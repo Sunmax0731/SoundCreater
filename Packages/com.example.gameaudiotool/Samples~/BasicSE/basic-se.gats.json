@@ -1,0 +1,63 @@
+{
+  "formatVersion": "1.0.0",
+  "toolVersion": "0.1.0",
+  "project": {
+    "id": "proj-basic-se",
+    "name": "BasicSE",
+    "bpm": 120,
+    "timeSignature": {
+      "numerator": 4,
+      "denominator": 4
+    },
+    "totalBars": 2,
+    "sampleRate": 48000,
+    "channelMode": "Stereo",
+    "masterGainDb": 0.0,
+    "loopPlayback": false,
+    "tracks": [
+      {
+        "id": "track-se-01",
+        "name": "Impact",
+        "mute": false,
+        "solo": false,
+        "volumeDb": 0.0,
+        "pan": 0.0,
+        "defaultVoice": {
+          "waveform": "Square",
+          "pulseWidth": 0.5,
+          "noiseEnabled": true,
+          "noiseType": "White",
+          "noiseMix": 0.35,
+          "adsr": {
+            "attackMs": 0,
+            "decayMs": 120,
+            "sustain": 0.2,
+            "releaseMs": 90
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": 0.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": true,
+              "timeMs": 110,
+              "feedback": 0.18,
+              "mix": 0.18
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "note-impact-01",
+            "startBeat": 0.0,
+            "durationBeat": 0.25,
+            "midiNote": 72,
+            "velocity": 0.95
+          }
+        ]
+      }
+    ]
+  }
+}

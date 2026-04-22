@@ -1,0 +1,120 @@
+using System;
+
+namespace GameAudioTool.Editor.Persistence
+{
+    [Serializable]
+    internal sealed class GameAudioProjectFileDto
+    {
+        public string formatVersion;
+        public string toolVersion;
+        public GameAudioProjectDto project;
+    }
+
+    [Serializable]
+    internal sealed class GameAudioProjectDto
+    {
+        public string id;
+        public string name;
+        public int bpm;
+        public GameAudioTimeSignatureDto timeSignature;
+        public int totalBars;
+        public int sampleRate;
+        public string channelMode;
+        public float masterGainDb;
+        public bool loopPlayback;
+        public GameAudioTrackDto[] tracks;
+    }
+
+    [Serializable]
+    internal sealed class GameAudioTimeSignatureDto
+    {
+        public int numerator;
+        public int denominator;
+    }
+
+    [Serializable]
+    internal sealed class GameAudioTrackDto
+    {
+        public string id;
+        public string name;
+        public bool mute;
+        public bool solo;
+        public float volumeDb;
+        public float pan;
+        public GameAudioVoiceDto defaultVoice;
+        public GameAudioNoteDto[] notes;
+    }
+
+    [Serializable]
+    internal sealed class GameAudioVoiceDto
+    {
+        public string waveform;
+        public float pulseWidth;
+        public bool noiseEnabled;
+        public string noiseType;
+        public float noiseMix;
+        public GameAudioEnvelopeDto adsr;
+        public GameAudioEffectDto effect;
+    }
+
+    [Serializable]
+    internal sealed class GameAudioEnvelopeDto
+    {
+        public int attackMs;
+        public int decayMs;
+        public float sustain;
+        public int releaseMs;
+    }
+
+    [Serializable]
+    internal sealed class GameAudioEffectDto
+    {
+        public float volumeDb;
+        public float pan;
+        public float pitchSemitone;
+        public int fadeInMs;
+        public int fadeOutMs;
+        public GameAudioDelayDto delay;
+    }
+
+    [Serializable]
+    internal sealed class GameAudioDelayDto
+    {
+        public bool enabled;
+        public int timeMs;
+        public float feedback;
+        public float mix;
+    }
+
+    [Serializable]
+    internal sealed class GameAudioNoteDto
+    {
+        public string id;
+        public float startBeat;
+        public float durationBeat;
+        public int midiNote;
+        public float velocity;
+        public GameAudioVoiceDto voiceOverride;
+    }
+
+    [Serializable]
+    internal sealed class GameAudioCommonConfigDto
+    {
+        public int defaultSampleRate;
+        public string defaultChannelMode;
+        public string defaultExportDirectory;
+        public bool showStartupGuide;
+        public bool rememberLastProject;
+        public string defaultGridDivision;
+        public int undoHistoryLimit;
+    }
+
+    [Serializable]
+    internal sealed class GameAudioProjectConfigDto
+    {
+        public string exportDirectory;
+        public bool autoRefreshAfterExport;
+        public int preferredSampleRate;
+        public string preferredChannelMode;
+    }
+}

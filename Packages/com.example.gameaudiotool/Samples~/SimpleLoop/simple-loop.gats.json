@@ -1,0 +1,127 @@
+{
+  "formatVersion": "1.0.0",
+  "toolVersion": "0.1.0",
+  "project": {
+    "id": "proj-sample-001",
+    "name": "SimpleLoop",
+    "bpm": 120,
+    "timeSignature": {
+      "numerator": 4,
+      "denominator": 4
+    },
+    "totalBars": 4,
+    "sampleRate": 48000,
+    "channelMode": "Stereo",
+    "masterGainDb": 0.0,
+    "loopPlayback": true,
+    "tracks": [
+      {
+        "id": "track-lead",
+        "name": "Lead",
+        "mute": false,
+        "solo": false,
+        "volumeDb": 0.0,
+        "pan": 0.0,
+        "defaultVoice": {
+          "waveform": "Square",
+          "pulseWidth": 0.5,
+          "noiseEnabled": false,
+          "noiseType": "White",
+          "noiseMix": 0.0,
+          "adsr": {
+            "attackMs": 5,
+            "decayMs": 80,
+            "sustain": 0.7,
+            "releaseMs": 120
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": 0.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": false,
+              "timeMs": 180,
+              "feedback": 0.25,
+              "mix": 0.2
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "lead-001",
+            "startBeat": 0.0,
+            "durationBeat": 1.0,
+            "midiNote": 60,
+            "velocity": 0.8
+          },
+          {
+            "id": "lead-002",
+            "startBeat": 1.0,
+            "durationBeat": 1.0,
+            "midiNote": 64,
+            "velocity": 0.8
+          }
+        ]
+      },
+      {
+        "id": "track-chord",
+        "name": "Chord",
+        "mute": false,
+        "solo": false,
+        "volumeDb": -3.0,
+        "pan": -0.1,
+        "defaultVoice": {
+          "waveform": "Triangle",
+          "pulseWidth": 0.5,
+          "noiseEnabled": false,
+          "noiseType": "White",
+          "noiseMix": 0.0,
+          "adsr": {
+            "attackMs": 10,
+            "decayMs": 120,
+            "sustain": 0.6,
+            "releaseMs": 180
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": 0.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": true,
+              "timeMs": 220,
+              "feedback": 0.2,
+              "mix": 0.15
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "chord-001",
+            "startBeat": 0.0,
+            "durationBeat": 2.0,
+            "midiNote": 48,
+            "velocity": 0.7
+          },
+          {
+            "id": "chord-002",
+            "startBeat": 0.0,
+            "durationBeat": 2.0,
+            "midiNote": 52,
+            "velocity": 0.7
+          },
+          {
+            "id": "chord-003",
+            "startBeat": 0.0,
+            "durationBeat": 2.0,
+            "midiNote": 55,
+            "velocity": 0.7
+          }
+        ]
+      }
+    ]
+  }
+}
