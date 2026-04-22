@@ -33,11 +33,18 @@ Open the tool from:
 ## Save And Load
 
 - `New` creates a fresh project shell with one default track.
-- `Open` reads `.json` project files and applies validation/fallback rules.
+- `Open` reads `.gats.json` project files and rejects broken schema or unsupported format versions.
 - `Save` writes the current project to disk.
-- `Save As` stores the project under a new file path.
+- `Save As` normalizes the selected path to the `.gats.json` session extension.
 
 The canonical session format is `.gats.json`.
+
+Config file behavior in the current foundation:
+
+- common settings: `%LocalAppData%/GameAudioTool/config.json`
+- project settings: `ProjectSettings/GameAudioToolSettings.json`
+- project settings override common defaults for sample rate, channel mode, and export directory
+- malformed config JSON falls back to built-in defaults so the editor can still open
 
 ## Samples
 

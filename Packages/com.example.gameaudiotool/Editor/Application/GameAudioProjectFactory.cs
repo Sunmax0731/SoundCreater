@@ -8,6 +8,11 @@ namespace GameAudioTool.Editor.Application
     {
         public static GameAudioProject CreateDefaultProject()
         {
+            return CreateDefaultProject(GameAudioToolInfo.DefaultSampleRate, GameAudioChannelMode.Stereo);
+        }
+
+        public static GameAudioProject CreateDefaultProject(int sampleRate, GameAudioChannelMode channelMode)
+        {
             var project = new GameAudioProject
             {
                 Id = CreateId("proj"),
@@ -15,8 +20,12 @@ namespace GameAudioTool.Editor.Application
                 Bpm = GameAudioToolInfo.DefaultBpm,
                 TimeSignature = new GameAudioTimeSignature { Numerator = 4, Denominator = 4 },
                 TotalBars = GameAudioToolInfo.DefaultTotalBars,
-                SampleRate = GameAudioToolInfo.DefaultSampleRate,
-                ChannelMode = GameAudioChannelMode.Stereo,
+                SampleRate = GameAudioValidationUtility.IsSupportedSampleRate(sampleRate)
+                    ? sampleRate
+                    : GameAudioToolInfo.DefaultSampleRate,
+                ChannelMode = channelMode == GameAudioChannelMode.Mono
+                    ? GameAudioChannelMode.Mono
+                    : GameAudioChannelMode.Stereo,
                 MasterGainDb = 0.0f,
                 LoopPlayback = false
             };

@@ -1,5 +1,6 @@
 using System.IO;
 using NUnit.Framework;
+using GameAudioTool.Editor.Application;
 using GameAudioTool.Editor.Config;
 using GameAudioTool.Editor.Domain;
 using GameAudioTool.Editor.Persistence;
@@ -105,6 +106,79 @@ namespace GameAudioTool.Editor.Tests
                     Directory.Delete(root, true);
                 }
             }
+        }
+
+        [Test]
+        public void CommonConfigSerializer_LoadOrDefault_ReturnsDefaultsForInvalidJson()
+        {
+            var serializer = new GameAudioCommonConfigSerializer();
+            string root = Path.Combine(Path.GetTempPath(), "GameAudioToolTests", Path.GetRandomFileName());
+            string configPath = Path.Combine(root, "config.json");
+
+            try
+            {
+                Directory.CreateDirectory(root);
+                File.WriteAllText(configPath, "{ invalid json");
+
+                GameAudioCommonConfig result = serializer.LoadOrDefault(configPath);
+
+                Assert.That(result.DefaultSampleRate, Is.EqualTo(48000));
+                Assert.That(result.DefaultChannelMode, Is.EqualTo(GameAudioChannelMode.Stereo));
+                Assert.That(result.UndoHistoryLimit, Is.EqualTo(100));
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                {
+                    Directory.Delete(root, true);
+                }
+            }
+        }
+
+        [Test]
+        public void ProjectConfigSerializer_LoadOrDefault_ReturnsDefaultsForInvalidJson()
+        {
+            var serializer = new GameAudioProjectConfigSerializer();
+            string root = Path.Combine(Path.GetTempPath(), "GameAudioToolTests", Path.GetRandomFileName());
+            string configPath = Path.Combine(root, "config.json");
+
+            try
+            {
+                Directory.CreateDirectory(root);
+                File.WriteAllText(configPath, "{ invalid json");
+
+                GameAudioProjectConfig result = serializer.LoadOrDefault(configPath);
+
+                Assert.That(result.ExportDirectory, Is.EqualTo(string.Empty));
+                Assert.That(result.AutoRefreshAfterExport, Is.True);
+                Assert.That(result.PreferredSampleRate, Is.Null);
+                Assert.That(result.PreferredChannelMode, Is.Null);
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                {
+                    Directory.Delete(root, true);
+                }
+            }
+        }
+
+        [Test]
+        public void ProjectFactory_UsesResolvedConfigDefaults()
+        {
+            var commonConfig = new GameAudioCommonConfig
+            {
+                DefaultSampleRate = 44100,
+                DefaultChannelMode = GameAudioChannelMode.Mono
+            };
+
+            var projectConfig = new GameAudioProjectConfig();
+            GameAudioProject project = GameAudioProjectFactory.CreateDefaultProject(
+                GameAudioConfigResolver.ResolveSampleRate(commonConfig, projectConfig),
+                GameAudioConfigResolver.ResolveChannelMode(commonConfig, projectConfig));
+
+            Assert.That(project.SampleRate, Is.EqualTo(44100));
+            Assert.That(project.ChannelMode, Is.EqualTo(GameAudioChannelMode.Mono));
         }
     }
 }

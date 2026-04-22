@@ -20,7 +20,14 @@ namespace GameAudioTool.Editor.Persistence
                 return new GameAudioCommonConfig();
             }
 
-            return Deserialize(File.ReadAllText(resolvedPath, Utf8WithoutBom));
+            try
+            {
+                return Deserialize(File.ReadAllText(resolvedPath, Utf8WithoutBom));
+            }
+            catch (Exception)
+            {
+                return new GameAudioCommonConfig();
+            }
         }
 
         public void Save(GameAudioCommonConfig config, string path = null)
@@ -74,7 +81,16 @@ namespace GameAudioTool.Editor.Persistence
                 return new GameAudioCommonConfig();
             }
 
-            var dto = JsonUtility.FromJson<GameAudioCommonConfigDto>(json);
+            GameAudioCommonConfigDto dto;
+            try
+            {
+                dto = JsonUtility.FromJson<GameAudioCommonConfigDto>(json);
+            }
+            catch (Exception)
+            {
+                return new GameAudioCommonConfig();
+            }
+
             if (dto == null)
             {
                 return new GameAudioCommonConfig();
