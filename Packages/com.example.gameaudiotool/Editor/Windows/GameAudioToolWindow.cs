@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using GameAudioTool.Editor.Application;
+using GameAudioTool.Editor.Config;
 using GameAudioTool.Editor.Domain;
 using GameAudioTool.Editor.Persistence;
 using GameAudioTool.Editor.Utilities;
@@ -12,7 +13,9 @@ namespace GameAudioTool.Editor.Windows
 {
     public sealed class GameAudioToolWindow : EditorWindow
     {
+        private readonly GameAudioCommonConfigSerializer _commonConfigSerializer = new GameAudioCommonConfigSerializer();
         private readonly GameAudioProjectSerializer _projectSerializer = new GameAudioProjectSerializer();
+        private readonly GameAudioProjectConfigSerializer _projectConfigSerializer = new GameAudioProjectConfigSerializer();
 
         private GameAudioProject _project;
         private string _projectPath = string.Empty;
@@ -40,7 +43,7 @@ namespace GameAudioTool.Editor.Windows
         {
             if (_project == null)
             {
-                _project = GameAudioProjectFactory.CreateDefaultProject();
+                _project = CreateConfiguredProject();
                 _isDirty = true;
             }
 
@@ -171,7 +174,7 @@ namespace GameAudioTool.Editor.Windows
                 return;
             }
 
-            _project = GameAudioProjectFactory.CreateDefaultProject();
+            _project = CreateConfiguredProject();
             _projectPath = string.Empty;
             _isDirty = true;
             _loadWarnings.Clear();
@@ -240,8 +243,9 @@ namespace GameAudioTool.Editor.Windows
         {
             try
             {
-                _projectSerializer.SaveToFile(targetPath, _project);
-                _projectPath = targetPath;
+                string resolvedPath = GameAudioProjectFileUtility.NormalizeSavePath(targetPath);
+                _projectSerializer.SaveToFile(resolvedPath, _project);
+                _projectPath = resolvedPath;
                 _isDirty = false;
                 ShowNotification(new GUIContent("Project saved."));
                 RefreshView();
@@ -278,6 +282,15 @@ namespace GameAudioTool.Editor.Windows
             }
 
             return false;
+        }
+
+        private GameAudioProject CreateConfiguredProject()
+        {
+            GameAudioCommonConfig commonConfig = _commonConfigSerializer.LoadOrDefault();
+            GameAudioProjectConfig projectConfig = _projectConfigSerializer.LoadOrDefault();
+            int sampleRate = GameAudioConfigResolver.ResolveSampleRate(commonConfig, projectConfig);
+            GameAudioChannelMode channelMode = GameAudioConfigResolver.ResolveChannelMode(commonConfig, projectConfig);
+            return GameAudioProjectFactory.CreateDefaultProject(sampleRate, channelMode);
         }
 
         private void RefreshView()

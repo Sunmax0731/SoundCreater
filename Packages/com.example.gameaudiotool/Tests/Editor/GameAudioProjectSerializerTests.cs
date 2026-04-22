@@ -2,6 +2,8 @@ using NUnit.Framework;
 using GameAudioTool.Editor.Application;
 using GameAudioTool.Editor.Domain;
 using GameAudioTool.Editor.Persistence;
+using GameAudioTool.Editor.Utilities;
+using System.IO;
 
 namespace GameAudioTool.Editor.Tests
 {
@@ -60,6 +62,30 @@ namespace GameAudioTool.Editor.Tests
             var serializer = new GameAudioProjectSerializer();
 
             Assert.Throws<GameAudioPersistenceException>(() => serializer.Deserialize(json));
+        }
+
+        [Test]
+        public void Deserialize_RejectsMissingRequiredField()
+        {
+            const string json = @"{
+  ""formatVersion"": ""1.0.0"",
+  ""toolVersion"": ""0.1.0"",
+  ""project"": {
+    ""id"": ""proj-001"",
+    ""bpm"": 120,
+    ""timeSignature"": { ""numerator"": 4, ""denominator"": 4 },
+    ""totalBars"": 4,
+    ""sampleRate"": 48000,
+    ""channelMode"": ""Stereo"",
+    ""masterGainDb"": 0.0,
+    ""loopPlayback"": false,
+    ""tracks"": []
+  }
+}";
+
+            var serializer = new GameAudioProjectSerializer();
+            GameAudioPersistenceException exception = Assert.Throws<GameAudioPersistenceException>(() => serializer.Deserialize(json));
+            StringAssert.Contains("$.project.name is required.", exception.Message);
         }
 
         [Test]
@@ -179,6 +205,39 @@ namespace GameAudioTool.Editor.Tests
 
             var serializer = new GameAudioProjectSerializer();
             Assert.Throws<GameAudioPersistenceException>(() => serializer.Deserialize(json));
+        }
+
+        [Test]
+        public void SaveToFile_NormalizesSessionFileExtension()
+        {
+            var serializer = new GameAudioProjectSerializer();
+            GameAudioProject project = GameAudioProjectFactory.CreateDefaultProject();
+            string root = Path.Combine(Path.GetTempPath(), "GameAudioToolTests", Path.GetRandomFileName());
+            string targetPath = Path.Combine(root, "session");
+            string expectedPath = $"{targetPath}{GameAudioToolInfo.SessionFileExtension}";
+
+            try
+            {
+                serializer.SaveToFile(targetPath, project);
+                Assert.That(File.Exists(expectedPath), Is.True);
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                {
+                    Directory.Delete(root, true);
+                }
+            }
+        }
+
+        [Test]
+        public void LoadFromFile_RejectsNonSessionFileExtension()
+        {
+            var serializer = new GameAudioProjectSerializer();
+            string path = Path.Combine(Path.GetTempPath(), "project.json");
+
+            GameAudioPersistenceException exception = Assert.Throws<GameAudioPersistenceException>(() => serializer.LoadFromFile(path));
+            StringAssert.Contains(GameAudioToolInfo.SessionFileExtension, exception.Message);
         }
     }
 }

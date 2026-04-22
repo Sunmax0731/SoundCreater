@@ -20,7 +20,14 @@ namespace GameAudioTool.Editor.Persistence
                 return new GameAudioProjectConfig();
             }
 
-            return Deserialize(File.ReadAllText(resolvedPath, Utf8WithoutBom));
+            try
+            {
+                return Deserialize(File.ReadAllText(resolvedPath, Utf8WithoutBom));
+            }
+            catch (Exception)
+            {
+                return new GameAudioProjectConfig();
+            }
         }
 
         public void Save(GameAudioProjectConfig config, string path = null)
@@ -65,7 +72,16 @@ namespace GameAudioTool.Editor.Persistence
                 return new GameAudioProjectConfig();
             }
 
-            var dto = JsonUtility.FromJson<GameAudioProjectConfigDto>(json);
+            GameAudioProjectConfigDto dto;
+            try
+            {
+                dto = JsonUtility.FromJson<GameAudioProjectConfigDto>(json);
+            }
+            catch (Exception)
+            {
+                return new GameAudioProjectConfig();
+            }
+
             if (dto == null)
             {
                 return new GameAudioProjectConfig();

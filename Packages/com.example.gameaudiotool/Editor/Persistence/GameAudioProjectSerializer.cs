@@ -33,18 +33,15 @@ namespace GameAudioTool.Editor.Persistence
 
         public void SaveToFile(string path, GameAudioProject project)
         {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                throw new ArgumentException("A target path is required.", nameof(path));
-            }
+            string resolvedPath = GameAudioProjectFileUtility.NormalizeSavePath(path);
 
-            string directoryPath = Path.GetDirectoryName(path);
+            string directoryPath = Path.GetDirectoryName(resolvedPath);
             if (!string.IsNullOrWhiteSpace(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
             }
 
-            File.WriteAllText(path, Serialize(project), Utf8WithoutBom);
+            File.WriteAllText(resolvedPath, Serialize(project), Utf8WithoutBom);
         }
 
         public GameAudioProjectLoadResult LoadFromFile(string path)
@@ -53,6 +50,8 @@ namespace GameAudioTool.Editor.Persistence
             {
                 throw new ArgumentException("A source path is required.", nameof(path));
             }
+
+            GameAudioProjectFileUtility.EnsureSessionFileExtension(path);
 
             if (!File.Exists(path))
             {
@@ -69,6 +68,8 @@ namespace GameAudioTool.Editor.Persistence
             {
                 throw new GameAudioPersistenceException("Project JSON is empty.");
             }
+
+            GameAudioProjectSchemaValidator.Validate(json);
 
             GameAudioProjectFileDto rootDto;
             try
