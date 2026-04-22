@@ -9,6 +9,7 @@ Current implementation scope:
 - open the editor from `Tools/Torus Edison/Open Editor`
 - create a new project shell
 - save and load `.gats.json` project files
+- render project data into deterministic offline audio buffers
 - keep package samples and configuration foundations in place
 
 Not implemented yet in this package revision:
