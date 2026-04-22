@@ -21,6 +21,7 @@ Current foundation in this repository:
 - domain models for project, track, note, voice, ADSR, effect, and config
 - `.gats.json` save/load foundation with validation
 - common/project config serializers
+- deterministic offline audio rendering core for waveform, noise, ADSR, delay, and mixdown
 - minimal Editor window entry point
 - sample session files and starter release documentation
 

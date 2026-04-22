@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- added a deterministic offline render core for waveform, noise, ADSR, delay, and track/project mixdown
+- added renderer-focused editor tests for determinism, waveform coverage, tail extension, and unsafe parameter clamping
+
 ## 0.1.0
 
 - created the initial Unity package structure
