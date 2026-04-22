@@ -1,0 +1,21 @@
+{
+  "name": "GameAudioTool.Editor.Tests",
+  "rootNamespace": "GameAudioTool.Editor.Tests",
+  "references": [
+    "GameAudioTool.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "noEngineReferences": false
+}
