@@ -98,6 +98,8 @@ Available controls:
 Use this page for:
 
 - project-level values such as BPM, total bars, sample rate, and channel mode
+- UI language mode
+- diagnostic mode and log level
 - current foundation diagnostics
 - validation warnings from loaded project data
 
@@ -168,8 +170,8 @@ Sample notes and validation steps:
 
 - live mouse interaction feel still needs real-editor confirmation
 - export behavior under `Assets/` should still be spot-checked in Unity
-- Japanese, English, and Chinese UI switching is not implemented yet
-- debug logging mode and log level switching are not implemented yet
+- UI localization currently supports Japanese, English, and Chinese only
+- diagnostic logging is intended for local support work through the Unity Console
 
 ## Current Notes
 

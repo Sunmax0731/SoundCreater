@@ -24,6 +24,8 @@
 - `Render Preview / Play / Pause / Stop / Rewind / Loop` によるプレビュー再生
 - WAV 書き出し
 - Undo / Redo
+- 日本語 / 英語 / 中国語 UI
+- Debug Mode と Log Level 切替による診断ログ
 - サンプルプロジェクトを使った動作確認
 
 ## 対応環境

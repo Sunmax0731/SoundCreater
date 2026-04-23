@@ -1,4 +1,12 @@
 # Agents.md
+## Additional Session Learnings
+
+- `Torus Edison` では localization と diagnostic logging が基盤機能になった。新しい表示文言は `GameAudioLocalization`、新しい診断ログは `GameAudioDiagnosticLogger` を通す。
+- 表示言語は日本語 / 英語 / 中国語の 3 言語対応とし、運用は `Auto + Override` を前提にする。Auto では editor language を優先し、必要なら system language に fallback する。
+- Windows 上の Unity headless validation は、起動した `Unity` プロセスを待機してから `-logFile` と `-testResults` を確認する。呼び出し元が先に戻っても検証完了とはみなさない。
+- full EditMode suite に無関係の既知 failure がある場合は、今回触った範囲の targeted fixture を先に使い、残りの failure は issue / PR に切り分けて記録する。
+- 日本語や中国語が PowerShell 上で文字化けして見えても、それだけでファイルを書き換えない。UTF-8 ソースと Unity 上の表示が壊れていることを確認してから修正する。
+
 
 ## 目的
 

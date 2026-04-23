@@ -3,7 +3,7 @@ namespace TorusEdison.Editor.Utilities
     internal static class GameAudioToolInfo
     {
         public const string DisplayName = "Torus Edison";
-        public const string ToolVersion = "0.1.0";
+        public const string ToolVersion = "0.1.1";
         public const string SessionFileExtension = ".gats.json";
         public const int MaxTrackCount = 32;
         public const int DefaultSampleRate = 48000;

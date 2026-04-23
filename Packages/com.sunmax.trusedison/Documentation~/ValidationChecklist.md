@@ -25,9 +25,11 @@ Recommended minimum automated checks:
 Current automated coverage in this package includes:
 
 - serializer tests under `Tests/Editor/GameAudioProjectSerializerTests.cs`
+- config serializer tests under `Tests/Editor/GameAudioConfigSerializerTests.cs`
 - render tests under `Tests/Editor/GameAudioProjectRendererTests.cs`
 - undo / redo tests under `Tests/Editor/GameAudioCommandHistoryTests.cs`
 - export tests under `Tests/Editor/GameAudioExportUtilityTests.cs`
+- diagnostic logger tests under `Tests/Editor/GameAudioDiagnosticLoggerTests.cs`
 - acceptance-scenario tests under `Tests/Editor/GameAudioAcceptanceScenarioTests.cs`
 
 ## Bundled Samples
@@ -152,11 +154,28 @@ Expected:
 - exported files are non-empty
 - `Assets/` export refresh behavior is correct
 
+### 6. Localization And Diagnostics
+
+1. Go to the `Settings` page
+2. Change UI language mode between `Auto`, `Japanese`, `English`, and `Chinese`
+3. Confirm major labels and buttons update immediately
+4. Enable diagnostic mode
+5. Raise log level to `Verbose`
+6. Load a sample or render preview
+7. Confirm diagnostic output appears in the Unity Console
+
+Expected:
+
+- language changes apply without reopening the window
+- Auto follows the editor or system language fallback
+- diagnostic logs respect the selected log level
+- disabling diagnostic mode suppresses routine info logs
+
 ## Known Limitations
 
 - Live mouse interaction feel still requires manual confirmation in Unity.
 - Export behavior under `Assets/` should still be spot-checked in a real editor session.
-- In the current validation environment, Unity batch `-runTests -testResults ...` may exit with code `0` without emitting the expected XML file.
+- `-testResults` XML should be inspected only after the spawned Unity process exits; reading too early can look like a missing result file.
 - End-user generated files such as local projects, exports, logs, and temp files are intentionally ignored by git.
 
 ## Release Gate
