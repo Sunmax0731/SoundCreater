@@ -7,6 +7,7 @@ namespace GameAudioTool.Editor.Audio
 {
     public sealed class GameAudioPreviewPlaybackService : IDisposable
     {
+        private readonly GameAudioPreviewClipAssetCache _clipAssetCache = new GameAudioPreviewClipAssetCache();
         private readonly GameAudioProjectRenderer _renderer = new GameAudioProjectRenderer();
 
         private GameAudioProject _boundProject;
@@ -16,6 +17,7 @@ namespace GameAudioTool.Editor.Audio
         private AudioClip _activeClip;
         private bool _previewDirty = true;
         private bool _isPlaying;
+        private bool _isPaused;
         private bool _loopPlayback;
         private double _playbackStartedAt;
         private double _playbackSeconds;
@@ -25,6 +27,7 @@ namespace GameAudioTool.Editor.Audio
         public GameAudioPreviewState State => new GameAudioPreviewState(
             _renderResult != null,
             _isPlaying,
+            _isPaused,
             _loopPlayback,
             _playbackSeconds,
             _renderResult,
@@ -65,15 +68,18 @@ namespace GameAudioTool.Editor.Audio
             }
 
             AudioClip clipToPlay = _loopPlayback ? (_loopClip ?? _outputClip) : _outputClip;
+            double resumeSeconds = _isPaused ? _playbackSeconds : 0.0d;
+            int startSample = _isPaused ? GetResumeStartSample(clipToPlay, resumeSeconds) : 0;
 
             try
             {
                 StopActiveClip();
-                GameAudioEditorAudioUtility.PlayPreviewClip(clipToPlay, _loopPlayback);
+                GameAudioEditorAudioUtility.PlayPreviewClip(clipToPlay, _loopPlayback, startSample);
                 _activeClip = clipToPlay;
                 _isPlaying = true;
-                _playbackStartedAt = EditorApplication.timeSinceStartup;
-                _playbackSeconds = 0.0d;
+                _isPaused = false;
+                _playbackStartedAt = EditorApplication.timeSinceStartup - resumeSeconds;
+                _playbackSeconds = resumeSeconds;
                 _errorText = string.Empty;
                 _statusText = _loopPlayback
                     ? "Loop preview playing."
@@ -85,6 +91,27 @@ namespace GameAudioTool.Editor.Audio
                 _errorText = exception.Message;
             }
 
+            return State;
+        }
+
+        public GameAudioPreviewState Pause()
+        {
+            if (_renderResult == null)
+            {
+                _statusText = "Preview not rendered.";
+                return State;
+            }
+
+            if (!_isPlaying)
+            {
+                _statusText = _isPaused
+                    ? (_loopPlayback ? "Loop preview paused." : "Preview paused.")
+                    : (_loopPlayback ? "Loop preview ready." : "Preview ready.");
+                return State;
+            }
+
+            _playbackSeconds = CalculatePlaybackSeconds(Math.Max(0.0d, EditorApplication.timeSinceStartup - _playbackStartedAt));
+            StopInternal(false, _loopPlayback ? "Loop preview paused." : "Preview paused.", true);
             return State;
         }
 
@@ -127,9 +154,18 @@ namespace GameAudioTool.Editor.Audio
                 return Play(_boundProject, _loopPlayback);
             }
 
-            _statusText = _loopPlayback
-                ? "Loop preview ready."
-                : "Preview ready.";
+            if (_isPaused)
+            {
+                _statusText = _loopPlayback
+                    ? "Loop preview paused."
+                    : "Preview paused.";
+            }
+            else
+            {
+                _statusText = _loopPlayback
+                    ? "Loop preview ready."
+                    : "Preview ready.";
+            }
             return State;
         }
 
@@ -175,16 +211,17 @@ namespace GameAudioTool.Editor.Audio
                     }
                 }
 
-                _playbackSeconds = NormalizeLoopSeconds(elapsedSeconds, loopDurationSeconds);
+                _playbackSeconds = CalculatePlaybackSeconds(elapsedSeconds);
                 return Math.Abs(previousSeconds - _playbackSeconds) > 0.0005d;
             }
 
             double outputDurationSeconds = State.OutputDurationSeconds;
-            _playbackSeconds = Math.Min(outputDurationSeconds, elapsedSeconds);
+            _playbackSeconds = CalculatePlaybackSeconds(elapsedSeconds);
             if (elapsedSeconds >= outputDurationSeconds)
             {
                 StopActiveClip();
                 _isPlaying = false;
+                _isPaused = false;
                 _statusText = "Preview complete.";
                 return true;
             }
@@ -205,7 +242,9 @@ namespace GameAudioTool.Editor.Audio
             {
                 if (!_isPlaying)
                 {
-                    _statusText = _loopPlayback ? "Loop preview ready." : "Preview ready.";
+                    _statusText = _isPaused
+                        ? (_loopPlayback ? "Loop preview paused." : "Preview paused.")
+                        : (_loopPlayback ? "Loop preview ready." : "Preview ready.");
                 }
 
                 return;
@@ -215,22 +254,28 @@ namespace GameAudioTool.Editor.Audio
             DestroyPreviewClips();
 
             _renderResult = _renderer.Render(project);
-            _outputClip = CreateClip($"{project.Name}-preview", _renderResult.Samples, _renderResult.FrameCount, _renderResult.ChannelCount, _renderResult.SampleRate);
+            _outputClip = _clipAssetCache.CreateOutputClip(project.Name, _renderResult);
 
             if (_renderResult.ProjectFrameCount < _renderResult.FrameCount)
             {
                 int loopSampleCount = _renderResult.ProjectFrameCount * _renderResult.ChannelCount;
                 float[] loopSamples = new float[loopSampleCount];
                 Array.Copy(_renderResult.Samples, loopSamples, loopSampleCount);
-                _loopClip = CreateClip($"{project.Name}-loop", loopSamples, _renderResult.ProjectFrameCount, _renderResult.ChannelCount, _renderResult.SampleRate);
+                _loopClip = _clipAssetCache.CreateLoopClip(project.Name, loopSamples, _renderResult.ProjectFrameCount, _renderResult.ChannelCount, _renderResult.SampleRate);
             }
             else
             {
                 _loopClip = _outputClip;
             }
 
+            if (_outputClip == null)
+            {
+                throw new InvalidOperationException("Preview clip asset could not be created.");
+            }
+
             _previewDirty = false;
             _isPlaying = false;
+            _isPaused = false;
             _playbackSeconds = 0.0d;
             _errorText = string.Empty;
             _statusText = !GameAudioEditorAudioUtility.IsAvailable
@@ -253,18 +298,37 @@ namespace GameAudioTool.Editor.Audio
                 : normalized;
         }
 
-        private static AudioClip CreateClip(string name, float[] samples, int frameCount, int channelCount, int sampleRate)
+        private double CalculatePlaybackSeconds(double elapsedSeconds)
         {
-            AudioClip clip = AudioClip.Create(name, frameCount, channelCount, sampleRate, false);
-            clip.hideFlags = HideFlags.HideAndDontSave;
-            clip.SetData(samples, 0);
-            return clip;
+            if (_renderResult == null)
+            {
+                return 0.0d;
+            }
+
+            if (_loopPlayback)
+            {
+                return NormalizeLoopSeconds(elapsedSeconds, State.ProjectDurationSeconds);
+            }
+
+            return Math.Min(State.OutputDurationSeconds, elapsedSeconds);
         }
 
-        private void StopInternal(bool resetCursor, string statusText)
+        private static int GetResumeStartSample(AudioClip clip, double resumeSeconds)
+        {
+            if (clip == null || clip.frequency <= 0 || clip.samples <= 0)
+            {
+                return 0;
+            }
+
+            int startSample = (int)Math.Round(Math.Max(0.0d, resumeSeconds) * clip.frequency);
+            return Math.Clamp(startSample, 0, Math.Max(0, clip.samples - 1));
+        }
+
+        private void StopInternal(bool resetCursor, string statusText, bool markPaused = false)
         {
             StopActiveClip();
             _isPlaying = false;
+            _isPaused = markPaused;
             if (resetCursor)
             {
                 _playbackSeconds = 0.0d;
@@ -286,20 +350,9 @@ namespace GameAudioTool.Editor.Audio
 
         private void DestroyPreviewClips()
         {
-            AudioClip outputClip = _outputClip;
-            AudioClip loopClip = _loopClip;
             _outputClip = null;
             _loopClip = null;
-
-            if (outputClip != null)
-            {
-                UnityEngine.Object.DestroyImmediate(outputClip);
-            }
-
-            if (loopClip != null && loopClip != outputClip)
-            {
-                UnityEngine.Object.DestroyImmediate(loopClip);
-            }
+            _clipAssetCache.Clear();
         }
     }
 }

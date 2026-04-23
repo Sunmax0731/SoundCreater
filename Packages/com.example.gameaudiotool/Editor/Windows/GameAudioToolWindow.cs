@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using GameAudioTool.Editor.Application;
 using GameAudioTool.Editor.Audio;
 using GameAudioTool.Editor.Config;
@@ -66,6 +67,7 @@ namespace GameAudioTool.Editor.Windows
 
             rootVisualElement.Add(BuildToolbar());
             rootVisualElement.Add(BuildSummaryPanel());
+            rootVisualElement.Add(BuildSamplePanel());
             rootVisualElement.Add(BuildPreviewPanel());
             rootVisualElement.Add(BuildInfoPanel());
 
@@ -117,6 +119,7 @@ namespace GameAudioTool.Editor.Windows
 
             transportRow.Add(CreateToolbarButton("Render Preview", RenderPreview));
             transportRow.Add(CreateToolbarButton("Play", PlayPreview));
+            transportRow.Add(CreateToolbarButton("Pause", PausePreview));
             transportRow.Add(CreateToolbarButton("Stop", StopPreview));
             transportRow.Add(CreateToolbarButton("Rewind", RewindPreview));
 
@@ -148,6 +151,39 @@ namespace GameAudioTool.Editor.Windows
                 }
             };
             panel.Add(_previewHelpBox);
+
+            return panel;
+        }
+
+        private VisualElement BuildSamplePanel()
+        {
+            var panel = CreateSectionPanel(new Color(0.15f, 0.15f, 0.15f));
+
+            panel.Add(CreateSectionTitle("Samples And Editing"));
+
+            var sampleRow = new VisualElement();
+            sampleRow.style.flexDirection = FlexDirection.Row;
+            sampleRow.style.marginBottom = 8;
+
+            sampleRow.Add(CreateToolbarButton("Create Samples", CreateSampleProjects));
+            sampleRow.Add(CreateToolbarButton("Load Basic SE", LoadBasicSampleProject));
+            sampleRow.Add(CreateToolbarButton("Load Simple Loop", LoadSimpleLoopSampleProject));
+            sampleRow.Add(CreateToolbarButton("Open Folder", OpenSampleProjectsFolder));
+
+            panel.Add(sampleRow);
+
+            var sampleLocationLabel = new Label($"Sample files are stored under {GetUserProjectFolderPath()}");
+            sampleLocationLabel.style.marginBottom = 4;
+            panel.Add(sampleLocationLabel);
+
+            var editingLabel = new Label("Current editing method: timeline and inspector editing UI are not implemented yet. For now, open a .gats.json file and edit the JSON in your text editor, then reopen it in Torus Edison.");
+            editingLabel.style.whiteSpace = WhiteSpace.Normal;
+            editingLabel.style.marginBottom = 4;
+            panel.Add(editingLabel);
+
+            var fieldsLabel = new Label("Useful fields to edit first: project.name, project.bpm, project.totalBars, project.loopPlayback, track volume/pan, note startBeat/durationBeat/midiNote/velocity.");
+            fieldsLabel.style.whiteSpace = WhiteSpace.Normal;
+            panel.Add(fieldsLabel);
 
             return panel;
         }
@@ -267,21 +303,7 @@ namespace GameAudioTool.Editor.Windows
                 return;
             }
 
-            try
-            {
-                GameAudioProjectLoadResult loadResult = _projectSerializer.LoadFromFile(selectedPath);
-                _project = loadResult.Project;
-                _projectPath = selectedPath;
-                _isDirty = false;
-                _loadWarnings = new List<string>(loadResult.Warnings);
-                ResetPreviewState();
-                ShowNotification(new GUIContent("Project loaded."));
-                RefreshView();
-            }
-            catch (Exception exception)
-            {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
-            }
+            LoadProjectFromPath(selectedPath);
         }
 
         private void SaveProject()
@@ -400,6 +422,12 @@ namespace GameAudioTool.Editor.Windows
             RefreshView();
         }
 
+        private void PausePreview()
+        {
+            _previewPlaybackService.Pause();
+            RefreshView();
+        }
+
         private void RewindPreview()
         {
             _previewPlaybackService.Rewind();
@@ -425,6 +453,119 @@ namespace GameAudioTool.Editor.Windows
             {
                 RefreshView();
             }
+        }
+
+        private void CreateSampleProjects()
+        {
+            try
+            {
+                EnsureSampleProjects();
+                ShowNotification(new GUIContent("Sample projects created."));
+            }
+            catch (Exception exception)
+            {
+                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+            }
+        }
+
+        private void LoadBasicSampleProject()
+        {
+            LoadSampleProject("BasicSE.gats.json");
+        }
+
+        private void LoadSimpleLoopSampleProject()
+        {
+            LoadSampleProject("SimpleLoop.gats.json");
+        }
+
+        private void OpenSampleProjectsFolder()
+        {
+            try
+            {
+                EnsureSampleProjects();
+                EditorUtility.RevealInFinder(GetUserProjectFolderPath());
+            }
+            catch (Exception exception)
+            {
+                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+            }
+        }
+
+        private void LoadSampleProject(string fileName)
+        {
+            if (!ConfirmDiscardIfDirty())
+            {
+                return;
+            }
+
+            try
+            {
+                EnsureSampleProjects();
+                LoadProjectFromPath(Path.Combine(GetUserProjectFolderPath(), fileName));
+            }
+            catch (Exception exception)
+            {
+                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+            }
+        }
+
+        private void LoadProjectFromPath(string path)
+        {
+            try
+            {
+                GameAudioProjectLoadResult loadResult = _projectSerializer.LoadFromFile(path);
+                _project = loadResult.Project;
+                _projectPath = path;
+                _isDirty = false;
+                _loadWarnings = new List<string>(loadResult.Warnings);
+                ResetPreviewState();
+                ShowNotification(new GUIContent("Project loaded."));
+                RefreshView();
+            }
+            catch (Exception exception)
+            {
+                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+            }
+        }
+
+        private static void EnsureSampleProjects()
+        {
+            string targetDirectory = GetUserProjectFolderPath();
+            Directory.CreateDirectory(targetDirectory);
+
+            CopySampleIfMissing("BasicSE/basic-se.gats.json", Path.Combine(targetDirectory, "BasicSE.gats.json"));
+            CopySampleIfMissing("SimpleLoop/simple-loop.gats.json", Path.Combine(targetDirectory, "SimpleLoop.gats.json"));
+        }
+
+        private static void CopySampleIfMissing(string sampleRelativePath, string targetPath)
+        {
+            if (File.Exists(targetPath))
+            {
+                return;
+            }
+
+            string sourcePath = Path.Combine(GetEmbeddedPackageRootPath(), "Samples~", sampleRelativePath);
+            if (!File.Exists(sourcePath))
+            {
+                throw new FileNotFoundException($"Sample file was not found: {sourcePath}");
+            }
+
+            File.Copy(sourcePath, targetPath, false);
+        }
+
+        private static string GetEmbeddedPackageRootPath()
+        {
+            return Path.Combine(GetProjectRootPath(), "Packages", "com.example.gameaudiotool");
+        }
+
+        private static string GetProjectRootPath()
+        {
+            return Path.GetDirectoryName(UnityEngine.Application.dataPath) ?? Environment.CurrentDirectory;
+        }
+
+        private static string GetUserProjectFolderPath()
+        {
+            return Path.Combine(GetProjectRootPath(), "myAudioProjects");
         }
 
         private void ResetPreviewState()

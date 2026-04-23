@@ -5,6 +5,7 @@ namespace GameAudioTool.Editor.Audio
         public GameAudioPreviewState(
             bool isPreviewReady,
             bool isPlaying,
+            bool isPaused,
             bool loopPlayback,
             double playbackSeconds,
             GameAudioRenderResult renderResult,
@@ -13,6 +14,7 @@ namespace GameAudioTool.Editor.Audio
         {
             IsPreviewReady = isPreviewReady;
             IsPlaying = isPlaying;
+            IsPaused = isPaused;
             LoopPlayback = loopPlayback;
             PlaybackSeconds = playbackSeconds;
             RenderResult = renderResult;
@@ -23,6 +25,8 @@ namespace GameAudioTool.Editor.Audio
         public bool IsPreviewReady { get; }
 
         public bool IsPlaying { get; }
+
+        public bool IsPaused { get; }
 
         public bool LoopPlayback { get; }
 
