@@ -1,4 +1,13 @@
 # Skill.md
+## Session Learnings
+
+- 新しい表示文言は `GameAudioLocalization` 経由で管理し、`GameAudioToolWindow` に日英中の文言を直書きしない。
+- 表示言語モードは `GameAudioLanguageMode` の `Auto + Override` を前提にし、Auto では editor language を優先し、取得できない場合のみ `UnityEngine.Application.systemLanguage` に fallback する。
+- `UnityEditor.LocalizationDatabase` はこの Unity 系列で直接参照できないことがある。compile-time 参照は避け、`typeof(EditorWindow).Assembly.GetType(...)` を使って localization 層の内部で reflection 解決する。
+- `Application` は project namespace と衝突しうるため、system language などの取得は `UnityEngine.Application` を明示する。
+- Save / Load / Preview / Export の診断は `GameAudioDiagnosticLogger` と `GameAudioDiagnosticLogLevel` を通して出す。ad-hoc な `Debug.Log` を増やさない。
+- batch validation では、生成された `Unity` PID を待ってから `-logFile` と `-testResults` を読む。full suite に無関係な既知 failure がある場合は targeted fixture で今回の変更範囲を先に確認する。
+
 
 ## 名称
 
