@@ -40,6 +40,36 @@ namespace TorusEdison.Editor.Tests
         }
 
         [Test]
+        public void SerializeAndDeserialize_RoundTripsImportedAudioConversionMetadata()
+        {
+            var serializer = new GameAudioProjectSerializer();
+            GameAudioProject project = GameAudioProjectFactory.CreateDefaultProject();
+            project.Name = "ImportedConversion";
+            project.ImportedAudioConversion = new GameAudioImportedAudioConversion
+            {
+                SourceClipName = "voice-source",
+                SourceAssetPath = "Assets/Audio/voice-source.wav",
+                SourceSampleRate = 44100,
+                SourceChannelCount = 2,
+                SourceDurationSeconds = 3.5f,
+                TargetSampleRate = 11025,
+                TargetChannelMode = "Mono",
+                OutputChannelCount = 1,
+                OutputWaveFileName = "voice-source_8bit.wav"
+            };
+
+            string json = serializer.Serialize(project);
+            GameAudioProjectLoadResult result = serializer.Deserialize(json);
+
+            Assert.That(result.Project.ImportedAudioConversion, Is.Not.Null);
+            Assert.That(result.Project.ImportedAudioConversion.SourceClipName, Is.EqualTo("voice-source"));
+            Assert.That(result.Project.ImportedAudioConversion.SourceAssetPath, Is.EqualTo("Assets/Audio/voice-source.wav"));
+            Assert.That(result.Project.ImportedAudioConversion.TargetSampleRate, Is.EqualTo(11025));
+            Assert.That(result.Project.ImportedAudioConversion.TargetChannelMode, Is.EqualTo("Mono"));
+            Assert.That(result.Project.ImportedAudioConversion.OutputWaveFileName, Is.EqualTo("voice-source_8bit.wav"));
+        }
+
+        [Test]
         public void Deserialize_RejectsUnsupportedFormatVersion()
         {
             const string json = @"{

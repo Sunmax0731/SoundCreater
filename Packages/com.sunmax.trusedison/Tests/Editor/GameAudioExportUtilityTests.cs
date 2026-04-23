@@ -38,6 +38,14 @@ namespace TorusEdison.Editor.Tests
         }
 
         [Test]
+        public void BuildProjectFilePath_SanitizesNameAndAppendsSessionExtension()
+        {
+            string path = GameAudioExportUtility.BuildProjectFilePath("D:/Exports", "Boss:SE?");
+
+            Assert.That(path.Replace('\\', '/'), Is.EqualTo("D:/Exports/Boss_SE_.gats.json"));
+        }
+
+        [Test]
         public void NormalizeStoredExportDirectory_ConvertsProjectSubfolderToRelativePath()
         {
             string stored = GameAudioExportUtility.NormalizeStoredExportDirectory("D:/ProjectRoot/Assets/Exports/Audio", "D:/ProjectRoot");

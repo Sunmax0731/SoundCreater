@@ -1,13 +1,19 @@
 using System;
 using System.IO;
+using TorusEdison.Editor.Application;
+using TorusEdison.Editor.Domain;
+using TorusEdison.Editor.Persistence;
 using TorusEdison.Editor.Utilities;
+using UnityEditor;
 using UnityEngine;
 
 namespace TorusEdison.Editor.Audio
 {
     internal sealed class GameAudioAudioClipConversionService
     {
-        public string ExportAsPcm8(
+        private readonly GameAudioProjectSerializer _projectSerializer = new GameAudioProjectSerializer();
+
+        public GameAudioAudioClipConversionExportResult ExportAsPcm8(
             AudioClip sourceClip,
             string exportDirectory,
             string outputName,
@@ -63,8 +69,22 @@ namespace TorusEdison.Editor.Audio
             Directory.CreateDirectory(directoryPath);
             byte[] wavBytes = GameAudioWavEncoder.EncodePcm8(convertedSamples, resolvedSampleRate, outputChannelCount);
             File.WriteAllBytes(filePath, wavBytes);
-            GameAudioDiagnosticLogger.Verbose("Conversion", $"Encoded 8-bit WAV {filePath} ({resolvedSampleRate} Hz / {outputChannelCount} ch).");
-            return filePath;
+            string waveFileName = Path.GetFileName(filePath);
+
+            GameAudioProject conversionProject = CreateConversionProject(
+                sourceClip,
+                outputName,
+                resolvedSampleRate,
+                channelMode,
+                outputChannelCount,
+                waveFileName);
+
+            string projectFilePath = GameAudioExportUtility.BuildProjectFilePath(exportDirectory, outputName);
+            _projectSerializer.SaveToFile(projectFilePath, conversionProject);
+            GameAudioDiagnosticLogger.Verbose(
+                "Conversion",
+                $"Encoded 8-bit WAV {filePath} ({resolvedSampleRate} Hz / {outputChannelCount} ch) and generated conversion project {projectFilePath}.");
+            return new GameAudioAudioClipConversionExportResult(filePath, projectFilePath);
         }
 
         internal static float[] ConvertSamples(
@@ -199,6 +219,71 @@ namespace TorusEdison.Editor.Audio
             }
 
             return total / count;
+        }
+
+        private static GameAudioProject CreateConversionProject(
+            AudioClip sourceClip,
+            string outputName,
+            int targetSampleRate,
+            GameAudioConversionChannelMode channelMode,
+            int outputChannelCount,
+            string outputWaveFileName)
+        {
+            string projectName = ResolveProjectName(sourceClip, outputName);
+            var project = GameAudioProjectFactory.CreateDefaultProject(
+                targetSampleRate,
+                outputChannelCount == 1 ? GameAudioChannelMode.Mono : GameAudioChannelMode.Stereo);
+
+            project.Name = projectName;
+            project.TotalBars = CalculateTotalBars(sourceClip.length, project.Bpm, project.TimeSignature?.Numerator ?? 4, project.TimeSignature?.Denominator ?? 4);
+            if (project.Tracks.Count > 0)
+            {
+                project.Tracks[0].Name = "Imported Audio";
+            }
+
+            string assetPath = AssetDatabase.GetAssetPath(sourceClip);
+            project.ImportedAudioConversion = new GameAudioImportedAudioConversion
+            {
+                SourceClipName = sourceClip.name ?? string.Empty,
+                SourceAssetPath = string.IsNullOrWhiteSpace(assetPath) ? "(not imported)" : assetPath,
+                SourceSampleRate = sourceClip.frequency,
+                SourceChannelCount = sourceClip.channels,
+                SourceDurationSeconds = sourceClip.length,
+                TargetSampleRate = targetSampleRate,
+                TargetChannelMode = channelMode.ToString(),
+                OutputChannelCount = outputChannelCount,
+                OutputWaveFileName = outputWaveFileName ?? string.Empty
+            };
+
+            return project;
+        }
+
+        private static string ResolveProjectName(AudioClip sourceClip, string outputName)
+        {
+            if (!string.IsNullOrWhiteSpace(outputName))
+            {
+                return outputName.Trim();
+            }
+
+            if (sourceClip != null && !string.IsNullOrWhiteSpace(sourceClip.name))
+            {
+                return $"{sourceClip.name}_8bit";
+            }
+
+            return "Converted8Bit";
+        }
+
+        private static int CalculateTotalBars(float durationSeconds, int bpm, int numerator, int denominator)
+        {
+            if (durationSeconds <= 0.0f || bpm <= 0)
+            {
+                return GameAudioToolInfo.DefaultTotalBars;
+            }
+
+            float beatsPerBar = Mathf.Max(1.0f, numerator * (4.0f / Mathf.Max(1, denominator)));
+            double totalBeats = durationSeconds * bpm / 60.0;
+            int totalBars = Math.Max(1, (int)Math.Ceiling(totalBeats / beatsPerBar));
+            return Math.Clamp(totalBars, 1, GameAudioToolInfo.MaxTotalBars);
         }
     }
 }

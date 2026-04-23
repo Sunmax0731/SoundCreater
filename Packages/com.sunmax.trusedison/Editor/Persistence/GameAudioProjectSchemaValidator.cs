@@ -32,12 +32,31 @@ namespace TorusEdison.Editor.Persistence
             RequireString(node, path, "channelMode");
             RequireNumber(node, path, "masterGainDb");
             RequireBoolean(node, path, "loopPlayback");
+            if (TryGetProperty(node, "importedAudioConversion", out GameAudioJsonNode importedAudioConversion)
+                && importedAudioConversion.Kind != GameAudioJsonKind.Null)
+            {
+                ValidateImportedAudioConversion(importedAudioConversion, $"{path}.importedAudioConversion");
+            }
 
             GameAudioJsonNode tracks = RequireArrayProperty(node, path, "tracks");
             for (int index = 0; index < tracks.Items.Count; index++)
             {
                 ValidateTrack(tracks.Items[index], $"{path}.tracks[{index}]");
             }
+        }
+
+        private static void ValidateImportedAudioConversion(GameAudioJsonNode node, string path)
+        {
+            RequireObject(node, path);
+            RequireString(node, path, "sourceClipName");
+            RequireString(node, path, "sourceAssetPath");
+            RequireNumber(node, path, "sourceSampleRate");
+            RequireNumber(node, path, "sourceChannelCount");
+            RequireNumber(node, path, "sourceDurationSeconds");
+            RequireNumber(node, path, "targetSampleRate");
+            RequireString(node, path, "targetChannelMode");
+            RequireNumber(node, path, "outputChannelCount");
+            RequireString(node, path, "outputWaveFileName");
         }
 
         private static void ValidateTrack(GameAudioJsonNode node, string path)

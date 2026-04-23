@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using NUnit.Framework;
 using TorusEdison.Editor.Audio;
+using TorusEdison.Editor.Persistence;
 using UnityEngine;
 
 namespace TorusEdison.Editor.Tests
@@ -49,7 +50,7 @@ namespace TorusEdison.Editor.Tests
         }
 
         [Test]
-        public void ExportAsPcm8_WritesWaveFileToDisk()
+        public void ExportAsPcm8_WritesWaveAndGeneratedProjectFilesToDisk()
         {
             string root = Path.Combine(Path.GetTempPath(), "TorusEdisonTests", Path.GetRandomFileName());
             AudioClip clip = null;
@@ -60,19 +61,30 @@ namespace TorusEdison.Editor.Tests
                 clip.SetData(new[] { -1.0f, 0.0f, 1.0f, 0.5f }, 0);
 
                 var service = new GameAudioAudioClipConversionService();
-                string filePath = service.ExportAsPcm8(
+                GameAudioAudioClipConversionExportResult exportResult = service.ExportAsPcm8(
                     clip,
                     root,
                     "Converted:Clip",
                     22050,
                     GameAudioConversionChannelMode.Preserve);
 
-                Assert.That(File.Exists(filePath), Is.True);
-                Assert.That(Path.GetFileName(filePath), Is.EqualTo("Converted_Clip.wav"));
+                Assert.That(File.Exists(exportResult.WaveFilePath), Is.True);
+                Assert.That(Path.GetFileName(exportResult.WaveFilePath), Is.EqualTo("Converted_Clip.wav"));
+                Assert.That(File.Exists(exportResult.ProjectFilePath), Is.True);
+                Assert.That(Path.GetFileName(exportResult.ProjectFilePath), Is.EqualTo("Converted_Clip.gats.json"));
 
-                byte[] bytes = File.ReadAllBytes(filePath);
+                byte[] bytes = File.ReadAllBytes(exportResult.WaveFilePath);
                 Assert.That(bytes.Length, Is.GreaterThan(44));
                 Assert.That(BitConverter.ToInt16(bytes, 34), Is.EqualTo(8));
+
+                var serializer = new GameAudioProjectSerializer();
+                GameAudioProjectLoadResult projectResult = serializer.LoadFromFile(exportResult.ProjectFilePath);
+                Assert.That(projectResult.Project.Name, Is.EqualTo("Converted:Clip"));
+                Assert.That(projectResult.Project.SampleRate, Is.EqualTo(22050));
+                Assert.That(projectResult.Project.ImportedAudioConversion, Is.Not.Null);
+                Assert.That(projectResult.Project.ImportedAudioConversion.SourceClipName, Is.EqualTo("source-clip"));
+                Assert.That(projectResult.Project.ImportedAudioConversion.TargetChannelMode, Is.EqualTo("Preserve"));
+                Assert.That(projectResult.Project.ImportedAudioConversion.OutputWaveFileName, Is.EqualTo("Converted_Clip.wav"));
             }
             finally
             {

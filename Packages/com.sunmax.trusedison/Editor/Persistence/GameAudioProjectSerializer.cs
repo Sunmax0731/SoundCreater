@@ -138,9 +138,26 @@ namespace TorusEdison.Editor.Persistence
                 channelMode = project.ChannelMode.ToString(),
                 masterGainDb = GameAudioValidationUtility.ClampFloat(project.MasterGainDb, -24.0f, 6.0f),
                 loopPlayback = project.LoopPlayback,
+                importedAudioConversion = project.ImportedAudioConversion == null ? null : ToDto(project.ImportedAudioConversion),
                 tracks = (project.Tracks ?? new List<GameAudioTrack>())
                     .Select(ToDto)
                     .ToArray()
+            };
+        }
+
+        private static GameAudioImportedAudioConversionDto ToDto(GameAudioImportedAudioConversion conversion)
+        {
+            return new GameAudioImportedAudioConversionDto
+            {
+                sourceClipName = conversion.SourceClipName ?? string.Empty,
+                sourceAssetPath = conversion.SourceAssetPath ?? string.Empty,
+                sourceSampleRate = Math.Max(0, conversion.SourceSampleRate),
+                sourceChannelCount = Math.Max(0, conversion.SourceChannelCount),
+                sourceDurationSeconds = Math.Max(0.0f, conversion.SourceDurationSeconds),
+                targetSampleRate = Math.Max(0, conversion.TargetSampleRate),
+                targetChannelMode = string.IsNullOrWhiteSpace(conversion.TargetChannelMode) ? "Preserve" : conversion.TargetChannelMode,
+                outputChannelCount = Math.Max(0, conversion.OutputChannelCount),
+                outputWaveFileName = conversion.OutputWaveFileName ?? string.Empty
             };
         }
 
@@ -233,7 +250,8 @@ namespace TorusEdison.Editor.Persistence
                 SampleRate = ReadSampleRate(dto.sampleRate, warnings, "project.sampleRate"),
                 ChannelMode = ReadChannelMode(dto.channelMode, GameAudioChannelMode.Stereo, warnings, "project.channelMode"),
                 MasterGainDb = ReadClamped(dto.masterGainDb, -24.0f, 6.0f, 0.0f, warnings, "project.masterGainDb"),
-                LoopPlayback = dto.loopPlayback
+                LoopPlayback = dto.loopPlayback,
+                ImportedAudioConversion = ReadImportedAudioConversion(dto.importedAudioConversion, warnings)
             };
 
             for (int index = 0; index < trackDtos.Length; index++)
@@ -243,6 +261,27 @@ namespace TorusEdison.Editor.Persistence
             }
 
             return project;
+        }
+
+        private static GameAudioImportedAudioConversion ReadImportedAudioConversion(GameAudioImportedAudioConversionDto dto, List<string> warnings)
+        {
+            if (dto == null)
+            {
+                return null;
+            }
+
+            return new GameAudioImportedAudioConversion
+            {
+                SourceClipName = ReadRequiredText(dto.sourceClipName, string.Empty, warnings, "project.importedAudioConversion.sourceClipName"),
+                SourceAssetPath = ReadRequiredText(dto.sourceAssetPath, string.Empty, warnings, "project.importedAudioConversion.sourceAssetPath"),
+                SourceSampleRate = ReadPositive(dto.sourceSampleRate, 0, warnings, "project.importedAudioConversion.sourceSampleRate"),
+                SourceChannelCount = ReadPositive(dto.sourceChannelCount, 0, warnings, "project.importedAudioConversion.sourceChannelCount"),
+                SourceDurationSeconds = ReadClamped(dto.sourceDurationSeconds, 0.0f, 36000.0f, 0.0f, warnings, "project.importedAudioConversion.sourceDurationSeconds"),
+                TargetSampleRate = ReadPositive(dto.targetSampleRate, 0, warnings, "project.importedAudioConversion.targetSampleRate"),
+                TargetChannelMode = ReadRequiredText(dto.targetChannelMode, "Preserve", warnings, "project.importedAudioConversion.targetChannelMode"),
+                OutputChannelCount = ReadPositive(dto.outputChannelCount, 0, warnings, "project.importedAudioConversion.outputChannelCount"),
+                OutputWaveFileName = ReadRequiredText(dto.outputWaveFileName, string.Empty, warnings, "project.importedAudioConversion.outputWaveFileName")
+            };
         }
 
         private static GameAudioTrack FromDto(GameAudioTrackDto dto, int trackIndex, List<string> warnings)

@@ -81,6 +81,7 @@
 
 - `Export WAV`
 - Unity に取り込んだ `AudioClip` の 8-bit WAV 変換
+- 変換した WAV と同じフォルダへの変換用 `.gats.json` 自動生成
 - `Open Export Folder`
 - 共通既定フォルダ設定
 - プロジェクト上書きフォルダ設定
@@ -157,6 +158,7 @@ Export 画面には、Unity に取り込んだ `AudioClip` アセットを 8-bit
 - 変換後サンプルレートを指定
 - `Preserve Source` / `Mono` / `Stereo` を選択
 - 8-bit PCM `.wav` として書き出し
+- 同じフォルダへ変換用 `.gats.json` を自動生成
 
 この機能は、すでに Unity へ取り込んだ音声を変換するためのものです。YouTube など外部サービスから音源を取得する機能は含みません。
 

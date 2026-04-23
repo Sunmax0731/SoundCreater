@@ -80,6 +80,7 @@ Available controls:
 
 - `Export WAV`
 - imported `AudioClip` to 8-bit WAV conversion
+- automatic generation of a conversion-focused `.gats.json` project next to the converted WAV
 - `Open Export Folder`
 - common default folder
 - project override folder
@@ -147,6 +148,7 @@ The Export page also includes a conversion flow for imported `AudioClip` assets.
 - choose the target sample rate
 - choose `Preserve Source`, `Mono`, or `Stereo`
 - export as 8-bit PCM `.wav`
+- automatically generate a conversion `.gats.json` project in the same folder
 
 This feature converts audio that you already brought into Unity. It does not download or extract audio from YouTube or other external services.
 

@@ -51,6 +51,7 @@ namespace TorusEdison.Editor.Windows
         private List<string> _loadWarnings = new List<string>();
         private string _lastExportedPath = string.Empty;
         private string _lastConverted8BitPath = string.Empty;
+        private string _lastConverted8BitProjectPath = string.Empty;
         private IVisualElementScheduledItem _previewTicker;
         private TimelineDragState _timelineDragState;
         private Vector2 _timelineScrollPosition;
@@ -85,6 +86,7 @@ namespace TorusEdison.Editor.Windows
         private PopupField<int> _conversionSampleRateField;
         private PopupField<GameAudioConversionChannelMode> _conversionChannelModeField;
         private Label _conversionLastResultValue;
+        private Label _conversionLastProjectValue;
         private IntegerField _toolbarBpmField;
         private PopupField<string> _toolbarGridField;
         private Toggle _toolbarLoopToggle;
@@ -545,6 +547,7 @@ namespace TorusEdison.Editor.Windows
             panel.Add(conversionActionRow);
 
             _conversionLastResultValue = AddKeyValue(panel, T("export.convert8Bit.lastExport", "Last 8-bit Export"));
+            _conversionLastProjectValue = AddKeyValue(panel, T("export.convert8Bit.lastProject", "Last Conversion Project"));
 
             return panel;
         }
@@ -2151,16 +2154,18 @@ namespace TorusEdison.Editor.Windows
             {
                 string exportDirectory = GetResolvedExportDirectory();
                 string outputName = GetResolvedConversionOutputName();
-                string exportPath = _audioClipConversionService.ExportAsPcm8(
+                GameAudioAudioClipConversionExportResult exportResult = _audioClipConversionService.ExportAsPcm8(
                     _conversionSourceClip,
                     exportDirectory,
                     outputName,
                     _conversionTargetSampleRate,
                     _conversionChannelMode);
-                _lastConverted8BitPath = exportPath;
+                _lastConverted8BitPath = exportResult.WaveFilePath;
+                _lastConverted8BitProjectPath = exportResult.ProjectFilePath;
 
                 bool shouldRefresh = (_projectConfig?.AutoRefreshAfterExport ?? true)
-                    && GameAudioExportUtility.ShouldRefreshAssetDatabase(exportPath, GetProjectRootPath());
+                    && (GameAudioExportUtility.ShouldRefreshAssetDatabase(exportResult.WaveFilePath, GetProjectRootPath())
+                        || GameAudioExportUtility.ShouldRefreshAssetDatabase(exportResult.ProjectFilePath, GetProjectRootPath()));
                 if (shouldRefresh)
                 {
                     AssetDatabase.Refresh();
@@ -2168,10 +2173,10 @@ namespace TorusEdison.Editor.Windows
 
                 GameAudioDiagnosticLogger.Info(
                     "Conversion",
-                    $"Exported 8-bit WAV to {exportPath}. AutoRefresh={shouldRefresh}. Source={_conversionSourceClip.name}; SampleRate={_conversionTargetSampleRate}; ChannelMode={_conversionChannelMode}.");
+                    $"Exported 8-bit WAV to {exportResult.WaveFilePath} and conversion project to {exportResult.ProjectFilePath}. AutoRefresh={shouldRefresh}. Source={_conversionSourceClip.name}; SampleRate={_conversionTargetSampleRate}; ChannelMode={_conversionChannelMode}.");
                 ShowNotification(new GUIContent(shouldRefresh
-                    ? T("status.convert8BitExportedAndRefreshed", "8-bit WAV exported and assets refreshed.")
-                    : T("status.convert8BitExported", "8-bit WAV exported.")));
+                    ? T("status.convert8BitExportedAndRefreshed", "8-bit WAV and conversion project exported, then assets refreshed.")
+                    : T("status.convert8BitExported", "8-bit WAV and conversion project exported.")));
                 RefreshView();
             }
             catch (Exception exception)
@@ -3309,6 +3314,12 @@ namespace TorusEdison.Editor.Windows
             _conversionLastResultValue.text = string.IsNullOrWhiteSpace(_lastConverted8BitPath)
                 ? T("status.notExported", "(not exported)")
                 : _lastConverted8BitPath;
+            if (_conversionLastProjectValue != null)
+            {
+                _conversionLastProjectValue.text = string.IsNullOrWhiteSpace(_lastConverted8BitProjectPath)
+                    ? T("status.notExported", "(not exported)")
+                    : _lastConverted8BitProjectPath;
+            }
 
             if (_undoButton != null)
             {
