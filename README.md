@@ -6,6 +6,8 @@ The public-facing tool name is `Torus Edison`.
 
 `Torus Edison` is a Unity Editor extension for building reusable game-audio project data, preview workflows, and release artifacts for later GitHub Release / BOOTH distribution.
 
+This repository now also contains the Unity host project used to validate the embedded package locally.
+
 ## Naming
 
 - Repository: `SoundCreater`
@@ -34,7 +36,7 @@ Not implemented yet:
 
 ## Open The Tool
 
-After the package is loaded in Unity, open:
+Open the repository root as a Unity project, wait for package import to complete, then open:
 
 - `Tools/Torus Edison/Open Editor`
 
@@ -42,6 +44,8 @@ After the package is loaded in Unity, open:
 
 - `Packages/com.example.gameaudiotool`
   Main Unity package under development.
+- `Assets`, `Packages/manifest.json`, `ProjectSettings`
+  Unity host project files used for local validation of the embedded package.
 - `game-audio-tool-docs/game-audio-tool-docs`
   Requirements, specification, skill, and agent guidance used as implementation references.
 
