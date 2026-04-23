@@ -66,6 +66,7 @@
 現在の主なショートカット:
 
 - `Render Preview` / `Play` / `Pause` / `Stop` / `Rewind` / `Loop`
+- `?` でタイムライン操作ヘルプをモーダル表示
 - `Ctrl+D` 選択ノート複製
 - `Delete` 選択ノート削除
 - `Ctrl+Z` Undo
