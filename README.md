@@ -8,7 +8,8 @@
 
 この README は概要案内です。詳しい使い方や画面ごとの説明は、別途用意しているマニュアルをご確認ください。
 
-- 使い方マニュアル: [Manual.md](Packages/com.sunmax.trusedison/Documentation~/Manual.md)
+- 使い方マニュアル 日本語版: [Manual.ja.md](Packages/com.sunmax.trusedison/Documentation~/Manual.ja.md)
+- 使い方マニュアル 英語版: [Manual.md](Packages/com.sunmax.trusedison/Documentation~/Manual.md)
 
 ## Torus Edison でできること
 
@@ -24,9 +25,10 @@
 
 導入後にまず確認したい情報は、以下の順番がおすすめです。
 
-1. [使い方マニュアル](Packages/com.sunmax.trusedison/Documentation~/Manual.md)
-2. GitHub Releases
-3. この README の「サポートと補足情報」
+1. [使い方マニュアル 日本語版](Packages/com.sunmax.trusedison/Documentation~/Manual.ja.md)
+2. [使い方マニュアル 英語版](Packages/com.sunmax.trusedison/Documentation~/Manual.md)
+3. GitHub Releases
+4. この README の「サポートと補足情報」
 
 ## ツールの起動
 
