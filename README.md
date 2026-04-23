@@ -1,67 +1,61 @@
-# SoundCreater
+# Torus Edison
 
-`SoundCreater` is the repository name.
+`Torus Edison` は、Unity Editor 上でゲーム向けの効果音やループ素材を試作し、音声プロジェクトとして保存しながら調整できるツールです。
 
-The public-facing tool name is `Torus Edison`.
+この GitHub リポジトリ名は `SoundCreater` ですが、BOOTH や配布物での公開名は `Torus Edison` です。
 
-`Torus Edison` is a Unity Editor extension for building reusable game-audio project data, preview workflows, and release artifacts for later GitHub Release / BOOTH distribution.
+## BOOTH ご購入者の方へ
 
-This repository now also contains the Unity host project used to validate the embedded package locally.
+この README は概要案内です。詳しい使い方や画面ごとの説明は、別途用意しているマニュアルをご確認ください。
 
-## Naming
+- 使い方マニュアル: [Manual.md](Packages/com.sunmax.trusedison/Documentation~/Manual.md)
 
-- Repository: `SoundCreater`
-- Tool name: `Torus Edison`
+## Torus Edison でできること
 
-The tool name is a wordplay on Thomas Edison, reframed as a sound-invention tool.
+- 音声プロジェクトの作成、保存、読み込み
+- タイムライン上でのノート編集
+- Unity Editor 上でのプレビュー再生
+- `Play / Pause / Stop / Rewind / Loop` の再生操作
+- WAV 書き出し
+- Undo / Redo
+- サンプルプロジェクトを使った動作確認
 
-## Current State
+## 最初に確認する場所
 
-Current foundation in this repository:
+導入後にまず確認したい情報は、以下の順番がおすすめです。
 
-- Unity package skeleton under `Packages/com.sunmax.trusedison`
-- domain models for project, track, note, voice, ADSR, effect, and config
-- `.gats.json` save/load foundation with validation
-- common/project config serializers
-- deterministic offline audio rendering core for waveform, noise, ADSR, delay, and mixdown
-- editor preview playback with Play / Stop / Rewind / Loop transport controls
-- sample session files and starter release documentation
+1. [使い方マニュアル](Packages/com.sunmax.trusedison/Documentation~/Manual.md)
+2. GitHub Releases
+3. この README の「サポートと補足情報」
 
-Not implemented yet:
+## ツールの起動
 
-- timeline editing UI
-- WAV export
-- Undo / Redo command history
-
-## Open The Tool
-
-Open the repository root as a Unity project, wait for package import to complete, then open:
+Unity プロジェクトを開き、パッケージの読み込みが終わったあとに次のメニューから起動します。
 
 - `Tools/Torus Edison/Open Editor`
 
-## Repository Layout
+## サポートと補足情報
+
+- リポジトリ名: `SoundCreater`
+- ツール名: `Torus Edison`
+- 公開や更新は GitHub Release / BOOTH を前提に進めています
+
+不具合確認や問い合わせ時は、使用している Unity バージョン、Torus Edison のバージョン、再現手順が分かると切り分けしやすくなります。
+
+## 開発者向け情報
+
+このリポジトリには、配布対象の Unity パッケージだけでなく、ローカル検証用の Unity ホストプロジェクトも含まれています。
 
 - `Packages/com.sunmax.trusedison`
-  Main Unity package under development.
+  Torus Edison 本体の Unity パッケージです。
 - `Assets`, `Packages/manifest.json`, `ProjectSettings`
-  Unity host project files used for local validation of the embedded package.
+  ローカル検証用の Unity プロジェクトです。
 - `game-audio-tool-docs/game-audio-tool-docs`
-  Requirements, specification, skill, and agent guidance used as implementation references.
+  要件、仕様、実装ガイドの保管場所です。
 
-## Planning Docs
-
-Reference documents:
+参考ドキュメント:
 
 - [requirements-definition-v0.3.md](game-audio-tool-docs/game-audio-tool-docs/requirements-definition-v0.3.md)
 - [specification-v0.1.md](game-audio-tool-docs/game-audio-tool-docs/specification-v0.1.md)
 - [Skill.md](game-audio-tool-docs/game-audio-tool-docs/Skill.md)
 - [Agents.md](game-audio-tool-docs/game-audio-tool-docs/Agents.md)
-
-## Release Direction
-
-The repository is intended to ship:
-
-- GitHub Release assets
-- a BOOTH listing using the public tool name `Torus Edison`
-
-Those release tasks are tracked in GitHub Issues.
