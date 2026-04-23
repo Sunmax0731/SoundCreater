@@ -126,6 +126,9 @@ namespace TorusEdison.Editor.Windows
             }
 
             rootVisualElement.Clear();
+            rootVisualElement.UnregisterCallback<KeyDownEvent>(OnRootKeyDown, TrickleDown.TrickleDown);
+            rootVisualElement.focusable = true;
+            rootVisualElement.tabIndex = 0;
             rootVisualElement.style.flexDirection = FlexDirection.Column;
             rootVisualElement.style.paddingLeft = 12;
             rootVisualElement.style.paddingRight = 12;
@@ -138,7 +141,7 @@ namespace TorusEdison.Editor.Windows
             rootVisualElement.Add(BuildNavigationBar());
             rootVisualElement.Add(BuildWorkspacePages());
 
-            rootVisualElement.RegisterCallback<KeyDownEvent>(OnRootKeyDown);
+            rootVisualElement.RegisterCallback<KeyDownEvent>(OnRootKeyDown, TrickleDown.TrickleDown);
 
             _previewTicker?.Pause();
             _previewTicker = rootVisualElement.schedule.Execute(HandlePreviewTick).Every(50);
@@ -348,9 +351,11 @@ namespace TorusEdison.Editor.Windows
             {
                 focusable = true
             };
+            _timelineSurface.tabIndex = 0;
             _timelineSurface.style.height = TimelineViewportHeight;
             _timelineSurface.style.marginBottom = 4;
-            _timelineSurface.RegisterCallback<MouseDownEvent>(_ => _timelineSurface.Focus());
+            _timelineSurface.RegisterCallback<MouseDownEvent>(_ => FocusTimelineShortcutTarget());
+            _timelineSurface.RegisterCallback<KeyDownEvent>(OnRootKeyDown, TrickleDown.TrickleDown);
             panel.Add(_timelineSurface);
 
             return panel;
@@ -3405,14 +3410,14 @@ namespace TorusEdison.Editor.Windows
             if (actionKey && evt.keyCode == KeyCode.Z)
             {
                 UndoLastEdit();
-                evt.StopPropagation();
+                ConsumeShortcutEvent(evt);
                 return;
             }
 
             if (actionKey && evt.keyCode == KeyCode.Y)
             {
                 RedoLastEdit();
-                evt.StopPropagation();
+                ConsumeShortcutEvent(evt);
                 return;
             }
 
@@ -3421,7 +3426,7 @@ namespace TorusEdison.Editor.Windows
                 if (_selectedNoteIds.Count > 0)
                 {
                     DuplicateSelectedNotes();
-                    evt.StopPropagation();
+                    ConsumeShortcutEvent(evt);
                 }
                 return;
             }
@@ -3431,7 +3436,7 @@ namespace TorusEdison.Editor.Windows
                 if (_selectedNoteIds.Count > 0)
                 {
                     DeleteSelectedNotes();
-                    evt.StopPropagation();
+                    ConsumeShortcutEvent(evt);
                 }
                 return;
             }
@@ -3439,8 +3444,30 @@ namespace TorusEdison.Editor.Windows
             if (evt.keyCode == KeyCode.Home)
             {
                 RewindPreview();
-                evt.StopPropagation();
+                ConsumeShortcutEvent(evt);
             }
+        }
+
+        private void FocusTimelineShortcutTarget()
+        {
+            if (_timelineSurface != null)
+            {
+                _timelineSurface.Focus();
+                return;
+            }
+
+            rootVisualElement?.Focus();
+        }
+
+        private static void ConsumeShortcutEvent(EventBase evt)
+        {
+            if (evt == null)
+            {
+                return;
+            }
+
+            evt.StopPropagation();
+            evt.PreventDefault();
         }
 
         private string BuildPreviewBufferText(GameAudioPreviewState previewState)
