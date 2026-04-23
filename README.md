@@ -8,6 +8,7 @@
 
 この README は概要案内です。詳しい使い方や画面ごとの説明は、以下のドキュメントをご確認ください。
 
+- GitHub Release 配布ページ: https://github.com/Sunmax0731/SoundCreater/releases
 - 使い方マニュアル 日本語版: [Manual.ja.md](Packages/com.sunmax.trusedison/Documentation~/Manual.ja.md)
 - 使い方マニュアル 英語版: [Manual.md](Packages/com.sunmax.trusedison/Documentation~/Manual.md)
 - 利用規約: [TermsOfUse.md](Packages/com.sunmax.trusedison/Documentation~/TermsOfUse.md)
