@@ -116,3 +116,4 @@ namespace GameAudioTool.Editor.Persistence
             };
         }
     }
+}
