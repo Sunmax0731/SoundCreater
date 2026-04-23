@@ -62,6 +62,20 @@
             "durationBeat": 1.0,
             "midiNote": 64,
             "velocity": 0.8
+          },
+          {
+            "id": "lead-003",
+            "startBeat": 2.0,
+            "durationBeat": 1.0,
+            "midiNote": 67,
+            "velocity": 0.78
+          },
+          {
+            "id": "lead-004",
+            "startBeat": 3.0,
+            "durationBeat": 1.0,
+            "midiNote": 64,
+            "velocity": 0.78
           }
         ]
       },
@@ -119,6 +133,27 @@
             "durationBeat": 2.0,
             "midiNote": 55,
             "velocity": 0.7
+          },
+          {
+            "id": "chord-004",
+            "startBeat": 2.0,
+            "durationBeat": 2.0,
+            "midiNote": 50,
+            "velocity": 0.68
+          },
+          {
+            "id": "chord-005",
+            "startBeat": 2.0,
+            "durationBeat": 2.0,
+            "midiNote": 53,
+            "velocity": 0.68
+          },
+          {
+            "id": "chord-006",
+            "startBeat": 2.0,
+            "durationBeat": 2.0,
+            "midiNote": 57,
+            "velocity": 0.68
           }
         ]
       }

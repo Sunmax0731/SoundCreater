@@ -64,7 +64,12 @@ Included samples:
 - `Samples~/BasicSE/basic-se.gats.json`
 - `Samples~/SimpleLoop/simple-loop.gats.json`
 
-These are intended for serializer validation and future playback/export checks.
+These are intended for playback, export, and release-readiness checks.
+
+Sample notes and manual validation steps:
+
+- [Samples~/README.md](../Samples~/README.md)
+- [ValidationChecklist.md](ValidationChecklist.md)
 
 ## Current Notes
 
