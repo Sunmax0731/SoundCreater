@@ -123,7 +123,7 @@ namespace TorusEdison.Editor.Windows
 
             if (_project == null)
             {
-                BindProject(CreateConfiguredProject(), true, string.Empty, Array.Empty<string>());
+                BindProject(CreateConfiguredProject(), false, string.Empty, Array.Empty<string>());
             }
 
             rootVisualElement.Clear();
@@ -1455,7 +1455,7 @@ namespace TorusEdison.Editor.Windows
                 return;
             }
 
-            BindProject(CreateConfiguredProject(), true, string.Empty, Array.Empty<string>());
+            BindProject(CreateConfiguredProject(), false, string.Empty, Array.Empty<string>());
             RefreshView();
         }
 
