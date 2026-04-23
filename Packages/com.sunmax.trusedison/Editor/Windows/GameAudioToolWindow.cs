@@ -83,7 +83,6 @@ namespace TorusEdison.Editor.Windows
         private Button _gridButton;
         private VisualElement _selectionInspectorContainer;
         private VisualElement _projectInspectorContainer;
-        private Label _timelineHintValue;
         private IMGUIContainer _timelineSurface;
         private IMGUIContainer _previewWaveformView;
         private string _inspectorStateKey = string.Empty;
@@ -321,17 +320,15 @@ namespace TorusEdison.Editor.Windows
             _undoButton = CreateToolbarButton(T("timeline.undo", "Undo"), UndoLastEdit);
             _redoButton = CreateToolbarButton(T("timeline.redo", "Redo"), RedoLastEdit);
             _gridButton = CreateToolbarButton(TF("timeline.grid", "Grid {0}", "1/16"), CycleGridDivision);
+            Button helpButton = CreateToolbarButton(T("timeline.help", "?"), ShowTimelineHelp);
+            helpButton.style.minWidth = 36.0f;
 
             actionRow.Add(_undoButton);
             actionRow.Add(_redoButton);
             actionRow.Add(_gridButton);
+            actionRow.Add(helpButton);
 
             panel.Add(actionRow);
-
-            _timelineHintValue = new Label();
-            _timelineHintValue.style.marginBottom = 8;
-            _timelineHintValue.style.whiteSpace = WhiteSpace.Normal;
-            panel.Add(_timelineHintValue);
 
             _timelineSurface = new IMGUIContainer(DrawTimelineGui)
             {
@@ -2180,6 +2177,13 @@ namespace TorusEdison.Editor.Windows
             RefreshView();
         }
 
+        private void ShowTimelineHelp()
+        {
+            GameAudioTimelineHelpWindow.Open(
+                _displayLanguage,
+                TF("status.timelineHint", "Grid {0} | Selected {1} note(s) | Drag empty lane to create | Drag note to move | Drag edge to resize | Ctrl+D duplicate | Delete remove | Ctrl+Z / Ctrl+Y undo redo", _currentGridDivision, _selectedNoteIds.Count));
+        }
+
         private void DuplicateSelectedNotes()
         {
             if (_selectedNoteIds.Count == 0 || CurrentProject == null)
@@ -3136,11 +3140,6 @@ namespace TorusEdison.Editor.Windows
             if (_gridButton != null)
             {
                 _gridButton.text = TF("timeline.grid", "Grid {0}", _currentGridDivision);
-            }
-
-            if (_timelineHintValue != null)
-            {
-                _timelineHintValue.text = TF("status.timelineHint", "Grid {0} | Selected {1} note(s) | Drag empty lane to create | Drag note to move | Drag edge to resize | Ctrl+D duplicate | Delete remove | Ctrl+Z / Ctrl+Y undo redo", _currentGridDivision, _selectedNoteIds.Count);
             }
 
             GameAudioPreviewState previewState = _previewPlaybackService.State;

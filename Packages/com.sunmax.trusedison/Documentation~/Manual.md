@@ -65,6 +65,7 @@ Use this page for:
 Current shortcuts:
 
 - `Render Preview`, `Play`, `Pause`, `Stop`, `Rewind`, `Loop`
+- `?` opens a modal help window for timeline gestures and shortcuts
 - `Ctrl+D` duplicate selected notes
 - `Delete` remove selected notes
 - `Ctrl+Z` undo
