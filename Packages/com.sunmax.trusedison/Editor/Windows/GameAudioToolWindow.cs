@@ -59,6 +59,7 @@ namespace TorusEdison.Editor.Windows
         private string _currentGridDivision = "1/16";
         private WorkspacePage _currentWorkspacePage = WorkspacePage.File;
         private GameAudioDisplayLanguage _displayLanguage = GameAudioDisplayLanguage.English;
+        private bool _pendingUiRebuild;
         private AudioClip _conversionSourceClip;
         private string _conversionOutputName = string.Empty;
         private int _conversionTargetSampleRate = 11025;
@@ -1880,7 +1881,7 @@ namespace TorusEdison.Editor.Windows
             GameAudioDiagnosticLogger.Configure(_commonConfig);
             _displayLanguage = GameAudioLocalization.ResolveLanguage(nextLanguage);
             GameAudioDiagnosticLogger.Info("Settings", $"Display language changed to {nextLanguage}.");
-            CreateGUI();
+            RequestUiRebuild();
         }
 
         private void OnDiagnosticLoggingChanged(bool enabled)
@@ -3399,8 +3400,32 @@ namespace TorusEdison.Editor.Windows
             }
 
             _displayLanguage = nextLanguage;
-            CreateGUI();
+            RequestUiRebuild();
             return true;
+        }
+
+        private void RequestUiRebuild()
+        {
+            if (_pendingUiRebuild)
+            {
+                return;
+            }
+
+            _pendingUiRebuild = true;
+
+            if (rootVisualElement != null)
+            {
+                rootVisualElement.schedule.Execute(() =>
+                {
+                    _pendingUiRebuild = false;
+                    CreateGUI();
+                });
+
+                return;
+            }
+
+            _pendingUiRebuild = false;
+            CreateGUI();
         }
 
         private void OnRootKeyDown(KeyDownEvent evt)
