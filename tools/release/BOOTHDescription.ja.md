@@ -1,12 +1,34 @@
 # Torus Edison
 
-`Torus Edison` は Unity Editor 上でゲーム向けの簡易効果音を作成し、音声プロジェクトとして保存、試聴、書き出しできるツールです。
+`Torus Edison` は、Unity Editor 上でゲーム向けの短い効果音やループ素材を試作するためのツールです。
+音声プロジェクトを `.gats.json` 形式で保存し、Unity 上で試聴しながら WAV 書き出しまで行えます。
 
-GitHub 上のリポジトリ名は `SoundCreater` ですが、BOOTH での公開名は `Torus Edison` です。
+「UI 音を少しだけ作りたい」「通知音や決定音を Unity 上でそのまま確認したい」「短いループ素材をすぐに試したい」といった用途に向いています。
 
-## 同梱物
+## こんな方におすすめです
 
-- `TorusEdison-0.1.1.unitypackage`
+- Unity プロジェクト内で効果音を手早く試作したい方
+- JSON ベースで音声プロジェクトを管理したい方
+- UI 音、通知音、決定音、短いループを自作したい方
+- DAW ほど大がかりではない、軽量な補助ツールを探している方
+
+## 主な機能
+
+- 音声プロジェクトの新規作成 / 保存 / 読み込み
+- `.gats.json` 形式でのセッション管理
+- タイムライン上でのノート作成、移動、長さ変更、複製、削除
+- タイムライン下部からのトラック追加
+- Edit 画面でのプレビュー生成、再生、波形確認
+- note / track / project の Inspector 編集
+- 16-bit WAV 書き出し
+- Unity に取り込んだ `AudioClip` の 8-bit WAV 変換
+- 変換した WAV と同じフォルダへの変換用 `.gats.json` 自動生成
+- 日本語 / 英語 / 中国語 UI
+- Debug Mode / Log Level 切替による診断ログ出力
+
+## 同梱内容
+
+- UnityPackage
 - 日本語マニュアル
 - English manual
 - 利用規約
@@ -14,43 +36,36 @@ GitHub 上のリポジトリ名は `SoundCreater` ですが、BOOTH での公開
 - 検証チェックリスト
 - サンプル `.gats.json`
 
-## できること
-
-- 音声プロジェクトの新規作成、保存、読込
-- `.gats.json` 形式でのセッション管理
-- タイムライン上でのノート作成、移動、長さ変更
-- note / track / project の Inspector 編集
-- `Render Preview / Play / Pause / Stop / Rewind / Loop`
-- WAV 書き出し
-- Undo / Redo
-- 日本語 / 英語 / 中国語 UI
-- Debug Mode と Log Level 切替による診断ログ出力
-
 ## 対応環境
 
 - Unity `6000.0` 以上
 - Windows 11 を前提とした Unity Editor 利用
 - オフライン利用
 
-## 現在の制限
+## 現在の対象外機能
 
-- 人声生成
+- 人声や歌声の生成
 - MP3 書き出し
 - オンライン連携
-- ランタイム向け音声プレイヤー機能
+- ランタイム向け再生プレイヤー機能
 - DAW のような本格的な音楽制作機能
 
-## 導入前に確認してほしいこと
+## ご購入前にご確認ください
 
-導入前に知っておいてほしい前提は次のとおりです。
+- 本商品は Unity Editor 用のエディタ拡張です
+- Unity プロジェクトへ導入して使用します
+- 詳しい使い方は同梱マニュアルをご確認ください
+- 利用条件は同梱の利用規約をご確認ください
 
-1. [日本語マニュアル](Packages/com.sunmax.trusedison/Documentation~/Manual.ja.md)
-2. [English manual](Packages/com.sunmax.trusedison/Documentation~/Manual.md)
-3. [利用規約](Packages/com.sunmax.trusedison/Documentation~/TermsOfUse.md)
-4. [リリースノート](Packages/com.sunmax.trusedison/Documentation~/ReleaseNotes.md)
-5. [検証チェックリスト](Packages/com.sunmax.trusedison/Documentation~/ValidationChecklist.md)
+## サポート
 
-## 補足
+不具合確認や問い合わせの際は、以下の情報があると切り分けしやすくなります。
 
-- 公開物は GitHub Release と BOOTH で同一成果物を前提にしています
-- サンプルは `Basic SE` と `Simple Loop` を含みます
+- 使用している Unity バージョン
+- Torus Edison のバージョン
+- 読み込んだ `.gats.json` ファイル名
+- 再現手順
+- Unity Console に表示されたエラーや警告
+
+更新情報や配布物は GitHub Release と BOOTH の両方で案内します。
+BOOTH 配布物と GitHub Release の成果物は、同一内容を前提にしています。

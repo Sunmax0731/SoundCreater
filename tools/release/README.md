@@ -55,11 +55,12 @@ Optional parameters:
 Before attaching the zip to GitHub Release:
 
 1. Confirm the package version in `Packages/com.sunmax.trusedison/package.json`
-2. Confirm `README`, manuals, terms, release notes, and changelog match the current implementation
-3. Run the validation checklist in `Packages/com.sunmax.trusedison/Documentation~/ValidationChecklist.md`
-4. Run `tools/release/build-release.ps1`
-5. Confirm the unitypackage and zip were both created
-6. Open the zip and verify the expected files are present
-7. Keep the GitHub Release artifact and BOOTH artifact identical
-8. Use `GitHubReleaseBody.ja.md` for the GitHub Release body
-9. Use `BOOTHDescription.ja.md` for the BOOTH listing text
+2. Confirm `Editor/Utilities/GameAudioToolInfo.cs`, sample `.gats.json`, and document examples use the same release version
+3. Confirm `README`, manuals, terms, release notes, changelog, and buyer-facing copy match the current implementation
+4. Run the validation checklist in `Packages/com.sunmax.trusedison/Documentation~/ValidationChecklist.md`
+5. Run `tools/release/build-release.ps1`
+6. Confirm the unitypackage and zip were both created
+7. Open the zip and verify the expected files are present
+8. Keep the GitHub Release artifact and BOOTH artifact identical
+9. Use `GitHubReleaseBody.ja.md` for the GitHub Release body
+10. Use `BOOTHDescription.ja.md` for the BOOTH listing text

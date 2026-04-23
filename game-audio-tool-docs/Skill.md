@@ -7,6 +7,9 @@
 - `Application` は project namespace と衝突しうるため、system language などの取得は `UnityEngine.Application` を明示する。
 - Save / Load / Preview / Export の診断は `GameAudioDiagnosticLogger` と `GameAudioDiagnosticLogLevel` を通して出す。ad-hoc な `Debug.Log` を増やさない。
 - batch validation では、生成された `Unity` PID を待ってから `-logFile` と `-testResults` を読む。full suite に無関係な既知 failure がある場合は targeted fixture で今回の変更範囲を先に確認する。
+- localization で `CreateGUI()` を呼び直す場合、`RefreshInspectorPanel` のような差分更新キャッシュは無効化する。表示言語が変わるのに state key が変わらないと、空の UI が「更新済み」と判定されうる。
+- タイムラインの `+ Add Track` footer のような補助行は、track row と同じ hit-test に流さない。`GetTrackIndex()` は実トラック領域外で `-1` を返すようにし、`Tracks[trackCount]` を読ませない。
+- release prep では、package version、`ToolVersion`、sample / spec の `toolVersion`、release body、BOOTH 商品紹介文、README、manual を同時に更新する。版番号だけ先行すると配布物の整合が崩れる。
 
 
 ## 名称

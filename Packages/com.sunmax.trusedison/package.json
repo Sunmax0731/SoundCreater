@@ -1,7 +1,7 @@
 {
   "name": "com.sunmax.trusedison",
   "displayName": "Torus Edison",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "unity": "6000.0",
   "description": "Unity Editor foundation package for authoring and persisting procedural game audio projects under the public tool name Torus Edison.",
   "keywords": [

@@ -1,10 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.2.0
 
+- integrated preview controls and waveform confirmation into the Edit page
+- added the timeline footer `+ Add Track` affordance
+- added project-length controls from both the Edit page and the Settings page
 - added imported `AudioClip` to 8-bit PCM WAV conversion in the Export page
 - added automatic generation of a conversion `.gats.json` project alongside 8-bit WAV export
-- added 8-bit WAV encoder coverage and audio-clip conversion tests
+- added the `Version & License` window
+- fixed Settings inspector refresh after live language changes
+- fixed timeline keyboard shortcut handling for duplicate, delete, undo, and redo
+- fixed footer hit testing so the add-track area is no longer treated as a normal track row
+- refreshed README, manuals, release notes, release helper text, and BOOTH-facing copy
 
 ## 0.1.1
 

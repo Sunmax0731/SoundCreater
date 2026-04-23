@@ -1,6 +1,6 @@
 {
   "formatVersion": "1.0.0",
-  "toolVersion": "0.1.1",
+  "toolVersion": "0.2.0",
   "project": {
     "id": "proj-basic-se",
     "name": "BasicSE",

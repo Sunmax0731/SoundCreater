@@ -116,13 +116,14 @@ Expected:
 2. Create a note on an empty lane
 3. Move the note
 4. Resize the note
-5. Duplicate the note with `Ctrl+D`
-6. Delete one note
-7. Undo and redo the changes
+5. Add a track with `+ Add Track`
+6. Duplicate the note with `Ctrl+D`
+7. Delete one note
+8. Undo and redo the changes
 
 Expected:
 
-- note creation, move, resize, duplicate, delete all work
+- note creation, move, resize, duplicate, delete, and track add all work
 - selection state remains consistent
 - undo / redo returns the project to the expected state
 
@@ -159,14 +160,16 @@ Expected:
 1. Go to the `Settings` page
 2. Change UI language mode between `Auto`, `Japanese`, `English`, and `Chinese`
 3. Confirm major labels and buttons update immediately
-4. Enable diagnostic mode
-5. Raise log level to `Verbose`
-6. Load a sample or render preview
-7. Confirm diagnostic output appears in the Unity Console
+4. Confirm the Settings inspector remains visible after each language change
+5. Enable diagnostic mode
+6. Raise log level to `Verbose`
+7. Load a sample or render preview
+8. Confirm diagnostic output appears in the Unity Console
 
 Expected:
 
 - language changes apply without reopening the window
+- the Settings page remains visible after each change
 - Auto follows the editor or system language fallback
 - diagnostic logs respect the selected log level
 - disabling diagnostic mode suppresses routine info logs
