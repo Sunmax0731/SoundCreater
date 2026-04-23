@@ -781,12 +781,28 @@ namespace TorusEdison.Editor.Windows
             slider.style.flexGrow = 1.0f;
             slider.style.marginRight = 8.0f;
 
+            float committedValue = slider.value;
+            float pendingValue = slider.value;
             var valueLabel = CreateInspectorValueLabel(FormatInspectorValue(slider.value, formatValue));
             slider.RegisterValueChangedCallback(evt =>
             {
+                pendingValue = evt.newValue;
                 valueLabel.text = FormatInspectorValue(evt.newValue, formatValue);
-                onChanged?.Invoke(evt.newValue);
             });
+
+            void CommitPendingValue()
+            {
+                if (Mathf.Approximately(pendingValue, committedValue))
+                {
+                    return;
+                }
+
+                committedValue = pendingValue;
+                onChanged?.Invoke(pendingValue);
+            }
+
+            slider.RegisterCallback<PointerCaptureOutEvent>(_ => CommitPendingValue());
+            slider.RegisterCallback<FocusOutEvent>(_ => CommitPendingValue());
 
             fieldContainer.Add(slider);
             fieldContainer.Add(valueLabel);
@@ -815,12 +831,28 @@ namespace TorusEdison.Editor.Windows
             slider.style.flexGrow = 1.0f;
             slider.style.marginRight = 8.0f;
 
+            int committedValue = slider.value;
+            int pendingValue = slider.value;
             var valueLabel = CreateInspectorValueLabel(FormatInspectorValue(slider.value, formatValue));
             slider.RegisterValueChangedCallback(evt =>
             {
+                pendingValue = evt.newValue;
                 valueLabel.text = FormatInspectorValue(evt.newValue, formatValue);
-                onChanged?.Invoke(evt.newValue);
             });
+
+            void CommitPendingValue()
+            {
+                if (pendingValue == committedValue)
+                {
+                    return;
+                }
+
+                committedValue = pendingValue;
+                onChanged?.Invoke(pendingValue);
+            }
+
+            slider.RegisterCallback<PointerCaptureOutEvent>(_ => CommitPendingValue());
+            slider.RegisterCallback<FocusOutEvent>(_ => CommitPendingValue());
 
             fieldContainer.Add(slider);
             fieldContainer.Add(valueLabel);
