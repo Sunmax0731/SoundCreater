@@ -1,0 +1,565 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Reflection;
+using TorusEdison.Editor.Domain;
+using UnityEditor;
+using UnityEngine;
+
+namespace TorusEdison.Editor.Localization
+{
+    internal static class GameAudioLocalization
+    {
+        private static readonly IReadOnlyList<GameAudioLanguageMode> SupportedLanguageModes = new[]
+        {
+            GameAudioLanguageMode.Auto,
+            GameAudioLanguageMode.Japanese,
+            GameAudioLanguageMode.English,
+            GameAudioLanguageMode.Chinese
+        };
+
+        private static readonly IReadOnlyDictionary<string, string> English = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["language.auto"] = "Auto",
+            ["language.japanese"] = "Japanese",
+            ["language.english"] = "English",
+            ["language.chinese"] = "Chinese",
+            ["audio.mono"] = "Mono",
+            ["audio.stereo"] = "Stereo",
+            ["channel.mono"] = "Mono",
+            ["channel.stereo"] = "Stereo",
+            ["waveform.sine"] = "Sine",
+            ["waveform.square"] = "Square",
+            ["waveform.triangle"] = "Triangle",
+            ["waveform.saw"] = "Saw",
+            ["waveform.pulse"] = "Pulse",
+            ["noise.white"] = "White"
+        };
+
+        private static readonly IReadOnlyDictionary<string, string> Japanese = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["language.auto"] = "自動",
+            ["language.japanese"] = "日本語",
+            ["language.english"] = "英語",
+            ["language.chinese"] = "中国語",
+            ["audio.mono"] = "モノラル",
+            ["audio.stereo"] = "ステレオ",
+            ["channel.mono"] = "モノラル",
+            ["channel.stereo"] = "ステレオ",
+            ["waveform.sine"] = "サイン波",
+            ["waveform.square"] = "矩形波",
+            ["waveform.triangle"] = "三角波",
+            ["waveform.saw"] = "ノコギリ波",
+            ["waveform.pulse"] = "パルス波",
+            ["noise.white"] = "ホワイト",
+            ["toolbar.new"] = "新規",
+            ["toolbar.open"] = "開く",
+            ["toolbar.save"] = "保存",
+            ["toolbar.saveAs"] = "名前を付けて保存",
+            ["workspace.file"] = "ファイル",
+            ["workspace.edit"] = "編集",
+            ["workspace.preview"] = "プレビュー",
+            ["workspace.export"] = "書き出し",
+            ["workspace.settings"] = "設定",
+            ["page.file.title"] = "ファイル",
+            ["page.file.description"] = "プロジェクトファイル、現在の状態、サンプル操作を確認します。",
+            ["page.edit.title"] = "編集",
+            ["page.edit.description"] = "タイムライン編集と、選択中のノートやトラックの編集を行います。",
+            ["page.preview.title"] = "プレビュー",
+            ["page.preview.description"] = "エディタ内で現在のプロジェクトをレンダリングし、試聴します。",
+            ["page.export.title"] = "書き出し",
+            ["page.export.description"] = "WAV を書き出し、現在の出力先を確認します。",
+            ["page.settings.title"] = "設定",
+            ["page.settings.description"] = "プロジェクト設定と基盤の診断情報を確認します。",
+            ["summary.currentProject"] = "現在のプロジェクト",
+            ["summary.name"] = "名前",
+            ["summary.bpm"] = "BPM",
+            ["summary.bars"] = "小節数",
+            ["summary.tracks"] = "トラック数",
+            ["summary.file"] = "ファイル",
+            ["summary.status"] = "状態",
+            ["timeline.title"] = "タイムライン編集",
+            ["timeline.undo"] = "元に戻す",
+            ["timeline.redo"] = "やり直す",
+            ["timeline.grid"] = "グリッド {0}",
+            ["timeline.barLabel"] = "Bar {0:00}",
+            ["timeline.trackInfo"] = "ノート {0} / Pan {1:0.00}",
+            ["timeline.noteLabel"] = "MIDI {0}",
+            ["selectionInspector.title"] = "選択インスペクター",
+            ["projectInspector.title"] = "プロジェクトインスペクター",
+            ["preview.title"] = "プレビュー再生",
+            ["preview.render"] = "プレビュー生成",
+            ["preview.play"] = "再生",
+            ["preview.pause"] = "一時停止",
+            ["preview.stop"] = "停止",
+            ["preview.rewind"] = "巻き戻し",
+            ["preview.loop"] = "ループ",
+            ["preview.key.preview"] = "プレビュー",
+            ["preview.key.buffer"] = "バッファ",
+            ["preview.key.cursor"] = "カーソル",
+            ["preview.cursorNotStarted"] = "カーソル未開始",
+            ["export.title"] = "WAV 書き出し",
+            ["export.exportWav"] = "WAV 書き出し",
+            ["export.openFolder"] = "書き出し先を開く",
+            ["export.resolvedFolder"] = "解決後フォルダ",
+            ["export.exportFile"] = "出力ファイル",
+            ["export.lastExport"] = "前回の書き出し",
+            ["export.commonDefaultFolder"] = "共通の既定フォルダ",
+            ["export.projectOverrideFolder"] = "プロジェクト別上書きフォルダ",
+            ["export.autoRefresh"] = "AssetDatabase を自動更新",
+            ["sample.title"] = "サンプルとワークフロー",
+            ["sample.create"] = "サンプル作成",
+            ["sample.loadBasic"] = "Basic SE を読み込む",
+            ["sample.loadLoop"] = "Simple Loop を読み込む",
+            ["sample.openFolder"] = "フォルダを開く",
+            ["sample.location"] = "サンプルファイルの保存先: {0}",
+            ["sample.editing"] = "タイムライン編集とインスペクター編集に対応しました。編集タブからノートの作成、移動、リサイズ、ノートやトラックの調整を行えます。",
+            ["sample.json"] = "JSON は一括編集、レビュー、バージョン管理に引き続き有効ですが、ファイル操作、プレビュー、書き出し、設定は専用タブに分かれています。",
+            ["info.title"] = "基盤ステータス",
+            ["info.currentScope"] = "このウィンドウはファイル、編集、プレビュー、書き出し、設定を分離しつつ、同じプロジェクト状態、選択状態、再生、Undo / Redo、JSON 保存 / 読み込み、WAV 書き出し基盤を共有します。",
+            ["info.nextScope"] = "次の層はリリース検証、ドキュメント同期、配布パッケージ化です。",
+            ["inspector.selection"] = "選択内容",
+            ["inspector.project"] = "プロジェクト",
+            ["inspector.toolSettings"] = "ツール設定",
+            ["inspector.language"] = "表示言語",
+            ["inspector.language.help"] = "自動は、取得できる場合は現在の Unity Editor の言語に追従します。上書き設定はサポート時やスクリーンショットの統一に便利です。",
+            ["inspector.selectTrackOrNote"] = "編集を始めるには、タイムラインでトラックヘッダーまたはノートを選択してください。",
+            ["inspector.note.singleSummary"] = "{1} 上のノート {0} を編集中です。",
+            ["inspector.note.multiSummary"] = "{1} トラックにまたがる {0} 個のノートを編集中です。変更はすべての選択ノートに適用されます。",
+            ["inspector.note.startBeat"] = "開始拍",
+            ["inspector.note.durationBeat"] = "長さ拍",
+            ["inspector.note.midi"] = "MIDI ノート",
+            ["inspector.note.velocity"] = "ベロシティ",
+            ["inspector.note.useVoiceOverride"] = "ボイス上書きを使用",
+            ["inspector.note.overridePartial"] = "選択中の一部ノートはまだトラック既定のボイスを使っています。ボイス上書きを有効にすると、選択中のすべてにノート単位の明示設定を適用できます。",
+            ["inspector.note.overrideNone"] = "選択中のノートは現在、各トラックの既定ボイスを使っています。ノート単位のボイス設定を編集するにはボイス上書きを有効にしてください。",
+            ["inspector.track.summary"] = "{0} を編集中です。ノート数: {1}",
+            ["inspector.track.name"] = "トラック名",
+            ["inspector.track.mute"] = "ミュート",
+            ["inspector.track.solo"] = "ソロ",
+            ["inspector.track.volume"] = "音量 (dB)",
+            ["inspector.track.pan"] = "パン",
+            ["inspector.project.summary"] = "現在のプロジェクトの再生、出力、レンダリング設定です。",
+            ["inspector.project.name"] = "プロジェクト名",
+            ["inspector.project.timeSignature"] = "拍子",
+            ["inspector.project.totalBars"] = "総小節数",
+            ["inspector.project.sampleRate"] = "サンプルレート",
+            ["inspector.project.channelMode"] = "チャンネルモード",
+            ["inspector.project.masterGain"] = "マスターゲイン (dB)",
+            ["voice.override"] = "ボイス上書き",
+            ["voice.default"] = "既定ボイス",
+            ["voice.waveform"] = "波形",
+            ["voice.pulseWidth"] = "パルス幅",
+            ["voice.noiseEnabled"] = "ノイズ有効",
+            ["voice.noiseType"] = "ノイズ種別",
+            ["voice.noiseMix"] = "ノイズミックス",
+            ["voice.envelope"] = "エンベロープ",
+            ["voice.attack"] = "アタック (ms)",
+            ["voice.decay"] = "ディケイ (ms)",
+            ["voice.sustain"] = "サステイン",
+            ["voice.release"] = "リリース (ms)",
+            ["voice.effect"] = "エフェクト",
+            ["voice.effectVolume"] = "音量 (dB)",
+            ["voice.effectPan"] = "パン",
+            ["voice.effectPitch"] = "ピッチ (半音)",
+            ["voice.fadeIn"] = "フェードイン (ms)",
+            ["voice.fadeOut"] = "フェードアウト (ms)",
+            ["voice.delay"] = "ディレイ",
+            ["voice.delayEnabled"] = "有効",
+            ["voice.delayTime"] = "時間 (ms)",
+            ["voice.delayFeedback"] = "フィードバック",
+            ["voice.delayMix"] = "ミックス",
+            ["status.saved"] = "保存済み",
+            ["status.unsaved"] = "未保存の変更あり",
+            ["status.unsavedFile"] = "(未保存)",
+            ["status.notExported"] = "(未書き出し)",
+            ["status.notRendered"] = "(未レンダリング)",
+            ["status.noProjectLoaded"] = "プロジェクトが読み込まれていません。",
+            ["status.preview.notRendered"] = "プレビューは未レンダリングです。",
+            ["status.preview.renderFailed"] = "プレビューのレンダリングに失敗しました。",
+            ["status.preview.loopPlaying"] = "ループプレビューを再生中です。",
+            ["status.preview.playing"] = "プレビューを再生中です。",
+            ["status.preview.loopPaused"] = "ループプレビューを一時停止しました。",
+            ["status.preview.paused"] = "プレビューを一時停止しました。",
+            ["status.preview.loopReady"] = "ループプレビューの準備ができました。",
+            ["status.preview.ready"] = "プレビューの準備ができました。",
+            ["status.preview.stopped"] = "プレビューを停止しました。",
+            ["status.preview.rewound"] = "プレビューを巻き戻しました。",
+            ["status.preview.complete"] = "プレビューが完了しました。",
+            ["status.preview.apiUnavailable"] = "プレビューは準備できましたが、この Editor では UnityEditor の再生 API が利用できません。",
+            ["status.preview.silent"] = "プレビューの準備ができました (無音バッファ)。",
+            ["status.preview.startFailed"] = "プレビューの開始に失敗しました。",
+            ["status.preview.loopRestartFailed"] = "ループプレビューの再開に失敗しました。",
+            ["status.preview.readyButApiMissing"] = "レンダリングは利用できますが、この Editor ビルドでは UnityEditor のプレビュー再生 API が見つかりませんでした。",
+            ["status.projectSaved"] = "プロジェクトを保存しました。",
+            ["status.projectLoaded"] = "プロジェクトを読み込みました。",
+            ["status.samplesCreated"] = "サンプルプロジェクトを作成しました。",
+            ["status.wavExported"] = "WAV を書き出しました。",
+            ["status.wavExportedAndRefreshed"] = "WAV を書き出し、アセットを更新しました。",
+            ["status.previewRendered"] = "プレビューを生成しました。",
+            ["status.timelineHint"] = "グリッド {0} | 選択ノート {1} 個 | 空レーンのドラッグで作成 | ノートのドラッグで移動 | 端のドラッグでリサイズ | Ctrl+D で複製 | Delete で削除 | Ctrl+Z / Ctrl+Y で Undo / Redo",
+            ["status.previewBuffer"] = "{0} Hz / {1} / project {2:0.00}s / output {3:0.00}s / peak {4:0.000}",
+            ["status.previewCursor"] = "Bar {0:00} / Beat {1:0.00} ({2:0.00}s)",
+            ["status.previewCursorTail"] = "{0} / tail +{1:0.00}s",
+            ["status.previewProgress"] = "Bar {0:00} / Beat {1:0.00}",
+            ["status.previewTail"] = "再生テール +{0:0.00}s",
+            ["dialog.ok"] = "OK",
+            ["dialog.openProject"] = "ゲームオーディオプロジェクトを開く",
+            ["dialog.saveProject"] = "ゲームオーディオプロジェクトを保存",
+            ["dialog.discardMessage"] = "未保存の変更は失われます。続行しますか？",
+            ["dialog.discard"] = "変更を破棄",
+            ["dialog.cancel"] = "キャンセル",
+            ["dialog.saveFirst"] = "先に保存",
+            ["notification.clampedInt"] = "{0} は {1} に補正されました。",
+            ["notification.clampedFloat"] = "{0} は {1:0.###} に補正されました。",
+            ["notification.requiresFinite"] = "{0} には有限の数値が必要です。"
+        };
+
+        private static readonly IReadOnlyDictionary<string, string> Chinese = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["language.auto"] = "自动",
+            ["language.japanese"] = "日语",
+            ["language.english"] = "英语",
+            ["language.chinese"] = "中文",
+            ["audio.mono"] = "单声道",
+            ["audio.stereo"] = "立体声",
+            ["channel.mono"] = "单声道",
+            ["channel.stereo"] = "立体声",
+            ["waveform.sine"] = "正弦波",
+            ["waveform.square"] = "方波",
+            ["waveform.triangle"] = "三角波",
+            ["waveform.saw"] = "锯齿波",
+            ["waveform.pulse"] = "脉冲波",
+            ["noise.white"] = "白噪声",
+            ["toolbar.new"] = "新建",
+            ["toolbar.open"] = "打开",
+            ["toolbar.save"] = "保存",
+            ["toolbar.saveAs"] = "另存为",
+            ["workspace.file"] = "文件",
+            ["workspace.edit"] = "编辑",
+            ["workspace.preview"] = "预览",
+            ["workspace.export"] = "导出",
+            ["workspace.settings"] = "设置",
+            ["page.file.title"] = "文件",
+            ["page.file.description"] = "查看项目文件、当前状态和示例操作。",
+            ["page.edit.title"] = "编辑",
+            ["page.edit.description"] = "进行时间线编辑，以及对所选音符或轨道进行编辑。",
+            ["page.preview.title"] = "预览",
+            ["page.preview.description"] = "在编辑器内渲染并试听当前项目。",
+            ["page.export.title"] = "导出",
+            ["page.export.description"] = "导出 WAV，并确认当前输出目录。",
+            ["page.settings.title"] = "设置",
+            ["page.settings.description"] = "查看项目设置和基础诊断信息。",
+            ["summary.currentProject"] = "当前项目",
+            ["summary.name"] = "名称",
+            ["summary.bpm"] = "BPM",
+            ["summary.bars"] = "小节数",
+            ["summary.tracks"] = "轨道数",
+            ["summary.file"] = "文件",
+            ["summary.status"] = "状态",
+            ["timeline.title"] = "时间线编辑",
+            ["timeline.undo"] = "撤销",
+            ["timeline.redo"] = "重做",
+            ["timeline.grid"] = "网格 {0}",
+            ["timeline.barLabel"] = "Bar {0:00}",
+            ["timeline.trackInfo"] = "音符 {0} / 声像 {1:0.00}",
+            ["timeline.noteLabel"] = "MIDI {0}",
+            ["selectionInspector.title"] = "选择检查器",
+            ["projectInspector.title"] = "项目检查器",
+            ["preview.title"] = "预览播放",
+            ["preview.render"] = "生成预览",
+            ["preview.play"] = "播放",
+            ["preview.pause"] = "暂停",
+            ["preview.stop"] = "停止",
+            ["preview.rewind"] = "回到开头",
+            ["preview.loop"] = "循环",
+            ["preview.key.preview"] = "预览",
+            ["preview.key.buffer"] = "缓冲区",
+            ["preview.key.cursor"] = "光标",
+            ["preview.cursorNotStarted"] = "光标尚未开始",
+            ["export.title"] = "WAV 导出",
+            ["export.exportWav"] = "导出 WAV",
+            ["export.openFolder"] = "打开导出目录",
+            ["export.resolvedFolder"] = "解析后的目录",
+            ["export.exportFile"] = "导出文件",
+            ["export.lastExport"] = "上次导出",
+            ["export.commonDefaultFolder"] = "公共默认目录",
+            ["export.projectOverrideFolder"] = "项目覆盖目录",
+            ["export.autoRefresh"] = "自动刷新资源",
+            ["sample.title"] = "示例与工作流",
+            ["sample.create"] = "创建示例",
+            ["sample.loadBasic"] = "载入 Basic SE",
+            ["sample.loadLoop"] = "载入 Simple Loop",
+            ["sample.openFolder"] = "打开文件夹",
+            ["sample.location"] = "示例文件保存在 {0}",
+            ["sample.editing"] = "现已支持时间线编辑和检查器编辑。使用编辑页可创建、移动、调整音符长度，并修改音符或轨道参数。",
+            ["sample.json"] = "JSON 仍适合批量编辑、审查和版本管理，但文件操作、预览、导出和设置现在已拆分到独立标签页。",
+            ["info.title"] = "基础状态",
+            ["info.currentScope"] = "此窗口已将文件、编辑、预览、导出和设置工作流分离，同时保留同一项目状态、选择状态、播放、Undo / Redo、JSON 保存 / 读取，以及 WAV 导出基础。",
+            ["info.nextScope"] = "下一层将接入发布验证、文档同步和分发打包。",
+            ["inspector.selection"] = "当前选择",
+            ["inspector.project"] = "项目",
+            ["inspector.toolSettings"] = "工具设置",
+            ["inspector.language"] = "显示语言",
+            ["inspector.language.help"] = "自动模式会在可用时跟随当前 Unity Editor 语言。覆盖模式适合客服支持和统一截图语言。",
+            ["inspector.selectTrackOrNote"] = "请先在时间线中选择轨道标题或音符，再开始编辑。",
+            ["inspector.note.singleSummary"] = "正在编辑 {1} 上的音符 {0}。",
+            ["inspector.note.multiSummary"] = "正在编辑跨 {1} 条轨道的 {0} 个音符。修改会应用到所有已选音符。",
+            ["inspector.note.startBeat"] = "开始拍",
+            ["inspector.note.durationBeat"] = "持续拍",
+            ["inspector.note.midi"] = "MIDI 音高",
+            ["inspector.note.velocity"] = "力度",
+            ["inspector.note.useVoiceOverride"] = "使用音色覆盖",
+            ["inspector.note.overridePartial"] = "部分已选音符仍在使用轨道默认音色。启用音色覆盖后，可为整个选择集应用显式的音符级音色设置。",
+            ["inspector.note.overrideNone"] = "当前所选音符都在使用各轨道的默认音色。启用音色覆盖后即可编辑音符级音色设置。",
+            ["inspector.track.summary"] = "正在编辑 {0}。音符数: {1}",
+            ["inspector.track.name"] = "轨道名称",
+            ["inspector.track.mute"] = "静音",
+            ["inspector.track.solo"] = "独奏",
+            ["inspector.track.volume"] = "音量 (dB)",
+            ["inspector.track.pan"] = "声像",
+            ["inspector.project.summary"] = "当前项目的播放、输出和渲染设置。",
+            ["inspector.project.name"] = "项目名称",
+            ["inspector.project.timeSignature"] = "拍号",
+            ["inspector.project.totalBars"] = "总小节数",
+            ["inspector.project.sampleRate"] = "采样率",
+            ["inspector.project.channelMode"] = "声道模式",
+            ["inspector.project.masterGain"] = "主增益 (dB)",
+            ["voice.override"] = "音色覆盖",
+            ["voice.default"] = "默认音色",
+            ["voice.waveform"] = "波形",
+            ["voice.pulseWidth"] = "脉冲宽度",
+            ["voice.noiseEnabled"] = "启用噪声",
+            ["voice.noiseType"] = "噪声类型",
+            ["voice.noiseMix"] = "噪声混合",
+            ["voice.envelope"] = "包络",
+            ["voice.attack"] = "起音 (ms)",
+            ["voice.decay"] = "衰减 (ms)",
+            ["voice.sustain"] = "持续",
+            ["voice.release"] = "释放 (ms)",
+            ["voice.effect"] = "效果",
+            ["voice.effectVolume"] = "音量 (dB)",
+            ["voice.effectPan"] = "声像",
+            ["voice.effectPitch"] = "音高 (半音)",
+            ["voice.fadeIn"] = "淡入 (ms)",
+            ["voice.fadeOut"] = "淡出 (ms)",
+            ["voice.delay"] = "延迟",
+            ["voice.delayEnabled"] = "启用",
+            ["voice.delayTime"] = "时间 (ms)",
+            ["voice.delayFeedback"] = "反馈",
+            ["voice.delayMix"] = "混合",
+            ["status.saved"] = "已保存",
+            ["status.unsaved"] = "有未保存的更改",
+            ["status.unsavedFile"] = "(未保存)",
+            ["status.notExported"] = "(尚未导出)",
+            ["status.notRendered"] = "(尚未渲染)",
+            ["status.noProjectLoaded"] = "尚未加载项目。",
+            ["status.preview.notRendered"] = "预览尚未渲染。",
+            ["status.preview.renderFailed"] = "预览渲染失败。",
+            ["status.preview.loopPlaying"] = "正在播放循环预览。",
+            ["status.preview.playing"] = "正在播放预览。",
+            ["status.preview.loopPaused"] = "循环预览已暂停。",
+            ["status.preview.paused"] = "预览已暂停。",
+            ["status.preview.loopReady"] = "循环预览已准备完成。",
+            ["status.preview.ready"] = "预览已准备完成。",
+            ["status.preview.stopped"] = "预览已停止。",
+            ["status.preview.rewound"] = "预览已回到开头。",
+            ["status.preview.complete"] = "预览已播放完成。",
+            ["status.preview.apiUnavailable"] = "预览已准备完成，但当前 Editor 构建中无法使用 UnityEditor 的播放 API。",
+            ["status.preview.silent"] = "预览已准备完成（静音缓冲区）。",
+            ["status.preview.startFailed"] = "预览启动失败。",
+            ["status.preview.loopRestartFailed"] = "循环预览重启失败。",
+            ["status.preview.readyButApiMissing"] = "可以完成渲染，但当前 Editor 构建中未找到 UnityEditor 预览播放 API。",
+            ["status.projectSaved"] = "项目已保存。",
+            ["status.projectLoaded"] = "项目已加载。",
+            ["status.samplesCreated"] = "示例项目已创建。",
+            ["status.wavExported"] = "WAV 已导出。",
+            ["status.wavExportedAndRefreshed"] = "WAV 已导出，资源已刷新。",
+            ["status.previewRendered"] = "预览已生成。",
+            ["status.timelineHint"] = "网格 {0} | 已选音符 {1} 个 | 拖拽空白轨道创建 | 拖拽音符移动 | 拖拽边缘调整长度 | Ctrl+D 复制 | Delete 删除 | Ctrl+Z / Ctrl+Y 撤销 / 重做",
+            ["status.previewBuffer"] = "{0} Hz / {1} / project {2:0.00}s / output {3:0.00}s / peak {4:0.000}",
+            ["status.previewCursor"] = "Bar {0:00} / Beat {1:0.00} ({2:0.00}s)",
+            ["status.previewCursorTail"] = "{0} / tail +{1:0.00}s",
+            ["status.previewProgress"] = "Bar {0:00} / Beat {1:0.00}",
+            ["status.previewTail"] = "播放尾部 +{0:0.00}s",
+            ["dialog.ok"] = "确定",
+            ["dialog.openProject"] = "打开游戏音频项目",
+            ["dialog.saveProject"] = "保存游戏音频项目",
+            ["dialog.discardMessage"] = "未保存的更改将会丢失。是否继续？",
+            ["dialog.discard"] = "放弃更改",
+            ["dialog.cancel"] = "取消",
+            ["dialog.saveFirst"] = "先保存",
+            ["notification.clampedInt"] = "{0} 已被限制为 {1}。",
+            ["notification.clampedFloat"] = "{0} 已被限制为 {1:0.###}。",
+            ["notification.requiresFinite"] = "{0} 需要有限数值。"
+        };
+
+        private static readonly IReadOnlyDictionary<GameAudioDisplayLanguage, IReadOnlyDictionary<string, string>> Tables =
+            new Dictionary<GameAudioDisplayLanguage, IReadOnlyDictionary<string, string>>
+            {
+                [GameAudioDisplayLanguage.English] = English,
+                [GameAudioDisplayLanguage.Japanese] = Japanese,
+                [GameAudioDisplayLanguage.Chinese] = Chinese
+            };
+
+        public static IReadOnlyList<GameAudioLanguageMode> GetSupportedLanguageModes()
+        {
+            return SupportedLanguageModes;
+        }
+
+        public static GameAudioDisplayLanguage ResolveLanguage(GameAudioLanguageMode languageMode)
+        {
+            return languageMode switch
+            {
+                GameAudioLanguageMode.Japanese => GameAudioDisplayLanguage.Japanese,
+                GameAudioLanguageMode.English => GameAudioDisplayLanguage.English,
+                GameAudioLanguageMode.Chinese => GameAudioDisplayLanguage.Chinese,
+                _ => MapSystemLanguage(GetPreferredUnityEditorLanguage())
+            };
+        }
+
+        public static string Get(GameAudioDisplayLanguage language, string key)
+        {
+            if (Tables.TryGetValue(language, out IReadOnlyDictionary<string, string> table)
+                && table.TryGetValue(key, out string localized))
+            {
+                return localized;
+            }
+
+            if (English.TryGetValue(key, out string fallback))
+            {
+                return fallback;
+            }
+
+            return key;
+        }
+
+        public static string Get(GameAudioDisplayLanguage language, string key, string englishText)
+        {
+            if (language == GameAudioDisplayLanguage.English)
+            {
+                return englishText;
+            }
+
+            if (Tables.TryGetValue(language, out IReadOnlyDictionary<string, string> table)
+                && table.TryGetValue(key, out string localized))
+            {
+                return localized;
+            }
+
+            return englishText;
+        }
+
+        public static string Format(GameAudioDisplayLanguage language, string key, params object[] args)
+        {
+            return string.Format(CultureInfo.InvariantCulture, Get(language, key), args);
+        }
+
+        public static string Format(GameAudioDisplayLanguage language, string key, string englishFormat, params object[] args)
+        {
+            return string.Format(CultureInfo.InvariantCulture, Get(language, key, englishFormat), args);
+        }
+
+        public static string GetLanguageModeLabel(GameAudioDisplayLanguage language, GameAudioLanguageMode languageMode)
+        {
+            return Get(
+                language,
+                languageMode switch
+                {
+                    GameAudioLanguageMode.Japanese => "language.japanese",
+                    GameAudioLanguageMode.English => "language.english",
+                    GameAudioLanguageMode.Chinese => "language.chinese",
+                    _ => "language.auto"
+                });
+        }
+
+        public static string GetChannelModeLabel(GameAudioDisplayLanguage language, GameAudioChannelMode channelMode)
+        {
+            return Get(
+                language,
+                channelMode == GameAudioChannelMode.Mono ? "channel.mono" : "channel.stereo");
+        }
+
+        public static string GetWaveformLabel(GameAudioDisplayLanguage language, GameAudioWaveformType waveform)
+        {
+            return Get(
+                language,
+                waveform switch
+                {
+                    GameAudioWaveformType.Sine => "waveform.sine",
+                    GameAudioWaveformType.Triangle => "waveform.triangle",
+                    GameAudioWaveformType.Saw => "waveform.saw",
+                    GameAudioWaveformType.Pulse => "waveform.pulse",
+                    _ => "waveform.square"
+                });
+        }
+
+        public static string GetNoiseTypeLabel(GameAudioDisplayLanguage language, GameAudioNoiseType noiseType)
+        {
+            return Get(
+                language,
+                noiseType switch
+                {
+                    GameAudioNoiseType.White => "noise.white",
+                    _ => "noise.white"
+                });
+        }
+
+        private static SystemLanguage GetPreferredUnityEditorLanguage()
+        {
+            try
+            {
+                Type localizationDatabaseType = typeof(EditorWindow).Assembly.GetType("UnityEditor.LocalizationDatabase");
+                PropertyInfo enabledProperty = localizationDatabaseType?.GetProperty("enableEditorLocalization", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                bool isLocalizationEnabled = enabledProperty?.GetValue(null) as bool? ?? false;
+                if (!isLocalizationEnabled)
+                {
+                    return UnityEngine.Application.systemLanguage;
+                }
+
+                PropertyInfo languageProperty = localizationDatabaseType.GetProperty("currentEditorLanguage", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                object currentLanguage = languageProperty?.GetValue(null);
+                if (TryConvertEditorLanguage(currentLanguage, out SystemLanguage resolvedLanguage))
+                {
+                    return resolvedLanguage;
+                }
+            }
+            catch (Exception)
+            {
+            }
+
+            return UnityEngine.Application.systemLanguage;
+        }
+
+        private static bool TryConvertEditorLanguage(object currentLanguage, out SystemLanguage resolvedLanguage)
+        {
+            if (currentLanguage is SystemLanguage systemLanguage)
+            {
+                resolvedLanguage = systemLanguage;
+                return true;
+            }
+
+            if (currentLanguage != null
+                && Enum.TryParse(currentLanguage.ToString(), true, out SystemLanguage parsedLanguage))
+            {
+                resolvedLanguage = parsedLanguage;
+                return true;
+            }
+
+            resolvedLanguage = UnityEngine.Application.systemLanguage;
+            return false;
+        }
+
+        internal static GameAudioDisplayLanguage MapSystemLanguage(SystemLanguage systemLanguage)
+        {
+            return systemLanguage switch
+            {
+                SystemLanguage.Japanese => GameAudioDisplayLanguage.Japanese,
+                SystemLanguage.Chinese => GameAudioDisplayLanguage.Chinese,
+                SystemLanguage.ChineseSimplified => GameAudioDisplayLanguage.Chinese,
+                SystemLanguage.ChineseTraditional => GameAudioDisplayLanguage.Chinese,
+                _ => GameAudioDisplayLanguage.English
+            };
+        }
+    }
+}

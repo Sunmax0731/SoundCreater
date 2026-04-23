@@ -1,4 +1,5 @@
 using TorusEdison.Editor.Domain;
+using TorusEdison.Editor.Localization;
 
 namespace TorusEdison.Editor.Config
 {
@@ -17,5 +18,7 @@ namespace TorusEdison.Editor.Config
         public string DefaultGridDivision { get; set; } = "1/16";
 
         public int UndoHistoryLimit { get; set; } = 100;
+
+        public GameAudioLanguageMode DisplayLanguage { get; set; } = GameAudioLanguageMode.Auto;
     }
 }
