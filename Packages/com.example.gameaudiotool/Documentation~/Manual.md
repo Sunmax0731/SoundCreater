@@ -10,12 +10,12 @@ Current implementation scope:
 - create a new project shell
 - save and load `.gats.json` project files
 - render project data into deterministic offline audio buffers
+- preview those buffers in the Unity Editor with Play / Stop / Rewind / Loop transport controls
 - keep package samples and configuration foundations in place
 
 Not implemented yet in this package revision:
 
 - timeline note editing UI
-- audio preview playback
 - WAV export
 - Undo / Redo command history
 
@@ -39,6 +39,14 @@ Open the tool from:
 - `Save As` normalizes the selected path to the `.gats.json` session extension.
 
 The canonical session format is `.gats.json`.
+
+## Preview Playback
+
+- `Render Preview` builds the current project into an `AudioClip`-backed editor preview buffer.
+- `Play` starts preview playback from the beginning.
+- `Stop` stops playback and returns the cursor to the start.
+- `Rewind` resets the cursor without rebuilding the preview buffer.
+- `Loop` is stored on the project and uses `Total Bars` as the loop length while one-shot playback still includes rendered effect tails.
 
 Config file behavior in the current foundation:
 

@@ -195,7 +195,7 @@ namespace GameAudioTool.Editor.Persistence
 
         public GameAudioJsonKind Kind { get; }
 
-        public IReadOnlyList<GameAudioJsonNode> Items => _items ?? (IReadOnlyList<GameAudioJsonNode>)Array.Empty<GameAudioJsonNode>();
+        public IReadOnlyList<GameAudioJsonNode> Items => _items ?? (IReadOnlyList<GameAudioJsonNode>)System.Array.Empty<GameAudioJsonNode>();
 
         public static GameAudioJsonNode Object(Dictionary<string, GameAudioJsonNode> properties)
         {

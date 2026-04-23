@@ -24,13 +24,12 @@ Current foundation in this repository:
 - `.gats.json` save/load foundation with validation
 - common/project config serializers
 - deterministic offline audio rendering core for waveform, noise, ADSR, delay, and mixdown
-- minimal Editor window entry point
+- editor preview playback with Play / Stop / Rewind / Loop transport controls
 - sample session files and starter release documentation
 
 Not implemented yet:
 
 - timeline editing UI
-- audio preview playback
 - WAV export
 - Undo / Redo command history
 
