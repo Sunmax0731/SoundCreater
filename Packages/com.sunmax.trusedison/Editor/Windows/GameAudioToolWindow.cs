@@ -28,6 +28,7 @@ namespace TorusEdison.Editor.Windows
         private const float TimelinePixelsPerBeat = 24.0f;
         private const float TimelineViewportHeight = 340.0f;
         private const float TimelineResizeHandleWidth = 6.0f;
+        private const float InspectorValueWidth = 92.0f;
 
         private readonly GameAudioCommonConfigSerializer _commonConfigSerializer = new GameAudioCommonConfigSerializer();
         private readonly GameAudioPreviewPlaybackService _previewPlaybackService = new GameAudioPreviewPlaybackService();
@@ -685,6 +686,74 @@ namespace TorusEdison.Editor.Windows
             parent.Add(CreateInspectorRow(label, field));
         }
 
+        private void AddInspectorFloatSliderField(
+            VisualElement parent,
+            string label,
+            float value,
+            float lowValue,
+            float highValue,
+            Action<float> onChanged,
+            Func<float, string> formatValue = null)
+        {
+            float actualLow = Math.Min(lowValue, value);
+            float actualHigh = Math.Max(highValue, value);
+
+            var fieldContainer = new VisualElement();
+            fieldContainer.style.flexDirection = FlexDirection.Row;
+            fieldContainer.style.alignItems = Align.Center;
+            fieldContainer.style.flexGrow = 1.0f;
+
+            var slider = new Slider(actualLow, actualHigh);
+            slider.value = Mathf.Clamp(value, actualLow, actualHigh);
+            slider.style.flexGrow = 1.0f;
+            slider.style.marginRight = 8.0f;
+
+            var valueLabel = CreateInspectorValueLabel(FormatInspectorValue(slider.value, formatValue));
+            slider.RegisterValueChangedCallback(evt =>
+            {
+                valueLabel.text = FormatInspectorValue(evt.newValue, formatValue);
+                onChanged?.Invoke(evt.newValue);
+            });
+
+            fieldContainer.Add(slider);
+            fieldContainer.Add(valueLabel);
+            parent.Add(CreateInspectorRow(label, fieldContainer));
+        }
+
+        private void AddInspectorIntegerSliderField(
+            VisualElement parent,
+            string label,
+            int value,
+            int lowValue,
+            int highValue,
+            Action<int> onChanged,
+            Func<int, string> formatValue = null)
+        {
+            int actualLow = Math.Min(lowValue, value);
+            int actualHigh = Math.Max(highValue, value);
+
+            var fieldContainer = new VisualElement();
+            fieldContainer.style.flexDirection = FlexDirection.Row;
+            fieldContainer.style.alignItems = Align.Center;
+            fieldContainer.style.flexGrow = 1.0f;
+
+            var slider = new SliderInt(actualLow, actualHigh);
+            slider.value = Mathf.Clamp(value, actualLow, actualHigh);
+            slider.style.flexGrow = 1.0f;
+            slider.style.marginRight = 8.0f;
+
+            var valueLabel = CreateInspectorValueLabel(FormatInspectorValue(slider.value, formatValue));
+            slider.RegisterValueChangedCallback(evt =>
+            {
+                valueLabel.text = FormatInspectorValue(evt.newValue, formatValue);
+                onChanged?.Invoke(evt.newValue);
+            });
+
+            fieldContainer.Add(slider);
+            fieldContainer.Add(valueLabel);
+            parent.Add(CreateInspectorRow(label, fieldContainer));
+        }
+
         private void AddInspectorToggleField(VisualElement parent, string label, bool value, Action<bool> onChanged)
         {
             var field = new Toggle();
@@ -801,21 +870,21 @@ namespace TorusEdison.Editor.Windows
                     actualNotes => NotifyClamp("Duration Beat", requested, actualNotes[0].Note.DurationBeat));
             });
 
-            AddInspectorIntegerField(parent, T("inspector.note.midi", "MIDI Note"), primarySelection.Note.MidiNote, requested =>
+            AddInspectorIntegerSliderField(parent, T("inspector.note.midi", "MIDI Note"), primarySelection.Note.MidiNote, 24, 96, requested =>
             {
                 TryApplySelectedNotesChange(
                     "Set Note Pitch",
                     note => note.MidiNote = requested,
                     actualNotes => NotifyClamp("MIDI Note", requested, actualNotes[0].Note.MidiNote));
-            });
+            }, FormatMidiNoteDisplay);
 
-            AddInspectorFloatField(parent, T("inspector.note.velocity", "Velocity"), primarySelection.Note.Velocity, requested =>
+            AddInspectorFloatSliderField(parent, T("inspector.note.velocity", "Velocity"), primarySelection.Note.Velocity, 0.0f, 1.0f, requested =>
             {
                 TryApplySelectedNotesChange(
                     "Set Note Velocity",
                     note => note.Velocity = requested,
                     actualNotes => NotifyClamp("Velocity", requested, actualNotes[0].Note.Velocity));
-            });
+            }, value => FormatPercentDisplay(value, 0));
 
             bool allHaveOverride = selectedNotes.All(selection => selection.Note.VoiceOverride != null);
             bool anyHaveOverride = selectedNotes.Any(selection => selection.Note.VoiceOverride != null);
@@ -887,23 +956,23 @@ namespace TorusEdison.Editor.Windows
                 TryApplyTrackChange("Toggle Solo", track.Id, current => current.Solo = requested);
             });
 
-            AddInspectorFloatField(parent, T("inspector.track.volume", "Volume (dB)"), track.VolumeDb, requested =>
+            AddInspectorFloatSliderField(parent, T("inspector.track.volume", "Volume (dB)"), track.VolumeDb, -48.0f, 6.0f, requested =>
             {
                 TryApplyTrackChange(
                     "Set Track Volume",
                     track.Id,
                     current => current.VolumeDb = requested,
                     actualTrack => NotifyClamp("Track Volume", requested, actualTrack.VolumeDb));
-            });
+            }, FormatDecibelDisplay);
 
-            AddInspectorFloatField(parent, T("inspector.track.pan", "Pan"), track.Pan, requested =>
+            AddInspectorFloatSliderField(parent, T("inspector.track.pan", "Pan"), track.Pan, -1.0f, 1.0f, requested =>
             {
                 TryApplyTrackChange(
                     "Set Track Pan",
                     track.Id,
                     current => current.Pan = requested,
                     actualTrack => NotifyClamp("Track Pan", requested, actualTrack.Pan));
-            });
+            }, value => value.ToString("0.00", CultureInfo.InvariantCulture));
 
             AddVoiceInspector(
                 parent,
@@ -937,13 +1006,13 @@ namespace TorusEdison.Editor.Windows
                 TryApplyProjectChange("Rename Project", current => current.Name = requested);
             });
 
-            AddInspectorIntegerField(parent, T("summary.bpm", "BPM"), project.Bpm, requested =>
+            AddInspectorIntegerSliderField(parent, T("summary.bpm", "BPM"), project.Bpm, 40, 240, requested =>
             {
                 TryApplyProjectChange(
                     "Set BPM",
                     current => current.Bpm = requested,
                     actualProject => NotifyClamp("BPM", requested, actualProject.Bpm));
-            });
+            }, value => string.Format(CultureInfo.InvariantCulture, "{0} BPM", value));
 
             AddInspectorPopupField(parent, T("inspector.project.timeSignature", "Time Signature"), GetSupportedTimeSignatureOptions(), FormatTimeSignature(project.TimeSignature), requested =>
             {
@@ -952,13 +1021,13 @@ namespace TorusEdison.Editor.Windows
                     current => current.TimeSignature = ParseTimeSignature(requested));
             });
 
-            AddInspectorIntegerField(parent, T("inspector.project.totalBars", "Total Bars"), project.TotalBars, requested =>
+            AddInspectorIntegerSliderField(parent, T("inspector.project.totalBars", "Total Bars"), project.TotalBars, 1, 32, requested =>
             {
                 TryApplyProjectChange(
                     "Set Total Bars",
                     current => current.TotalBars = requested,
                     actualProject => NotifyClamp("Total Bars", requested, actualProject.TotalBars));
-            });
+            }, value => value.ToString(CultureInfo.InvariantCulture));
 
             AddInspectorPopupField(parent, T("inspector.project.sampleRate", "Sample Rate"), GetSupportedSampleRateOptions(), FormatSampleRateOption(project.SampleRate), requested =>
             {
@@ -980,13 +1049,13 @@ namespace TorusEdison.Editor.Windows
                         current => current.ChannelMode = requested);
                 });
 
-            AddInspectorFloatField(parent, T("inspector.project.masterGain", "Master Gain (dB)"), project.MasterGainDb, requested =>
+            AddInspectorFloatSliderField(parent, T("inspector.project.masterGain", "Master Gain (dB)"), project.MasterGainDb, -24.0f, 6.0f, requested =>
             {
                 TryApplyProjectChange(
                     "Set Master Gain",
                     current => current.MasterGainDb = requested,
                     actualProject => NotifyClamp("Master Gain", requested, actualProject.MasterGainDb));
-            });
+            }, FormatDecibelDisplay);
 
             parent.Add(CreateInspectorGroupTitle(T("inspector.toolSettings", "Tool Settings")));
             AddInspectorPopupField(
@@ -1042,13 +1111,13 @@ namespace TorusEdison.Editor.Windows
                     applyVoiceChange("Set Waveform", current => current.Waveform = requested, null);
                 });
 
-            AddInspectorFloatField(voiceFoldout, T("voice.pulseWidth", "Pulse Width"), voice.PulseWidth, requested =>
+            AddInspectorFloatSliderField(voiceFoldout, T("voice.pulseWidth", "Pulse Width"), voice.PulseWidth, 0.10f, 0.90f, requested =>
             {
                 applyVoiceChange(
                     "Set Pulse Width",
                     current => current.PulseWidth = requested,
                     actualVoice => NotifyClamp("Pulse Width", requested, actualVoice.PulseWidth));
-            });
+            }, value => FormatPercentDisplay(value, 0));
 
             AddInspectorToggleField(voiceFoldout, T("voice.noiseEnabled", "Noise Enabled"), voice.NoiseEnabled, requested =>
             {
@@ -1066,13 +1135,13 @@ namespace TorusEdison.Editor.Windows
                     applyVoiceChange("Set Noise Type", current => current.NoiseType = requested, null);
                 });
 
-            AddInspectorFloatField(voiceFoldout, T("voice.noiseMix", "Noise Mix"), voice.NoiseMix, requested =>
+            AddInspectorFloatSliderField(voiceFoldout, T("voice.noiseMix", "Noise Mix"), voice.NoiseMix, 0.0f, 1.0f, requested =>
             {
                 applyVoiceChange(
                     "Set Noise Mix",
                     current => current.NoiseMix = requested,
                     actualVoice => NotifyClamp("Noise Mix", requested, actualVoice.NoiseMix));
-            });
+            }, value => FormatPercentDisplay(value, 0));
 
             var envelopeFoldout = new Foldout
             {
@@ -1081,37 +1150,37 @@ namespace TorusEdison.Editor.Windows
             };
             voiceFoldout.Add(envelopeFoldout);
 
-            AddInspectorIntegerField(envelopeFoldout, T("voice.attack", "Attack (ms)"), voice.Adsr.AttackMs, requested =>
+            AddInspectorIntegerSliderField(envelopeFoldout, T("voice.attack", "Attack (ms)"), voice.Adsr.AttackMs, 0, 5000, requested =>
             {
                 applyVoiceChange(
                     "Set Attack",
                     current => current.Adsr.AttackMs = requested,
                     actualVoice => NotifyClamp("Attack", requested, actualVoice.Adsr.AttackMs));
-            });
+            }, FormatMillisecondsDisplay);
 
-            AddInspectorIntegerField(envelopeFoldout, T("voice.decay", "Decay (ms)"), voice.Adsr.DecayMs, requested =>
+            AddInspectorIntegerSliderField(envelopeFoldout, T("voice.decay", "Decay (ms)"), voice.Adsr.DecayMs, 0, 5000, requested =>
             {
                 applyVoiceChange(
                     "Set Decay",
                     current => current.Adsr.DecayMs = requested,
                     actualVoice => NotifyClamp("Decay", requested, actualVoice.Adsr.DecayMs));
-            });
+            }, FormatMillisecondsDisplay);
 
-            AddInspectorFloatField(envelopeFoldout, T("voice.sustain", "Sustain"), voice.Adsr.Sustain, requested =>
+            AddInspectorFloatSliderField(envelopeFoldout, T("voice.sustain", "Sustain"), voice.Adsr.Sustain, 0.0f, 1.0f, requested =>
             {
                 applyVoiceChange(
                     "Set Sustain",
                     current => current.Adsr.Sustain = requested,
                     actualVoice => NotifyClamp("Sustain", requested, actualVoice.Adsr.Sustain));
-            });
+            }, value => FormatPercentDisplay(value, 0));
 
-            AddInspectorIntegerField(envelopeFoldout, T("voice.release", "Release (ms)"), voice.Adsr.ReleaseMs, requested =>
+            AddInspectorIntegerSliderField(envelopeFoldout, T("voice.release", "Release (ms)"), voice.Adsr.ReleaseMs, 0, 5000, requested =>
             {
                 applyVoiceChange(
                     "Set Release",
                     current => current.Adsr.ReleaseMs = requested,
                     actualVoice => NotifyClamp("Release", requested, actualVoice.Adsr.ReleaseMs));
-            });
+            }, FormatMillisecondsDisplay);
 
             var effectFoldout = new Foldout
             {
@@ -1120,45 +1189,45 @@ namespace TorusEdison.Editor.Windows
             };
             voiceFoldout.Add(effectFoldout);
 
-            AddInspectorFloatField(effectFoldout, T("voice.effectVolume", "Volume (dB)"), voice.Effect.VolumeDb, requested =>
+            AddInspectorFloatSliderField(effectFoldout, T("voice.effectVolume", "Volume (dB)"), voice.Effect.VolumeDb, -48.0f, 6.0f, requested =>
             {
                 applyVoiceChange(
                     "Set Voice Volume",
                     current => current.Effect.VolumeDb = requested,
                     actualVoice => NotifyClamp("Voice Volume", requested, actualVoice.Effect.VolumeDb));
-            });
+            }, FormatDecibelDisplay);
 
-            AddInspectorFloatField(effectFoldout, T("voice.effectPan", "Pan"), voice.Effect.Pan, requested =>
+            AddInspectorFloatSliderField(effectFoldout, T("voice.effectPan", "Pan"), voice.Effect.Pan, -1.0f, 1.0f, requested =>
             {
                 applyVoiceChange(
                     "Set Voice Pan",
                     current => current.Effect.Pan = requested,
                     actualVoice => NotifyClamp("Voice Pan", requested, actualVoice.Effect.Pan));
-            });
+            }, value => value.ToString("0.00", CultureInfo.InvariantCulture));
 
-            AddInspectorFloatField(effectFoldout, T("voice.effectPitch", "Pitch (semitone)"), voice.Effect.PitchSemitone, requested =>
+            AddInspectorFloatSliderField(effectFoldout, T("voice.effectPitch", "Pitch (semitone)"), voice.Effect.PitchSemitone, -24.0f, 24.0f, requested =>
             {
                 applyVoiceChange(
                     "Set Voice Pitch",
                     current => current.Effect.PitchSemitone = requested,
                     actualVoice => NotifyClamp("Voice Pitch", requested, actualVoice.Effect.PitchSemitone));
-            });
+            }, value => string.Format(CultureInfo.InvariantCulture, "{0:+0.0;-0.0;0.0} st", value));
 
-            AddInspectorIntegerField(effectFoldout, T("voice.fadeIn", "Fade In (ms)"), voice.Effect.FadeInMs, requested =>
+            AddInspectorIntegerSliderField(effectFoldout, T("voice.fadeIn", "Fade In (ms)"), voice.Effect.FadeInMs, 0, 3000, requested =>
             {
                 applyVoiceChange(
                     "Set Fade In",
                     current => current.Effect.FadeInMs = requested,
                     actualVoice => NotifyClamp("Fade In", requested, actualVoice.Effect.FadeInMs));
-            });
+            }, FormatMillisecondsDisplay);
 
-            AddInspectorIntegerField(effectFoldout, T("voice.fadeOut", "Fade Out (ms)"), voice.Effect.FadeOutMs, requested =>
+            AddInspectorIntegerSliderField(effectFoldout, T("voice.fadeOut", "Fade Out (ms)"), voice.Effect.FadeOutMs, 0, 3000, requested =>
             {
                 applyVoiceChange(
                     "Set Fade Out",
                     current => current.Effect.FadeOutMs = requested,
                     actualVoice => NotifyClamp("Fade Out", requested, actualVoice.Effect.FadeOutMs));
-            });
+            }, FormatMillisecondsDisplay);
 
             var delayFoldout = new Foldout
             {
@@ -1172,29 +1241,29 @@ namespace TorusEdison.Editor.Windows
                 applyVoiceChange("Toggle Delay", current => current.Effect.Delay.Enabled = requested, null);
             });
 
-            AddInspectorIntegerField(delayFoldout, T("voice.delayTime", "Time (ms)"), voice.Effect.Delay.TimeMs, requested =>
+            AddInspectorIntegerSliderField(delayFoldout, T("voice.delayTime", "Time (ms)"), voice.Effect.Delay.TimeMs, 20, 1000, requested =>
             {
                 applyVoiceChange(
                     "Set Delay Time",
                     current => current.Effect.Delay.TimeMs = requested,
                     actualVoice => NotifyClamp("Delay Time", requested, actualVoice.Effect.Delay.TimeMs));
-            });
+            }, FormatMillisecondsDisplay);
 
-            AddInspectorFloatField(delayFoldout, T("voice.delayFeedback", "Feedback"), voice.Effect.Delay.Feedback, requested =>
+            AddInspectorFloatSliderField(delayFoldout, T("voice.delayFeedback", "Feedback"), voice.Effect.Delay.Feedback, 0.0f, 0.70f, requested =>
             {
                 applyVoiceChange(
                     "Set Delay Feedback",
                     current => current.Effect.Delay.Feedback = requested,
                     actualVoice => NotifyClamp("Delay Feedback", requested, actualVoice.Effect.Delay.Feedback));
-            });
+            }, value => FormatPercentDisplay(value, 0));
 
-            AddInspectorFloatField(delayFoldout, T("voice.delayMix", "Mix"), voice.Effect.Delay.Mix, requested =>
+            AddInspectorFloatSliderField(delayFoldout, T("voice.delayMix", "Mix"), voice.Effect.Delay.Mix, 0.0f, 1.0f, requested =>
             {
                 applyVoiceChange(
                     "Set Delay Mix",
                     current => current.Effect.Delay.Mix = requested,
                     actualVoice => NotifyClamp("Delay Mix", requested, actualVoice.Effect.Delay.Mix));
-            });
+            }, value => FormatPercentDisplay(value, 0));
         }
 
         private void CreateNewProject()
@@ -1256,6 +1325,53 @@ namespace TorusEdison.Editor.Windows
         private static IEnumerable<GameAudioChannelMode> GetSupportedChannelModeOptions()
         {
             return (GameAudioChannelMode[])Enum.GetValues(typeof(GameAudioChannelMode));
+        }
+
+        private static Label CreateInspectorValueLabel(string text)
+        {
+            var label = new Label(text ?? string.Empty);
+            label.style.minWidth = InspectorValueWidth;
+            label.style.unityTextAlign = TextAnchor.MiddleRight;
+            label.style.color = new Color(0.78f, 0.82f, 0.88f);
+            return label;
+        }
+
+        private static string FormatInspectorValue(float value, Func<float, string> formatValue)
+        {
+            return formatValue?.Invoke(value)
+                ?? value.ToString("0.00", CultureInfo.InvariantCulture);
+        }
+
+        private static string FormatInspectorValue(int value, Func<int, string> formatValue)
+        {
+            return formatValue?.Invoke(value)
+                ?? value.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static string FormatMidiNoteDisplay(int midiNote)
+        {
+            string[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+            int normalized = Mathf.Clamp(midiNote, 0, 127);
+            string noteName = noteNames[normalized % noteNames.Length];
+            int octave = (normalized / 12) - 1;
+            return string.Format(CultureInfo.InvariantCulture, "{0}{1} ({2})", noteName, octave, normalized);
+        }
+
+        private static string FormatPercentDisplay(float value, int decimals)
+        {
+            float percentage = value * 100.0f;
+            string format = decimals <= 0 ? "0" : "0." + new string('0', decimals);
+            return string.Format(CultureInfo.InvariantCulture, "{0}%", percentage.ToString(format, CultureInfo.InvariantCulture));
+        }
+
+        private static string FormatMillisecondsDisplay(int value)
+        {
+            return string.Format(CultureInfo.InvariantCulture, "{0} ms", value);
+        }
+
+        private static string FormatDecibelDisplay(float value)
+        {
+            return string.Format(CultureInfo.InvariantCulture, "{0:+0.0;-0.0;0.0} dB", value);
         }
 
         private static IEnumerable<GameAudioWaveformType> GetSupportedWaveformOptions()
