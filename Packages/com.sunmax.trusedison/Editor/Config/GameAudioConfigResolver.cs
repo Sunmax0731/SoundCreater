@@ -1,5 +1,5 @@
-using System.IO;
 using TorusEdison.Editor.Domain;
+using TorusEdison.Editor.Utilities;
 
 namespace TorusEdison.Editor.Config
 {
@@ -29,17 +29,15 @@ namespace TorusEdison.Editor.Config
         {
             if (projectConfig != null && !string.IsNullOrWhiteSpace(projectConfig.ExportDirectory))
             {
-                return projectConfig.ExportDirectory;
+                return GameAudioExportUtility.NormalizeExportDirectory(projectConfig.ExportDirectory, projectRoot);
             }
 
             if (commonConfig != null && !string.IsNullOrWhiteSpace(commonConfig.DefaultExportDirectory))
             {
-                return Path.IsPathRooted(commonConfig.DefaultExportDirectory)
-                    ? commonConfig.DefaultExportDirectory
-                    : Path.Combine(projectRoot, commonConfig.DefaultExportDirectory);
+                return GameAudioExportUtility.NormalizeExportDirectory(commonConfig.DefaultExportDirectory, projectRoot);
             }
 
-            return Path.Combine(projectRoot, "Exports", "Audio");
+            return GameAudioExportUtility.NormalizeExportDirectory(string.Empty, projectRoot);
         }
     }
 }
