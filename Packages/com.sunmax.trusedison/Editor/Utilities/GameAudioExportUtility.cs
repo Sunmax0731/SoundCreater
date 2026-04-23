@@ -14,12 +14,47 @@ namespace TorusEdison.Editor.Utilities
 
             if (string.IsNullOrWhiteSpace(exportDirectory))
             {
-                return Path.Combine(projectRoot, "Exports", "Audio");
+                return Path.GetFullPath(Path.Combine(projectRoot, "Exports", "Audio"));
             }
 
             return Path.IsPathRooted(exportDirectory)
-                ? exportDirectory
-                : Path.Combine(projectRoot, exportDirectory);
+                ? Path.GetFullPath(exportDirectory)
+                : Path.GetFullPath(Path.Combine(projectRoot, exportDirectory));
+        }
+
+        public static string NormalizeStoredExportDirectory(string exportDirectory, string projectRoot)
+        {
+            if (string.IsNullOrWhiteSpace(projectRoot))
+            {
+                throw new ArgumentException("Project root is required.", nameof(projectRoot));
+            }
+
+            if (string.IsNullOrWhiteSpace(exportDirectory))
+            {
+                return string.Empty;
+            }
+
+            string trimmed = exportDirectory.Trim();
+            if (!Path.IsPathRooted(trimmed))
+            {
+                return NormalizeStoredRelativeDirectory(trimmed);
+            }
+
+            string projectRootFullPath = TrimEndingDirectorySeparators(Path.GetFullPath(projectRoot));
+            string exportFullPath = TrimEndingDirectorySeparators(Path.GetFullPath(trimmed));
+            string projectRootWithSeparator = projectRootFullPath + Path.DirectorySeparatorChar;
+
+            if (string.Equals(exportFullPath, projectRootFullPath, StringComparison.OrdinalIgnoreCase))
+            {
+                return ".";
+            }
+
+            if (exportFullPath.StartsWith(projectRootWithSeparator, StringComparison.OrdinalIgnoreCase))
+            {
+                return NormalizeStoredRelativeDirectory(Path.GetRelativePath(projectRootFullPath, exportFullPath));
+            }
+
+            return exportFullPath;
         }
 
         public static string NormalizeWaveFileName(string projectName)
@@ -58,6 +93,39 @@ namespace TorusEdison.Editor.Utilities
                 + Path.DirectorySeparatorChar;
 
             return fullFilePath.StartsWith(assetsDirectoryWithSeparator, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string NormalizeStoredRelativeDirectory(string relativeDirectory)
+        {
+            if (string.IsNullOrWhiteSpace(relativeDirectory))
+            {
+                return string.Empty;
+            }
+
+            string normalized = relativeDirectory
+                .Trim()
+                .Replace(Path.DirectorySeparatorChar, '/')
+                .Replace(Path.AltDirectorySeparatorChar, '/');
+
+            normalized = normalized.TrimEnd('/');
+            return string.IsNullOrWhiteSpace(normalized)
+                ? string.Empty
+                : normalized;
+        }
+
+        private static string TrimEndingDirectorySeparators(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return string.Empty;
+            }
+
+            string fullPath = Path.GetFullPath(path);
+            string root = Path.GetPathRoot(fullPath) ?? string.Empty;
+            string trimmed = fullPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            return string.IsNullOrWhiteSpace(trimmed) || string.Equals(trimmed, root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), StringComparison.OrdinalIgnoreCase)
+                ? root
+                : trimmed;
         }
     }
 }

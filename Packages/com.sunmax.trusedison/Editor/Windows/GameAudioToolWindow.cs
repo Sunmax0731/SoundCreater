@@ -445,14 +445,34 @@ namespace TorusEdison.Editor.Windows
                 isDelayed = true
             };
             _commonExportDirectoryField.RegisterValueChangedCallback(OnCommonExportDirectoryChanged);
-            panel.Add(CreateInspectorRow(T("export.commonDefaultFolder", "Common Default Folder"), _commonExportDirectoryField));
+            panel.Add(CreateInspectorRow(
+                T("export.commonDefaultFolder", "Common Default Folder"),
+                CreateExportDirectoryEditor(
+                    _commonExportDirectoryField,
+                    BrowseCommonExportDirectory,
+                    SetCommonExportDirectoryToProjectExports,
+                    SetCommonExportDirectoryToAssetsExports,
+                    null,
+                    null)));
 
             _projectExportDirectoryField = new TextField
             {
                 isDelayed = true
             };
             _projectExportDirectoryField.RegisterValueChangedCallback(OnProjectExportDirectoryChanged);
-            panel.Add(CreateInspectorRow(T("export.projectOverrideFolder", "Project Override Folder"), _projectExportDirectoryField));
+            panel.Add(CreateInspectorRow(
+                T("export.projectOverrideFolder", "Project Override Folder"),
+                CreateExportDirectoryEditor(
+                    _projectExportDirectoryField,
+                    BrowseProjectExportDirectory,
+                    SetProjectExportDirectoryToProjectExports,
+                    SetProjectExportDirectoryToAssetsExports,
+                    ClearProjectExportDirectoryOverride,
+                    T("export.clearOverride", "Clear"))));
+
+            panel.Add(CreateInspectorHelpBox(
+                T("export.folderHelp", "Folders inside this Unity project are stored as relative paths. External folders stay absolute. Use Project/Exports for project-side files or Assets/Exports when you want Unity to refresh imported WAV files."),
+                HelpBoxMessageType.Info));
 
             _autoRefreshAfterExportToggle = new Toggle();
             _autoRefreshAfterExportToggle.RegisterValueChangedCallback(OnAutoRefreshAfterExportChanged);
@@ -531,6 +551,59 @@ namespace TorusEdison.Editor.Windows
             button.style.minWidth = 84;
             button.style.marginRight = 8;
             button.style.marginBottom = 4;
+            return button;
+        }
+
+        private VisualElement CreateExportDirectoryEditor(
+            TextField field,
+            Action browseAction,
+            Action useProjectExportsAction,
+            Action useAssetsExportsAction,
+            Action trailingAction,
+            string trailingLabel)
+        {
+            var container = new VisualElement();
+            container.style.flexDirection = FlexDirection.Column;
+            container.style.flexGrow = 1.0f;
+
+            var inputRow = new VisualElement();
+            inputRow.style.flexDirection = FlexDirection.Row;
+            inputRow.style.alignItems = Align.Center;
+            inputRow.style.flexGrow = 1.0f;
+
+            field.style.flexGrow = 1.0f;
+            inputRow.Add(field);
+            inputRow.Add(CreateCompactActionButton(T("export.browse", "Browse"), browseAction));
+            container.Add(inputRow);
+
+            var shortcutRow = new VisualElement();
+            shortcutRow.style.flexDirection = FlexDirection.Row;
+            shortcutRow.style.flexWrap = Wrap.Wrap;
+            shortcutRow.style.marginTop = 4.0f;
+            shortcutRow.Add(CreateCompactActionButton(T("export.useProjectFolder", "Project/Exports"), useProjectExportsAction));
+            shortcutRow.Add(CreateCompactActionButton(T("export.useAssetsFolder", "Assets/Exports"), useAssetsExportsAction));
+            if (trailingAction != null && !string.IsNullOrWhiteSpace(trailingLabel))
+            {
+                shortcutRow.Add(CreateCompactActionButton(trailingLabel, trailingAction));
+            }
+
+            container.Add(shortcutRow);
+            return container;
+        }
+
+        private static Button CreateCompactActionButton(string label, Action onClick)
+        {
+            var button = new Button(onClick)
+            {
+                text = label
+            };
+
+            button.style.minWidth = 88.0f;
+            button.style.height = 22.0f;
+            button.style.marginLeft = 6.0f;
+            button.style.marginBottom = 4.0f;
+            button.style.paddingLeft = 8.0f;
+            button.style.paddingRight = 8.0f;
             return button;
         }
 
@@ -1696,11 +1769,78 @@ namespace TorusEdison.Editor.Windows
             RefreshView();
         }
 
-        private void OnCommonExportDirectoryChanged(ChangeEvent<string> evt)
+        private void BrowseCommonExportDirectory()
+        {
+            string selectedPath = OpenExportDirectoryPanel(_commonConfig?.DefaultExportDirectory);
+            if (string.IsNullOrWhiteSpace(selectedPath))
+            {
+                return;
+            }
+
+            ApplyCommonExportDirectory(GameAudioExportUtility.NormalizeStoredExportDirectory(selectedPath, GetProjectRootPath()));
+        }
+
+        private void BrowseProjectExportDirectory()
+        {
+            _projectConfig ??= _projectConfigSerializer.LoadOrDefault(GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
+            string seed = string.IsNullOrWhiteSpace(_projectConfig.ExportDirectory)
+                ? _commonConfig?.DefaultExportDirectory
+                : _projectConfig.ExportDirectory;
+            string selectedPath = OpenExportDirectoryPanel(seed);
+            if (string.IsNullOrWhiteSpace(selectedPath))
+            {
+                return;
+            }
+
+            ApplyProjectExportDirectory(GameAudioExportUtility.NormalizeStoredExportDirectory(selectedPath, GetProjectRootPath()));
+        }
+
+        private void SetCommonExportDirectoryToProjectExports()
+        {
+            ApplyCommonExportDirectory("Exports/Audio");
+        }
+
+        private void SetCommonExportDirectoryToAssetsExports()
+        {
+            ApplyCommonExportDirectory("Assets/Exports/Audio");
+        }
+
+        private void SetProjectExportDirectoryToProjectExports()
+        {
+            ApplyProjectExportDirectory("Exports/Audio");
+        }
+
+        private void SetProjectExportDirectoryToAssetsExports()
+        {
+            ApplyProjectExportDirectory("Assets/Exports/Audio");
+        }
+
+        private void ClearProjectExportDirectoryOverride()
+        {
+            ApplyProjectExportDirectory(string.Empty);
+        }
+
+        private string OpenExportDirectoryPanel(string configuredDirectory)
+        {
+            string projectRoot = GetProjectRootPath();
+            string initialDirectory = ResolveExistingDirectory(
+                string.IsNullOrWhiteSpace(configuredDirectory)
+                    ? GetResolvedExportDirectory()
+                    : GameAudioExportUtility.NormalizeExportDirectory(configuredDirectory, projectRoot),
+                projectRoot);
+
+            return EditorUtility.OpenFolderPanel(
+                GameAudioToolInfo.DisplayName,
+                initialDirectory,
+                string.Empty);
+        }
+
+        private void ApplyCommonExportDirectory(string storedValue)
         {
             _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
-            string nextValue = evt.newValue?.Trim() ?? string.Empty;
-            string normalizedValue = string.IsNullOrWhiteSpace(nextValue) ? "Exports/Audio" : nextValue;
+            string normalizedValue = string.IsNullOrWhiteSpace(storedValue)
+                ? "Exports/Audio"
+                : GameAudioExportUtility.NormalizeStoredExportDirectory(storedValue, GetProjectRootPath());
             if (string.Equals(_commonConfig.DefaultExportDirectory, normalizedValue, StringComparison.Ordinal))
             {
                 return;
@@ -1720,26 +1860,60 @@ namespace TorusEdison.Editor.Windows
             }
         }
 
-        private void OnProjectExportDirectoryChanged(ChangeEvent<string> evt)
+        private void ApplyProjectExportDirectory(string storedValue)
         {
             _projectConfig ??= _projectConfigSerializer.LoadOrDefault(GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
-            string nextValue = evt.newValue?.Trim() ?? string.Empty;
-            if (string.Equals(_projectConfig.ExportDirectory, nextValue, StringComparison.Ordinal))
+            string normalizedValue = string.IsNullOrWhiteSpace(storedValue)
+                ? string.Empty
+                : GameAudioExportUtility.NormalizeStoredExportDirectory(storedValue, GetProjectRootPath());
+            if (string.Equals(_projectConfig.ExportDirectory, normalizedValue, StringComparison.Ordinal))
             {
                 return;
             }
 
             try
             {
-                _projectConfig.ExportDirectory = nextValue;
+                _projectConfig.ExportDirectory = normalizedValue;
                 SaveProjectConfig();
-                GameAudioDiagnosticLogger.Verbose("Settings", $"Project export directory set to {nextValue}.");
+                GameAudioDiagnosticLogger.Verbose("Settings", $"Project export directory set to {normalizedValue}.");
                 RefreshView();
             }
             catch (Exception exception)
             {
                 ShowEditorException(exception, "Settings", "Saving project export directory failed");
             }
+        }
+
+        private static string ResolveExistingDirectory(string preferredDirectory, string fallbackDirectory)
+        {
+            string current = preferredDirectory;
+            while (!string.IsNullOrWhiteSpace(current))
+            {
+                if (Directory.Exists(current))
+                {
+                    return current;
+                }
+
+                string parent = Path.GetDirectoryName(current);
+                if (string.Equals(parent, current, StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
+                }
+
+                current = parent;
+            }
+
+            return fallbackDirectory;
+        }
+
+        private void OnCommonExportDirectoryChanged(ChangeEvent<string> evt)
+        {
+            ApplyCommonExportDirectory(evt.newValue?.Trim() ?? string.Empty);
+        }
+
+        private void OnProjectExportDirectoryChanged(ChangeEvent<string> evt)
+        {
+            ApplyProjectExportDirectory(evt.newValue?.Trim() ?? string.Empty);
         }
 
         private void OnAutoRefreshAfterExportChanged(ChangeEvent<bool> evt)

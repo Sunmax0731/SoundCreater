@@ -38,6 +38,30 @@ namespace TorusEdison.Editor.Tests
         }
 
         [Test]
+        public void NormalizeStoredExportDirectory_ConvertsProjectSubfolderToRelativePath()
+        {
+            string stored = GameAudioExportUtility.NormalizeStoredExportDirectory("D:/ProjectRoot/Assets/Exports/Audio", "D:/ProjectRoot");
+
+            Assert.That(stored, Is.EqualTo("Assets/Exports/Audio"));
+        }
+
+        [Test]
+        public void NormalizeStoredExportDirectory_KeepsExternalFolderAbsolute()
+        {
+            string stored = GameAudioExportUtility.NormalizeStoredExportDirectory("D:/External/Audio", "D:/ProjectRoot");
+
+            Assert.That(stored.Replace('\\', '/'), Is.EqualTo("D:/External/Audio"));
+        }
+
+        [Test]
+        public void NormalizeStoredExportDirectory_UsesDotForProjectRoot()
+        {
+            string stored = GameAudioExportUtility.NormalizeStoredExportDirectory("D:/ProjectRoot", "D:/ProjectRoot");
+
+            Assert.That(stored, Is.EqualTo("."));
+        }
+
+        [Test]
         public void ShouldRefreshAssetDatabase_ReturnsTrueOnlyForAssetsSubpaths()
         {
             Assert.That(GameAudioExportUtility.ShouldRefreshAssetDatabase("D:/Project/Assets/Exports/test.wav", "D:/Project"), Is.True);
