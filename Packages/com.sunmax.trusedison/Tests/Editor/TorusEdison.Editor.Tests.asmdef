@@ -1,0 +1,21 @@
+{
+  "name": "TorusEdison.Editor.Tests",
+  "rootNamespace": "TorusEdison.Editor.Tests",
+  "references": [
+    "TorusEdison.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "noEngineReferences": false
+}
