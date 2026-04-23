@@ -3594,8 +3594,8 @@ namespace TorusEdison.Editor.Windows
                 return;
             }
 
+            evt.StopImmediatePropagation();
             evt.StopPropagation();
-            evt.PreventDefault();
         }
 
         private string BuildPreviewBufferText(GameAudioPreviewState previewState)
