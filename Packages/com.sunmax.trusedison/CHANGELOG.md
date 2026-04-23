@@ -7,6 +7,7 @@
 - added Unity Editor preview transport controls with Play, Stop, Rewind, loop playback, and cursor reporting
 - refreshed the bundled `BasicSE` and `SimpleLoop` sample projects for playback and export checks
 - added release-readiness validation notes, sample guidance, and acceptance-scenario editor tests
+- refreshed README, manuals, release notes, terms, and license documents to match the current implementation
 
 
 ## 0.1.0

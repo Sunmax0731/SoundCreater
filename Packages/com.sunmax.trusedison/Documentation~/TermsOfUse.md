@@ -1,22 +1,64 @@
-# Terms Of Use
+# Torus Edison 利用規約
 
-## Status
+## 目的
 
-This document is an initial placeholder for the package foundation.
-Until a release-ready terms document is finalized, usage follows the MIT license included with this package.
+この文書は、`Torus Edison` の利用者向けに、利用範囲、免責、配布時の扱いを分かりやすくまとめた案内です。
 
-## Intended Use
+法的なライセンス本文は [LICENSE.md](../LICENSE.md) を参照してください。
+本ファイルとライセンス本文に差異がある場合は、`LICENSE.md` の記載を優先します。
 
-- use inside Unity Editor workflows
-- modify for internal or external project use
-- redistribute only under terms compatible with the bundled MIT license
+## 利用範囲
 
-## Limitations
+`Torus Edison` は Unity Editor 上で利用するエディタ拡張です。
 
-- this package is under active development
-- editor features described in the specification may not yet be fully implemented
-- no warranty is provided
+利用者は、同梱ライセンスに従う範囲で、以下を行えます。
 
-## Future Revision
+- 個人利用
+- 法人利用
+- 商用利用
+- 改変
+- 再配布
 
-Before public GitHub Release and BOOTH publication, this file should be replaced with the release-grade terms text defined by the project specification.
+## 作成した音声データの扱い
+
+`Torus Edison` を使って利用者自身が作成したプロジェクトデータや音声出力物については、原則として利用者自身の管理対象です。
+
+ただし、以下は利用者自身が確認してください。
+
+- 使用した外部素材の権利
+- 組み込み先プロジェクトの利用規約
+- 販売先プラットフォームの利用条件
+
+## 再配布時の注意
+
+ツール本体や改変版を再配布する場合は、同梱ライセンスの条件に従い、必要な著作権表示とライセンス表示を残してください。
+
+## サポートと保証
+
+`Torus Edison` は現状有姿で提供されます。
+
+以下について保証は行いません。
+
+- 特定用途への適合性
+- 利用環境固有の完全動作
+- データ消失が発生しないこと
+- 将来の機能追加や継続サポート
+
+利用により発生した損害、データ損失、制作停止、販売上の不利益について、作者は責任を負いません。
+
+## 現在の実装上の注意
+
+現バージョンでは、以下の点を理解したうえで利用してください。
+
+- Unity Editor 上での手動確認が必要な項目があります
+- 画面表示言語の自動切替はまだ未実装です
+- デバッグモードとログレベル切替はまだ未実装です
+- 人声生成、MP3 書き出し、オンライン連携は対象外です
+
+## 購入前確認について
+
+GitHub Release や BOOTH の説明から、本ファイルを購入前に確認できる状態にすることを前提としています。
+
+## 改定
+
+本ファイルは、実装状況や配布方針に応じて更新されることがあります。
