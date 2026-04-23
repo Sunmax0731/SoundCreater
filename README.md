@@ -22,6 +22,7 @@
 - タイムライン上でのノート作成、移動、リサイズ、複製、削除
 - note / track / project の Inspector 編集
 - `Render Preview / Play / Pause / Stop / Rewind / Loop` によるプレビュー再生
+- preview 波形表示
 - WAV 書き出し
 - Undo / Redo
 - 日本語 / 英語 / 中国語 UI
