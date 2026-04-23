@@ -139,6 +139,7 @@ namespace TorusEdison.Editor.Windows
             rootVisualElement.style.paddingBottom = 12;
             _workspaceTabButtons.Clear();
             _workspacePages.Clear();
+            _inspectorStateKey = string.Empty;
 
             rootVisualElement.Add(BuildToolbar());
             rootVisualElement.Add(BuildNavigationBar());
@@ -993,8 +994,9 @@ namespace TorusEdison.Editor.Windows
                 : string.Join(",", _selectedNoteIds.OrderBy(noteId => noteId, StringComparer.Ordinal));
             string nextStateKey = string.Format(
                 CultureInfo.InvariantCulture,
-                "{0}|{1}|{2}",
+                "{0}|{1}|{2}|{3}",
                 RuntimeHelpers.GetHashCode(project),
+                _displayLanguage,
                 _selectedTrackId,
                 selectionKey);
 
