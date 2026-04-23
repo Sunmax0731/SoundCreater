@@ -34,6 +34,8 @@ namespace TorusEdison.Editor.Windows
         private readonly GameAudioProjectConfigSerializer _projectConfigSerializer = new GameAudioProjectConfigSerializer();
         private readonly GameAudioWavExportService _wavExportService = new GameAudioWavExportService();
         private readonly HashSet<string> _selectedNoteIds = new HashSet<string>(StringComparer.Ordinal);
+        private readonly Dictionary<WorkspacePage, Button> _workspaceTabButtons = new Dictionary<WorkspacePage, Button>();
+        private readonly Dictionary<WorkspacePage, ScrollView> _workspacePages = new Dictionary<WorkspacePage, ScrollView>();
 
         private GameAudioCommonConfig _commonConfig;
         private GameAudioProjectConfig _projectConfig;
@@ -48,6 +50,7 @@ namespace TorusEdison.Editor.Windows
         private Vector2 _timelineScrollPosition;
         private string _selectedTrackId = string.Empty;
         private string _currentGridDivision = "1/16";
+        private WorkspacePage _currentWorkspacePage = WorkspacePage.File;
 
         private Label _nameValue;
         private Label _bpmValue;
@@ -108,25 +111,19 @@ namespace TorusEdison.Editor.Windows
             rootVisualElement.style.paddingRight = 12;
             rootVisualElement.style.paddingTop = 12;
             rootVisualElement.style.paddingBottom = 12;
+            _workspaceTabButtons.Clear();
+            _workspacePages.Clear();
 
-            var scrollView = new ScrollView();
-            scrollView.style.flexGrow = 1.0f;
-            rootVisualElement.Add(scrollView);
-
-            scrollView.Add(BuildToolbar());
-            scrollView.Add(BuildSummaryPanel());
-            scrollView.Add(BuildTimelinePanel());
-            scrollView.Add(BuildInspectorPanel());
-            scrollView.Add(BuildPreviewPanel());
-            scrollView.Add(BuildExportPanel());
-            scrollView.Add(BuildSamplePanel());
-            scrollView.Add(BuildInfoPanel());
+            rootVisualElement.Add(BuildToolbar());
+            rootVisualElement.Add(BuildNavigationBar());
+            rootVisualElement.Add(BuildWorkspacePages());
 
             rootVisualElement.RegisterCallback<KeyDownEvent>(OnRootKeyDown);
 
             _previewTicker?.Pause();
             _previewTicker = rootVisualElement.schedule.Execute(HandlePreviewTick).Every(50);
 
+            SetWorkspacePage(_currentWorkspacePage);
             RefreshView();
         }
 
@@ -143,32 +140,131 @@ namespace TorusEdison.Editor.Windows
             container.Add(CreateToolbarButton("Save", SaveProject));
             container.Add(CreateToolbarButton("Save As", SaveProjectAs));
 
-            _toolbarBpmField = new IntegerField
-            {
-                isDelayed = true
-            };
-            _toolbarBpmField.style.width = 84.0f;
-            _toolbarBpmField.style.marginRight = 8.0f;
-            _toolbarBpmField.style.marginBottom = 4.0f;
-            _toolbarBpmField.RegisterValueChangedCallback(OnToolbarBpmChanged);
-            container.Add(CreateToolbarValueGroup("BPM", _toolbarBpmField));
+            return container;
+        }
 
-            List<string> gridChoices = GameAudioTimelineGridUtility.SupportedDivisions.ToList();
-            int gridIndex = Math.Max(0, gridChoices.IndexOf(GameAudioTimelineGridUtility.NormalizeDivision(_currentGridDivision)));
-            _toolbarGridField = new PopupField<string>(gridChoices, gridIndex);
-            _toolbarGridField.style.width = 92.0f;
-            _toolbarGridField.style.marginRight = 8.0f;
-            _toolbarGridField.style.marginBottom = 4.0f;
-            _toolbarGridField.RegisterValueChangedCallback(OnToolbarGridChanged);
-            container.Add(CreateToolbarValueGroup("Grid", _toolbarGridField));
+        private VisualElement BuildNavigationBar()
+        {
+            var container = new VisualElement();
+            container.style.flexDirection = FlexDirection.Row;
+            container.style.flexWrap = Wrap.Wrap;
+            container.style.marginBottom = 12.0f;
 
-            _toolbarLoopToggle = new Toggle("Loop");
-            _toolbarLoopToggle.style.marginRight = 8.0f;
-            _toolbarLoopToggle.style.marginBottom = 4.0f;
-            _toolbarLoopToggle.RegisterValueChangedCallback(OnLoopPlaybackChanged);
-            container.Add(_toolbarLoopToggle);
+            AddWorkspaceTabButton(container, WorkspacePage.File, "File");
+            AddWorkspaceTabButton(container, WorkspacePage.Edit, "Edit");
+            AddWorkspaceTabButton(container, WorkspacePage.Preview, "Preview");
+            AddWorkspaceTabButton(container, WorkspacePage.Export, "Export");
+            AddWorkspaceTabButton(container, WorkspacePage.Settings, "Settings");
 
             return container;
+        }
+
+        private VisualElement BuildWorkspacePages()
+        {
+            var container = new VisualElement();
+            container.style.flexGrow = 1.0f;
+
+            container.Add(CreateWorkspacePage(WorkspacePage.File, page =>
+            {
+                page.Add(BuildPageHeader("File", "Project files, current status, and sample workflows."));
+                page.Add(BuildSummaryPanel());
+                page.Add(BuildSamplePanel());
+            }));
+
+            container.Add(CreateWorkspacePage(WorkspacePage.Edit, page =>
+            {
+                page.Add(BuildPageHeader("Edit", "Timeline editing and selection-scoped note or track changes."));
+                page.Add(BuildTimelinePanel());
+                page.Add(BuildSelectionInspectorPanel());
+            }));
+
+            container.Add(CreateWorkspacePage(WorkspacePage.Preview, page =>
+            {
+                page.Add(BuildPageHeader("Preview", "Render and audition the current project without leaving the editor."));
+                page.Add(BuildPreviewPanel());
+            }));
+
+            container.Add(CreateWorkspacePage(WorkspacePage.Export, page =>
+            {
+                page.Add(BuildPageHeader("Export", "Write WAV files and confirm the current output destination."));
+                page.Add(BuildExportPanel());
+            }));
+
+            container.Add(CreateWorkspacePage(WorkspacePage.Settings, page =>
+            {
+                page.Add(BuildPageHeader("Settings", "Project-level settings and foundation diagnostics."));
+                page.Add(BuildProjectInspectorPanel());
+                page.Add(BuildInfoPanel());
+            }));
+
+            return container;
+        }
+
+        private void AddWorkspaceTabButton(VisualElement parent, WorkspacePage page, string label)
+        {
+            var button = new Button(() => SetWorkspacePage(page))
+            {
+                text = label
+            };
+            button.style.minWidth = 104.0f;
+            button.style.marginRight = 8.0f;
+            button.style.marginBottom = 4.0f;
+            button.style.paddingLeft = 12.0f;
+            button.style.paddingRight = 12.0f;
+            _workspaceTabButtons[page] = button;
+            parent.Add(button);
+        }
+
+        private ScrollView CreateWorkspacePage(WorkspacePage page, Action<ScrollView> populate)
+        {
+            var scrollView = new ScrollView();
+            scrollView.style.flexGrow = 1.0f;
+            scrollView.style.display = DisplayStyle.None;
+            _workspacePages[page] = scrollView;
+            populate?.Invoke(scrollView);
+            return scrollView;
+        }
+
+        private static VisualElement BuildPageHeader(string title, string description)
+        {
+            var container = new VisualElement();
+            container.style.marginBottom = 12.0f;
+
+            var titleLabel = new Label(title);
+            titleLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+            titleLabel.style.fontSize = 15.0f;
+            titleLabel.style.marginBottom = 4.0f;
+            container.Add(titleLabel);
+
+            var descriptionLabel = new Label(description);
+            descriptionLabel.style.whiteSpace = WhiteSpace.Normal;
+            container.Add(descriptionLabel);
+
+            return container;
+        }
+
+        private void SetWorkspacePage(WorkspacePage page)
+        {
+            _currentWorkspacePage = page;
+
+            foreach (KeyValuePair<WorkspacePage, ScrollView> entry in _workspacePages)
+            {
+                entry.Value.style.display = entry.Key == page ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+
+            UpdateWorkspaceTabStyles();
+            _timelineSurface?.MarkDirtyRepaint();
+        }
+
+        private void UpdateWorkspaceTabStyles()
+        {
+            foreach (KeyValuePair<WorkspacePage, Button> entry in _workspaceTabButtons)
+            {
+                bool isActive = entry.Key == _currentWorkspacePage;
+                entry.Value.style.backgroundColor = isActive ? new Color(0.95f, 0.62f, 0.18f) : new Color(0.20f, 0.20f, 0.20f);
+                entry.Value.style.color = isActive ? new Color(0.07f, 0.07f, 0.07f) : new Color(0.92f, 0.92f, 0.92f);
+                entry.Value.style.unityFontStyleAndWeight = isActive ? FontStyle.Bold : FontStyle.Normal;
+            }
         }
 
         private VisualElement BuildSummaryPanel()
@@ -225,15 +321,24 @@ namespace TorusEdison.Editor.Windows
             return panel;
         }
 
-        private VisualElement BuildInspectorPanel()
+        private VisualElement BuildSelectionInspectorPanel()
         {
             var panel = CreateSectionPanel(new Color(0.14f, 0.14f, 0.14f));
 
-            panel.Add(CreateSectionTitle("Inspector"));
+            panel.Add(CreateSectionTitle("Selection Inspector"));
 
             _selectionInspectorContainer = new VisualElement();
             _selectionInspectorContainer.style.marginBottom = 12.0f;
             panel.Add(_selectionInspectorContainer);
+
+            return panel;
+        }
+
+        private VisualElement BuildProjectInspectorPanel()
+        {
+            var panel = CreateSectionPanel(new Color(0.14f, 0.14f, 0.14f));
+
+            panel.Add(CreateSectionTitle("Project Inspector"));
 
             _projectInspectorContainer = new VisualElement();
             panel.Add(_projectInspectorContainer);
@@ -353,12 +458,12 @@ namespace TorusEdison.Editor.Windows
             sampleLocationLabel.style.marginBottom = 4;
             panel.Add(sampleLocationLabel);
 
-            var editingLabel = new Label("Timeline editing and inspector editing are now available. Drag on an empty lane to create a note, drag a note to move it, and drag the left or right edge to resize it. Use the Inspector to adjust note, track, and project parameters.");
+            var editingLabel = new Label("Timeline editing and inspector editing are now available. Use the Edit tab to create notes, move them, resize them, and adjust note or track parameters without leaving the editor.");
             editingLabel.style.whiteSpace = WhiteSpace.Normal;
             editingLabel.style.marginBottom = 4;
             panel.Add(editingLabel);
 
-            var fieldsLabel = new Label("JSON is still useful for bulk edits, review, and version control, but the core editing flow now runs inside the editor window.");
+            var fieldsLabel = new Label("JSON is still useful for bulk edits, review, and version control, but file actions, preview, export, and settings are now separated into dedicated tabs.");
             fieldsLabel.style.whiteSpace = WhiteSpace.Normal;
             panel.Add(fieldsLabel);
 
@@ -371,7 +476,7 @@ namespace TorusEdison.Editor.Windows
             panel.style.flexDirection = FlexDirection.Column;
 
             panel.Add(CreateSectionTitle("Foundation Status"));
-            var currentScopeLabel = new Label("This window now wires up project creation, timeline note editing, note / track / project inspector editing, Undo / Redo, JSON save/load, offline preview rendering, editor playback, and WAV export.");
+            var currentScopeLabel = new Label("This window now separates file, edit, preview, export, and settings workflows while keeping the same project state, selection, playback, Undo / Redo, JSON save/load, and WAV export foundations.");
             currentScopeLabel.style.marginBottom = 4;
             panel.Add(currentScopeLabel);
 
@@ -2628,6 +2733,15 @@ namespace TorusEdison.Editor.Windows
             public GameAudioTrack Track { get; }
 
             public GameAudioNote Note { get; }
+        }
+
+        private enum WorkspacePage
+        {
+            File,
+            Edit,
+            Preview,
+            Export,
+            Settings
         }
 
         private sealed class TimelineDragState
