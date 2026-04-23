@@ -32,13 +32,17 @@ namespace TorusEdison.Editor.Windows
         private readonly GameAudioPreviewPlaybackService _previewPlaybackService = new GameAudioPreviewPlaybackService();
         private readonly GameAudioProjectSerializer _projectSerializer = new GameAudioProjectSerializer();
         private readonly GameAudioProjectConfigSerializer _projectConfigSerializer = new GameAudioProjectConfigSerializer();
+        private readonly GameAudioWavExportService _wavExportService = new GameAudioWavExportService();
         private readonly HashSet<string> _selectedNoteIds = new HashSet<string>(StringComparer.Ordinal);
 
+        private GameAudioCommonConfig _commonConfig;
+        private GameAudioProjectConfig _projectConfig;
         private GameAudioEditorSession _editorSession;
         private GameAudioProject _project;
         private string _projectPath = string.Empty;
         private bool _isDirty;
         private List<string> _loadWarnings = new List<string>();
+        private string _lastExportedPath = string.Empty;
         private IVisualElementScheduledItem _previewTicker;
         private TimelineDragState _timelineDragState;
         private Vector2 _timelineScrollPosition;
@@ -56,6 +60,12 @@ namespace TorusEdison.Editor.Windows
         private Label _previewBufferValue;
         private Label _previewCursorValue;
         private ProgressBar _previewProgressBar;
+        private TextField _commonExportDirectoryField;
+        private TextField _projectExportDirectoryField;
+        private Toggle _autoRefreshAfterExportToggle;
+        private Label _exportResolvedPathValue;
+        private Label _exportFileNameValue;
+        private Label _exportLastResultValue;
         private IntegerField _toolbarBpmField;
         private PopupField<string> _toolbarGridField;
         private Toggle _toolbarLoopToggle;
@@ -83,8 +93,9 @@ namespace TorusEdison.Editor.Windows
 
         private void CreateGUI()
         {
-            GameAudioCommonConfig commonConfig = _commonConfigSerializer.LoadOrDefault();
-            _currentGridDivision = GameAudioTimelineGridUtility.NormalizeDivision(commonConfig.DefaultGridDivision);
+            _commonConfig = _commonConfigSerializer.LoadOrDefault();
+            _projectConfig = _projectConfigSerializer.LoadOrDefault(GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
+            _currentGridDivision = GameAudioTimelineGridUtility.NormalizeDivision(_commonConfig.DefaultGridDivision);
 
             if (_project == null)
             {
@@ -106,8 +117,9 @@ namespace TorusEdison.Editor.Windows
             scrollView.Add(BuildSummaryPanel());
             scrollView.Add(BuildTimelinePanel());
             scrollView.Add(BuildInspectorPanel());
-            scrollView.Add(BuildSamplePanel());
             scrollView.Add(BuildPreviewPanel());
+            scrollView.Add(BuildExportPanel());
+            scrollView.Add(BuildSamplePanel());
             scrollView.Add(BuildInfoPanel());
 
             rootVisualElement.RegisterCallback<KeyDownEvent>(OnRootKeyDown);
@@ -279,6 +291,46 @@ namespace TorusEdison.Editor.Windows
             return panel;
         }
 
+        private VisualElement BuildExportPanel()
+        {
+            var panel = CreateSectionPanel(new Color(0.15f, 0.14f, 0.13f));
+
+            panel.Add(CreateSectionTitle("WAV Export"));
+
+            var actionRow = new VisualElement();
+            actionRow.style.flexDirection = FlexDirection.Row;
+            actionRow.style.alignItems = Align.Center;
+            actionRow.style.flexWrap = Wrap.Wrap;
+            actionRow.style.marginBottom = 8.0f;
+            actionRow.Add(CreateToolbarButton("Export WAV", ExportWav));
+            actionRow.Add(CreateToolbarButton("Open Export Folder", OpenExportFolder));
+            panel.Add(actionRow);
+
+            _exportResolvedPathValue = AddKeyValue(panel, "Resolved Folder");
+            _exportFileNameValue = AddKeyValue(panel, "Export File");
+            _exportLastResultValue = AddKeyValue(panel, "Last Export");
+
+            _commonExportDirectoryField = new TextField
+            {
+                isDelayed = true
+            };
+            _commonExportDirectoryField.RegisterValueChangedCallback(OnCommonExportDirectoryChanged);
+            panel.Add(CreateInspectorRow("Common Default Folder", _commonExportDirectoryField));
+
+            _projectExportDirectoryField = new TextField
+            {
+                isDelayed = true
+            };
+            _projectExportDirectoryField.RegisterValueChangedCallback(OnProjectExportDirectoryChanged);
+            panel.Add(CreateInspectorRow("Project Override Folder", _projectExportDirectoryField));
+
+            _autoRefreshAfterExportToggle = new Toggle();
+            _autoRefreshAfterExportToggle.RegisterValueChangedCallback(OnAutoRefreshAfterExportChanged);
+            panel.Add(CreateInspectorRow("Auto Refresh Assets", _autoRefreshAfterExportToggle));
+
+            return panel;
+        }
+
         private VisualElement BuildSamplePanel()
         {
             var panel = CreateSectionPanel(new Color(0.15f, 0.15f, 0.15f));
@@ -319,11 +371,11 @@ namespace TorusEdison.Editor.Windows
             panel.style.flexDirection = FlexDirection.Column;
 
             panel.Add(CreateSectionTitle("Foundation Status"));
-            var currentScopeLabel = new Label("This window now wires up project creation, timeline note editing, note / track / project inspector editing, Undo / Redo, JSON save/load, offline preview rendering, and editor playback.");
+            var currentScopeLabel = new Label("This window now wires up project creation, timeline note editing, note / track / project inspector editing, Undo / Redo, JSON save/load, offline preview rendering, editor playback, and WAV export.");
             currentScopeLabel.style.marginBottom = 4;
             panel.Add(currentScopeLabel);
 
-            var nextScopeLabel = new Label("WAV export, release validation, and distribution packaging are the next layers to connect.");
+            var nextScopeLabel = new Label("Release validation, documentation sync, and distribution packaging are the next layers to connect.");
             nextScopeLabel.style.marginBottom = 8;
             panel.Add(nextScopeLabel);
 
@@ -1274,12 +1326,138 @@ namespace TorusEdison.Editor.Windows
 
         private GameAudioProject CreateConfiguredProject()
         {
-            GameAudioCommonConfig commonConfig = _commonConfigSerializer.LoadOrDefault();
-            GameAudioProjectConfig projectConfig = _projectConfigSerializer.LoadOrDefault();
-            int sampleRate = GameAudioConfigResolver.ResolveSampleRate(commonConfig, projectConfig);
-            GameAudioChannelMode channelMode = GameAudioConfigResolver.ResolveChannelMode(commonConfig, projectConfig);
-            _currentGridDivision = GameAudioTimelineGridUtility.NormalizeDivision(commonConfig.DefaultGridDivision);
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            _projectConfig ??= _projectConfigSerializer.LoadOrDefault(GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
+            int sampleRate = GameAudioConfigResolver.ResolveSampleRate(_commonConfig, _projectConfig);
+            GameAudioChannelMode channelMode = GameAudioConfigResolver.ResolveChannelMode(_commonConfig, _projectConfig);
+            _currentGridDivision = GameAudioTimelineGridUtility.NormalizeDivision(_commonConfig.DefaultGridDivision);
             return GameAudioProjectFactory.CreateDefaultProject(sampleRate, channelMode);
+        }
+
+        private string GetResolvedExportDirectory()
+        {
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            _projectConfig ??= _projectConfigSerializer.LoadOrDefault(GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
+            return GameAudioConfigResolver.ResolveExportDirectory(_commonConfig, _projectConfig, GetProjectRootPath());
+        }
+
+        private void SaveCommonConfig()
+        {
+            _commonConfigSerializer.Save(_commonConfig ?? new GameAudioCommonConfig());
+        }
+
+        private void SaveProjectConfig()
+        {
+            _projectConfigSerializer.Save(
+                _projectConfig ?? new GameAudioProjectConfig(),
+                GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
+        }
+
+        private void OnCommonExportDirectoryChanged(ChangeEvent<string> evt)
+        {
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            string nextValue = evt.newValue?.Trim() ?? string.Empty;
+            string normalizedValue = string.IsNullOrWhiteSpace(nextValue) ? "Exports/Audio" : nextValue;
+            if (string.Equals(_commonConfig.DefaultExportDirectory, normalizedValue, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            try
+            {
+                _commonConfig.DefaultExportDirectory = normalizedValue;
+                SaveCommonConfig();
+                RefreshView();
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception);
+            }
+        }
+
+        private void OnProjectExportDirectoryChanged(ChangeEvent<string> evt)
+        {
+            _projectConfig ??= _projectConfigSerializer.LoadOrDefault(GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
+            string nextValue = evt.newValue?.Trim() ?? string.Empty;
+            if (string.Equals(_projectConfig.ExportDirectory, nextValue, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            try
+            {
+                _projectConfig.ExportDirectory = nextValue;
+                SaveProjectConfig();
+                RefreshView();
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception);
+            }
+        }
+
+        private void OnAutoRefreshAfterExportChanged(ChangeEvent<bool> evt)
+        {
+            _projectConfig ??= _projectConfigSerializer.LoadOrDefault(GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
+            if (_projectConfig.AutoRefreshAfterExport == evt.newValue)
+            {
+                return;
+            }
+
+            try
+            {
+                _projectConfig.AutoRefreshAfterExport = evt.newValue;
+                SaveProjectConfig();
+                RefreshView();
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception);
+            }
+        }
+
+        private void ExportWav()
+        {
+            GameAudioProject project = CurrentProject;
+            if (project == null)
+            {
+                return;
+            }
+
+            try
+            {
+                string exportDirectory = GetResolvedExportDirectory();
+                string exportPath = _wavExportService.Export(project, exportDirectory, project.Name);
+                _lastExportedPath = exportPath;
+
+                bool shouldRefresh = (_projectConfig?.AutoRefreshAfterExport ?? true)
+                    && GameAudioExportUtility.ShouldRefreshAssetDatabase(exportPath, GetProjectRootPath());
+                if (shouldRefresh)
+                {
+                    AssetDatabase.Refresh();
+                }
+
+                ShowNotification(new GUIContent(shouldRefresh ? "WAV exported and assets refreshed." : "WAV exported."));
+                RefreshView();
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception);
+            }
+        }
+
+        private void OpenExportFolder()
+        {
+            try
+            {
+                string exportDirectory = GetResolvedExportDirectory();
+                Directory.CreateDirectory(exportDirectory);
+                EditorUtility.RevealInFinder(exportDirectory);
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception);
+            }
         }
 
         private void RenderPreview()
@@ -1557,10 +1735,12 @@ namespace TorusEdison.Editor.Windows
             _projectPath = path ?? string.Empty;
             _isDirty = isDirty;
             _loadWarnings = warnings == null ? new List<string>() : new List<string>(warnings);
-            _editorSession = new GameAudioEditorSession(_project, _commonConfigSerializer.LoadOrDefault().UndoHistoryLimit);
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            _editorSession = new GameAudioEditorSession(_project, _commonConfig.UndoHistoryLimit);
             _selectedNoteIds.Clear();
             _selectedTrackId = _project.Tracks.FirstOrDefault()?.Id ?? string.Empty;
             _inspectorStateKey = string.Empty;
+            _lastExportedPath = string.Empty;
             CancelTimelineInteraction();
             _timelineScrollPosition = Vector2.zero;
             ResetPreviewState();
@@ -2280,6 +2460,20 @@ namespace TorusEdison.Editor.Windows
             _toolbarGridField?.SetValueWithoutNotify(GameAudioTimelineGridUtility.NormalizeDivision(_currentGridDivision));
             _toolbarLoopToggle?.SetValueWithoutNotify(project.LoopPlayback);
             _loopToggle.SetValueWithoutNotify(project.LoopPlayback);
+            if (_commonExportDirectoryField != null)
+            {
+                _commonExportDirectoryField.SetValueWithoutNotify(_commonConfig?.DefaultExportDirectory ?? "Exports/Audio");
+            }
+
+            if (_projectExportDirectoryField != null)
+            {
+                _projectExportDirectoryField.SetValueWithoutNotify(_projectConfig?.ExportDirectory ?? string.Empty);
+            }
+
+            _autoRefreshAfterExportToggle?.SetValueWithoutNotify(_projectConfig?.AutoRefreshAfterExport ?? true);
+            _exportResolvedPathValue.text = GetResolvedExportDirectory();
+            _exportFileNameValue.text = GameAudioExportUtility.NormalizeWaveFileName(project.Name);
+            _exportLastResultValue.text = string.IsNullOrWhiteSpace(_lastExportedPath) ? "(not exported)" : _lastExportedPath;
 
             if (_undoButton != null)
             {
