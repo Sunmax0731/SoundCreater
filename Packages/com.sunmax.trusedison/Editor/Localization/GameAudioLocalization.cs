@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using TorusEdison.Editor.Domain;
+using TorusEdison.Editor.Utilities;
 using UnityEditor;
 using UnityEngine;
 
@@ -24,6 +25,10 @@ namespace TorusEdison.Editor.Localization
             ["language.japanese"] = "Japanese",
             ["language.english"] = "English",
             ["language.chinese"] = "Chinese",
+            ["logLevel.error"] = "Error",
+            ["logLevel.warning"] = "Warning",
+            ["logLevel.info"] = "Info",
+            ["logLevel.verbose"] = "Verbose",
             ["audio.mono"] = "Mono",
             ["audio.stereo"] = "Stereo",
             ["channel.mono"] = "Mono",
@@ -123,6 +128,9 @@ namespace TorusEdison.Editor.Localization
             ["inspector.toolSettings"] = "ツール設定",
             ["inspector.language"] = "表示言語",
             ["inspector.language.help"] = "自動は、取得できる場合は現在の Unity Editor の言語に追従します。上書き設定はサポート時やスクリーンショットの統一に便利です。",
+            ["inspector.debugMode"] = "デバッグモード",
+            ["inspector.logLevel"] = "ログレベル",
+            ["inspector.diagnostics.help"] = "有効にすると、Torus Edison は Unity Console へ診断ログを出力します。エンドユーザ調査時は必要に応じてログレベルを上げてください。",
             ["inspector.selectTrackOrNote"] = "編集を始めるには、タイムラインでトラックヘッダーまたはノートを選択してください。",
             ["inspector.note.singleSummary"] = "{1} 上のノート {0} を編集中です。",
             ["inspector.note.multiSummary"] = "{1} トラックにまたがる {0} 個のノートを編集中です。変更はすべての選択ノートに適用されます。",
@@ -221,6 +229,10 @@ namespace TorusEdison.Editor.Localization
             ["language.japanese"] = "日语",
             ["language.english"] = "英语",
             ["language.chinese"] = "中文",
+            ["logLevel.error"] = "错误",
+            ["logLevel.warning"] = "警告",
+            ["logLevel.info"] = "信息",
+            ["logLevel.verbose"] = "详细",
             ["audio.mono"] = "单声道",
             ["audio.stereo"] = "立体声",
             ["channel.mono"] = "单声道",
@@ -302,6 +314,9 @@ namespace TorusEdison.Editor.Localization
             ["inspector.toolSettings"] = "工具设置",
             ["inspector.language"] = "显示语言",
             ["inspector.language.help"] = "自动模式会在可用时跟随当前 Unity Editor 语言。覆盖模式适合客服支持和统一截图语言。",
+            ["inspector.debugMode"] = "调试模式",
+            ["inspector.logLevel"] = "日志级别",
+            ["inspector.diagnostics.help"] = "启用后，Torus Edison 会向 Unity Console 输出诊断日志。与终端用户一起排查时，可按需提高日志级别。",
             ["inspector.selectTrackOrNote"] = "请先在时间线中选择轨道标题或音符，再开始编辑。",
             ["inspector.note.singleSummary"] = "正在编辑 {1} 上的音符 {0}。",
             ["inspector.note.multiSummary"] = "正在编辑跨 {1} 条轨道的 {0} 个音符。修改会应用到所有已选音符。",
@@ -473,6 +488,19 @@ namespace TorusEdison.Editor.Localization
                 });
         }
 
+        public static string GetDiagnosticLogLevelLabel(GameAudioDisplayLanguage language, GameAudioDiagnosticLogLevel logLevel)
+        {
+            return Get(
+                language,
+                logLevel switch
+                {
+                    GameAudioDiagnosticLogLevel.Error => "logLevel.error",
+                    GameAudioDiagnosticLogLevel.Warning => "logLevel.warning",
+                    GameAudioDiagnosticLogLevel.Verbose => "logLevel.verbose",
+                    _ => "logLevel.info"
+                });
+        }
+
         public static string GetChannelModeLabel(GameAudioDisplayLanguage language, GameAudioChannelMode channelMode)
         {
             return Get(
@@ -511,7 +539,7 @@ namespace TorusEdison.Editor.Localization
             {
                 Type localizationDatabaseType = typeof(EditorWindow).Assembly.GetType("UnityEditor.LocalizationDatabase");
                 PropertyInfo enabledProperty = localizationDatabaseType?.GetProperty("enableEditorLocalization", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-                bool isLocalizationEnabled = enabledProperty?.GetValue(null) as bool? ?? false;
+                bool isLocalizationEnabled = enabledProperty?.GetValue(null) is bool enabled && enabled;
                 if (!isLocalizationEnabled)
                 {
                     return UnityEngine.Application.systemLanguage;

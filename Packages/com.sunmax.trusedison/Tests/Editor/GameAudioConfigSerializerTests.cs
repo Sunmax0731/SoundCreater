@@ -25,7 +25,9 @@ namespace TorusEdison.Editor.Tests
                 RememberLastProject = false,
                 DefaultGridDivision = "1/8",
                 UndoHistoryLimit = 240,
-                DisplayLanguage = GameAudioLanguageMode.Chinese
+                DisplayLanguage = GameAudioLanguageMode.Chinese,
+                EnableDiagnosticLogging = true,
+                DiagnosticLogLevel = GameAudioDiagnosticLogLevel.Verbose
             };
 
             string json = serializer.Serialize(config);
@@ -39,6 +41,8 @@ namespace TorusEdison.Editor.Tests
             Assert.That(result.DefaultGridDivision, Is.EqualTo("1/8"));
             Assert.That(result.UndoHistoryLimit, Is.EqualTo(240));
             Assert.That(result.DisplayLanguage, Is.EqualTo(GameAudioLanguageMode.Chinese));
+            Assert.That(result.EnableDiagnosticLogging, Is.True);
+            Assert.That(result.DiagnosticLogLevel, Is.EqualTo(GameAudioDiagnosticLogLevel.Verbose));
         }
 
         [Test]
@@ -130,6 +134,8 @@ namespace TorusEdison.Editor.Tests
                 Assert.That(result.DefaultChannelMode, Is.EqualTo(GameAudioChannelMode.Stereo));
                 Assert.That(result.UndoHistoryLimit, Is.EqualTo(100));
                 Assert.That(result.DisplayLanguage, Is.EqualTo(GameAudioLanguageMode.Auto));
+                Assert.That(result.EnableDiagnosticLogging, Is.False);
+                Assert.That(result.DiagnosticLogLevel, Is.EqualTo(GameAudioDiagnosticLogLevel.Info));
             }
             finally
             {

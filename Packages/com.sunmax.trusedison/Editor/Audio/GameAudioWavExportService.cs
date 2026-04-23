@@ -28,6 +28,7 @@ namespace TorusEdison.Editor.Audio
             GameAudioRenderResult renderResult = _renderer.Render(project);
             byte[] wavBytes = GameAudioWavEncoder.EncodePcm16(renderResult.Samples, renderResult.SampleRate, renderResult.ChannelCount);
             File.WriteAllBytes(filePath, wavBytes);
+            GameAudioDiagnosticLogger.Verbose("Export", $"Encoded {wavBytes.Length} bytes for {projectName}.");
             return filePath;
         }
     }
