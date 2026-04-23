@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using TorusEdison.Editor.Application;
 using TorusEdison.Editor.Audio;
 using TorusEdison.Editor.Commands;
@@ -17,6 +19,7 @@ namespace TorusEdison.Editor.Windows
 {
     public sealed class GameAudioToolWindow : EditorWindow
     {
+        private const float InspectorLabelWidth = 164.0f;
         private const float TimelineHeaderWidth = 168.0f;
         private const float TimelineRulerHeight = 28.0f;
         private const float TimelineRowHeight = 42.0f;
@@ -53,13 +56,19 @@ namespace TorusEdison.Editor.Windows
         private Label _previewBufferValue;
         private Label _previewCursorValue;
         private ProgressBar _previewProgressBar;
+        private IntegerField _toolbarBpmField;
+        private PopupField<string> _toolbarGridField;
+        private Toggle _toolbarLoopToggle;
         private Toggle _loopToggle;
         private HelpBox _previewHelpBox;
         private Button _undoButton;
         private Button _redoButton;
         private Button _gridButton;
+        private VisualElement _selectionInspectorContainer;
+        private VisualElement _projectInspectorContainer;
         private Label _timelineHintValue;
         private IMGUIContainer _timelineSurface;
+        private string _inspectorStateKey = string.Empty;
 
         [MenuItem("Tools/Torus Edison/Open Editor")]
         public static void OpenWindow()
@@ -96,6 +105,7 @@ namespace TorusEdison.Editor.Windows
             scrollView.Add(BuildToolbar());
             scrollView.Add(BuildSummaryPanel());
             scrollView.Add(BuildTimelinePanel());
+            scrollView.Add(BuildInspectorPanel());
             scrollView.Add(BuildSamplePanel());
             scrollView.Add(BuildPreviewPanel());
             scrollView.Add(BuildInfoPanel());
@@ -112,6 +122,7 @@ namespace TorusEdison.Editor.Windows
         {
             var container = new VisualElement();
             container.style.flexDirection = FlexDirection.Row;
+            container.style.alignItems = Align.Center;
             container.style.flexWrap = Wrap.Wrap;
             container.style.marginBottom = 12;
 
@@ -119,6 +130,31 @@ namespace TorusEdison.Editor.Windows
             container.Add(CreateToolbarButton("Open", OpenProject));
             container.Add(CreateToolbarButton("Save", SaveProject));
             container.Add(CreateToolbarButton("Save As", SaveProjectAs));
+
+            _toolbarBpmField = new IntegerField
+            {
+                isDelayed = true
+            };
+            _toolbarBpmField.style.width = 84.0f;
+            _toolbarBpmField.style.marginRight = 8.0f;
+            _toolbarBpmField.style.marginBottom = 4.0f;
+            _toolbarBpmField.RegisterValueChangedCallback(OnToolbarBpmChanged);
+            container.Add(CreateToolbarValueGroup("BPM", _toolbarBpmField));
+
+            List<string> gridChoices = GameAudioTimelineGridUtility.SupportedDivisions.ToList();
+            int gridIndex = Math.Max(0, gridChoices.IndexOf(GameAudioTimelineGridUtility.NormalizeDivision(_currentGridDivision)));
+            _toolbarGridField = new PopupField<string>(gridChoices, gridIndex);
+            _toolbarGridField.style.width = 92.0f;
+            _toolbarGridField.style.marginRight = 8.0f;
+            _toolbarGridField.style.marginBottom = 4.0f;
+            _toolbarGridField.RegisterValueChangedCallback(OnToolbarGridChanged);
+            container.Add(CreateToolbarValueGroup("Grid", _toolbarGridField));
+
+            _toolbarLoopToggle = new Toggle("Loop");
+            _toolbarLoopToggle.style.marginRight = 8.0f;
+            _toolbarLoopToggle.style.marginBottom = 4.0f;
+            _toolbarLoopToggle.RegisterValueChangedCallback(OnLoopPlaybackChanged);
+            container.Add(_toolbarLoopToggle);
 
             return container;
         }
@@ -173,6 +209,22 @@ namespace TorusEdison.Editor.Windows
             _timelineSurface.style.marginBottom = 4;
             _timelineSurface.RegisterCallback<MouseDownEvent>(_ => _timelineSurface.Focus());
             panel.Add(_timelineSurface);
+
+            return panel;
+        }
+
+        private VisualElement BuildInspectorPanel()
+        {
+            var panel = CreateSectionPanel(new Color(0.14f, 0.14f, 0.14f));
+
+            panel.Add(CreateSectionTitle("Inspector"));
+
+            _selectionInspectorContainer = new VisualElement();
+            _selectionInspectorContainer.style.marginBottom = 12.0f;
+            panel.Add(_selectionInspectorContainer);
+
+            _projectInspectorContainer = new VisualElement();
+            panel.Add(_projectInspectorContainer);
 
             return panel;
         }
@@ -249,12 +301,12 @@ namespace TorusEdison.Editor.Windows
             sampleLocationLabel.style.marginBottom = 4;
             panel.Add(sampleLocationLabel);
 
-            var editingLabel = new Label("Timeline note editing is now available. Drag on an empty lane to create a note, drag a note to move it, and drag the left or right edge to resize it. Exact pitch and voice parameter editing still falls back to JSON until the Inspector UI is implemented.");
+            var editingLabel = new Label("Timeline editing and inspector editing are now available. Drag on an empty lane to create a note, drag a note to move it, and drag the left or right edge to resize it. Use the Inspector to adjust note, track, and project parameters.");
             editingLabel.style.whiteSpace = WhiteSpace.Normal;
             editingLabel.style.marginBottom = 4;
             panel.Add(editingLabel);
 
-            var fieldsLabel = new Label("Useful fields to edit in JSON for now: note MIDI / velocity / voiceOverride, track defaultVoice / pan / volume, project BPM / Total Bars / sampleRate / channelMode.");
+            var fieldsLabel = new Label("JSON is still useful for bulk edits, review, and version control, but the core editing flow now runs inside the editor window.");
             fieldsLabel.style.whiteSpace = WhiteSpace.Normal;
             panel.Add(fieldsLabel);
 
@@ -267,11 +319,11 @@ namespace TorusEdison.Editor.Windows
             panel.style.flexDirection = FlexDirection.Column;
 
             panel.Add(CreateSectionTitle("Foundation Status"));
-            var currentScopeLabel = new Label("This window now wires up project creation, timeline note editing, Undo / Redo, JSON save/load, offline preview rendering, and editor playback.");
+            var currentScopeLabel = new Label("This window now wires up project creation, timeline note editing, note / track / project inspector editing, Undo / Redo, JSON save/load, offline preview rendering, and editor playback.");
             currentScopeLabel.style.marginBottom = 4;
             panel.Add(currentScopeLabel);
 
-            var nextScopeLabel = new Label("Inspector editing, WAV export, and release packaging are the next layers to connect.");
+            var nextScopeLabel = new Label("WAV export, release validation, and distribution packaging are the next layers to connect.");
             nextScopeLabel.style.marginBottom = 8;
             panel.Add(nextScopeLabel);
 
@@ -349,6 +401,561 @@ namespace TorusEdison.Editor.Windows
             return label;
         }
 
+        private static VisualElement CreateToolbarValueGroup(string label, VisualElement field)
+        {
+            var container = new VisualElement();
+            container.style.flexDirection = FlexDirection.Row;
+            container.style.alignItems = Align.Center;
+            container.style.marginRight = 8.0f;
+            container.style.marginBottom = 4.0f;
+
+            var labelElement = new Label($"{label}:");
+            labelElement.style.minWidth = 40.0f;
+            labelElement.style.unityFontStyleAndWeight = FontStyle.Bold;
+            labelElement.style.marginRight = 4.0f;
+            container.Add(labelElement);
+            container.Add(field);
+            return container;
+        }
+
+        private static Label CreateInspectorGroupTitle(string text)
+        {
+            var label = new Label(text);
+            label.style.unityFontStyleAndWeight = FontStyle.Bold;
+            label.style.marginTop = 2.0f;
+            label.style.marginBottom = 6.0f;
+            return label;
+        }
+
+        private static VisualElement CreateInspectorRow(string labelText, VisualElement field)
+        {
+            var row = new VisualElement();
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.alignItems = Align.Center;
+            row.style.marginBottom = 4.0f;
+
+            var label = new Label(labelText);
+            label.style.minWidth = InspectorLabelWidth;
+            label.style.unityFontStyleAndWeight = FontStyle.Bold;
+            label.style.marginRight = 8.0f;
+            row.Add(label);
+
+            field.style.flexGrow = 1.0f;
+            row.Add(field);
+            return row;
+        }
+
+        private static Label CreateInspectorSummaryLabel(string text)
+        {
+            var label = new Label(text);
+            label.style.whiteSpace = WhiteSpace.Normal;
+            label.style.marginBottom = 6.0f;
+            return label;
+        }
+
+        private static HelpBox CreateInspectorHelpBox(string text, HelpBoxMessageType messageType)
+        {
+            var helpBox = new HelpBox(text, messageType);
+            helpBox.style.marginBottom = 6.0f;
+            return helpBox;
+        }
+
+        private void AddInspectorTextField(VisualElement parent, string label, string value, Action<string> onChanged)
+        {
+            var field = new TextField
+            {
+                isDelayed = true
+            };
+            field.SetValueWithoutNotify(value ?? string.Empty);
+            field.RegisterValueChangedCallback(evt => onChanged?.Invoke(evt.newValue));
+            parent.Add(CreateInspectorRow(label, field));
+        }
+
+        private void AddInspectorIntegerField(VisualElement parent, string label, int value, Action<int> onChanged)
+        {
+            var field = new IntegerField
+            {
+                isDelayed = true
+            };
+            field.SetValueWithoutNotify(value);
+            field.RegisterValueChangedCallback(evt => onChanged?.Invoke(evt.newValue));
+            parent.Add(CreateInspectorRow(label, field));
+        }
+
+        private void AddInspectorFloatField(VisualElement parent, string label, float value, Action<float> onChanged)
+        {
+            var field = new FloatField
+            {
+                isDelayed = true
+            };
+            field.SetValueWithoutNotify(value);
+            field.RegisterValueChangedCallback(evt =>
+            {
+                if (!IsFinite(evt.newValue))
+                {
+                    ShowInvalidNumberMessage(label);
+                    _inspectorStateKey = string.Empty;
+                    RefreshView();
+                    return;
+                }
+
+                onChanged?.Invoke(evt.newValue);
+            });
+            parent.Add(CreateInspectorRow(label, field));
+        }
+
+        private void AddInspectorToggleField(VisualElement parent, string label, bool value, Action<bool> onChanged)
+        {
+            var field = new Toggle();
+            field.SetValueWithoutNotify(value);
+            field.RegisterValueChangedCallback(evt => onChanged?.Invoke(evt.newValue));
+            parent.Add(CreateInspectorRow(label, field));
+        }
+
+        private void AddInspectorPopupField(VisualElement parent, string label, IEnumerable<string> options, string value, Action<string> onChanged)
+        {
+            List<string> choices = options.ToList();
+            int selectedIndex = Math.Max(0, choices.IndexOf(choices.Contains(value) ? value : choices[0]));
+            var field = new PopupField<string>(choices, selectedIndex);
+            field.RegisterValueChangedCallback(evt => onChanged?.Invoke(evt.newValue));
+            parent.Add(CreateInspectorRow(label, field));
+        }
+
+        private void RefreshInspectorPanel(GameAudioProject project)
+        {
+            if (project == null || _selectionInspectorContainer == null || _projectInspectorContainer == null)
+            {
+                return;
+            }
+
+            string selectionKey = _selectedNoteIds.Count == 0
+                ? string.Empty
+                : string.Join(",", _selectedNoteIds.OrderBy(noteId => noteId, StringComparer.Ordinal));
+            string nextStateKey = string.Format(
+                CultureInfo.InvariantCulture,
+                "{0}|{1}|{2}",
+                RuntimeHelpers.GetHashCode(project),
+                _selectedTrackId,
+                selectionKey);
+
+            if (string.Equals(_inspectorStateKey, nextStateKey, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _inspectorStateKey = nextStateKey;
+            RebuildInspectorPanel(project);
+        }
+
+        private void RebuildInspectorPanel(GameAudioProject project)
+        {
+            _selectionInspectorContainer.Clear();
+            _projectInspectorContainer.Clear();
+
+            _selectionInspectorContainer.Add(CreateInspectorGroupTitle("Selection"));
+
+            IReadOnlyList<SelectedNoteContext> selectedNotes = GetSelectedNoteContexts(project);
+            if (selectedNotes.Count > 0)
+            {
+                BuildNoteInspector(_selectionInspectorContainer, selectedNotes);
+            }
+            else
+            {
+                GameAudioTrack selectedTrack = FindTrackById(project, _selectedTrackId) ?? project.Tracks.FirstOrDefault();
+                if (selectedTrack == null)
+                {
+                    _selectionInspectorContainer.Add(CreateInspectorHelpBox("Select a track header or note in the timeline to start editing.", HelpBoxMessageType.Info));
+                }
+                else
+                {
+                    BuildTrackInspector(_selectionInspectorContainer, selectedTrack);
+                }
+            }
+
+            _projectInspectorContainer.Add(CreateInspectorGroupTitle("Project"));
+            BuildProjectInspector(_projectInspectorContainer, project);
+        }
+
+        private void BuildNoteInspector(VisualElement parent, IReadOnlyList<SelectedNoteContext> selectedNotes)
+        {
+            SelectedNoteContext primarySelection = selectedNotes[0];
+            int trackCount = selectedNotes
+                .Select(selection => selection.Track.Id)
+                .Distinct(StringComparer.Ordinal)
+                .Count();
+
+            string summaryText = selectedNotes.Count == 1
+                ? $"Editing note {primarySelection.Note.Id} on {primarySelection.Track.Name}."
+                : $"Editing {selectedNotes.Count} notes across {trackCount} tracks. Changes apply to every selected note.";
+            parent.Add(CreateInspectorSummaryLabel(summaryText));
+
+            AddInspectorFloatField(parent, "Start Beat", primarySelection.Note.StartBeat, requested =>
+            {
+                TryApplySelectedNotesChange(
+                    "Set Note Start",
+                    note => note.StartBeat = requested,
+                    actualNotes => NotifyClamp("Start Beat", requested, actualNotes[0].Note.StartBeat));
+            });
+
+            AddInspectorFloatField(parent, "Duration Beat", primarySelection.Note.DurationBeat, requested =>
+            {
+                TryApplySelectedNotesChange(
+                    "Set Note Duration",
+                    note => note.DurationBeat = requested,
+                    actualNotes => NotifyClamp("Duration Beat", requested, actualNotes[0].Note.DurationBeat));
+            });
+
+            AddInspectorIntegerField(parent, "MIDI Note", primarySelection.Note.MidiNote, requested =>
+            {
+                TryApplySelectedNotesChange(
+                    "Set Note Pitch",
+                    note => note.MidiNote = requested,
+                    actualNotes => NotifyClamp("MIDI Note", requested, actualNotes[0].Note.MidiNote));
+            });
+
+            AddInspectorFloatField(parent, "Velocity", primarySelection.Note.Velocity, requested =>
+            {
+                TryApplySelectedNotesChange(
+                    "Set Note Velocity",
+                    note => note.Velocity = requested,
+                    actualNotes => NotifyClamp("Velocity", requested, actualNotes[0].Note.Velocity));
+            });
+
+            bool allHaveOverride = selectedNotes.All(selection => selection.Note.VoiceOverride != null);
+            bool anyHaveOverride = selectedNotes.Any(selection => selection.Note.VoiceOverride != null);
+            AddInspectorToggleField(parent, "Use Voice Override", allHaveOverride, enabled =>
+            {
+                TryApplySelectedNotesChange(
+                    enabled ? "Enable Voice Override" : "Disable Voice Override",
+                    note => note.VoiceOverride = enabled ? note.VoiceOverride ?? GameAudioProjectFactory.CreateDefaultVoice() : null);
+            });
+
+            if (!allHaveOverride)
+            {
+                string message = anyHaveOverride
+                    ? "Some selected notes still use the track default voice. Enable voice override to apply explicit note-level voice settings to the full selection."
+                    : "Selected notes currently use each track's default voice. Enable voice override to edit per-note voice settings.";
+                parent.Add(CreateInspectorHelpBox(message, HelpBoxMessageType.Info));
+                return;
+            }
+
+            GameAudioVoiceSettings voice = primarySelection.Note.VoiceOverride ?? GameAudioProjectFactory.CreateDefaultVoice();
+            AddVoiceInspector(
+                parent,
+                "Voice Override",
+                voice,
+                (displayName, applyVoiceChange, afterApply) =>
+                {
+                    TryApplySelectedNotesChange(
+                        displayName,
+                        note =>
+                        {
+                            note.VoiceOverride = note.VoiceOverride ?? GameAudioProjectFactory.CreateDefaultVoice();
+                            applyVoiceChange(note.VoiceOverride);
+                        },
+                        actualNotes => afterApply?.Invoke(actualNotes[0].Note.VoiceOverride ?? GameAudioProjectFactory.CreateDefaultVoice()));
+                });
+        }
+
+        private void BuildTrackInspector(VisualElement parent, GameAudioTrack track)
+        {
+            parent.Add(CreateInspectorSummaryLabel($"Editing {track.Name}. Notes: {track.Notes.Count}."));
+
+            AddInspectorTextField(parent, "Track Name", track.Name, requested =>
+            {
+                if (string.Equals(track.Name, requested, StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                TryApplyTrackChange("Rename Track", track.Id, current => current.Name = requested);
+            });
+
+            AddInspectorToggleField(parent, "Mute", track.Mute, requested =>
+            {
+                if (track.Mute == requested)
+                {
+                    return;
+                }
+
+                TryApplyTrackChange("Toggle Mute", track.Id, current => current.Mute = requested);
+            });
+
+            AddInspectorToggleField(parent, "Solo", track.Solo, requested =>
+            {
+                if (track.Solo == requested)
+                {
+                    return;
+                }
+
+                TryApplyTrackChange("Toggle Solo", track.Id, current => current.Solo = requested);
+            });
+
+            AddInspectorFloatField(parent, "Volume (dB)", track.VolumeDb, requested =>
+            {
+                TryApplyTrackChange(
+                    "Set Track Volume",
+                    track.Id,
+                    current => current.VolumeDb = requested,
+                    actualTrack => NotifyClamp("Track Volume", requested, actualTrack.VolumeDb));
+            });
+
+            AddInspectorFloatField(parent, "Pan", track.Pan, requested =>
+            {
+                TryApplyTrackChange(
+                    "Set Track Pan",
+                    track.Id,
+                    current => current.Pan = requested,
+                    actualTrack => NotifyClamp("Track Pan", requested, actualTrack.Pan));
+            });
+
+            AddVoiceInspector(
+                parent,
+                "Default Voice",
+                track.DefaultVoice ?? GameAudioProjectFactory.CreateDefaultVoice(),
+                (displayName, applyVoiceChange, afterApply) =>
+                {
+                    TryApplyTrackChange(
+                        displayName,
+                        track.Id,
+                        current =>
+                        {
+                            current.DefaultVoice ??= GameAudioProjectFactory.CreateDefaultVoice();
+                            applyVoiceChange(current.DefaultVoice);
+                        },
+                        actualTrack => afterApply?.Invoke(actualTrack.DefaultVoice ?? GameAudioProjectFactory.CreateDefaultVoice()));
+                });
+        }
+
+        private void BuildProjectInspector(VisualElement parent, GameAudioProject project)
+        {
+            parent.Add(CreateInspectorSummaryLabel("Transport, output, and render settings for the current project."));
+
+            AddInspectorTextField(parent, "Project Name", project.Name, requested =>
+            {
+                if (string.Equals(project.Name, requested, StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                TryApplyProjectChange("Rename Project", current => current.Name = requested);
+            });
+
+            AddInspectorIntegerField(parent, "BPM", project.Bpm, requested =>
+            {
+                TryApplyProjectChange(
+                    "Set BPM",
+                    current => current.Bpm = requested,
+                    actualProject => NotifyClamp("BPM", requested, actualProject.Bpm));
+            });
+
+            AddInspectorPopupField(parent, "Time Signature", GetSupportedTimeSignatureOptions(), FormatTimeSignature(project.TimeSignature), requested =>
+            {
+                TryApplyProjectChange(
+                    "Set Time Signature",
+                    current => current.TimeSignature = ParseTimeSignature(requested));
+            });
+
+            AddInspectorIntegerField(parent, "Total Bars", project.TotalBars, requested =>
+            {
+                TryApplyProjectChange(
+                    "Set Total Bars",
+                    current => current.TotalBars = requested,
+                    actualProject => NotifyClamp("Total Bars", requested, actualProject.TotalBars));
+            });
+
+            AddInspectorPopupField(parent, "Sample Rate", GetSupportedSampleRateOptions(), FormatSampleRateOption(project.SampleRate), requested =>
+            {
+                TryApplyProjectChange(
+                    "Set Sample Rate",
+                    current => current.SampleRate = ParseSampleRateOption(requested));
+            });
+
+            AddInspectorPopupField(parent, "Channel Mode", GetSupportedChannelModeOptions(), project.ChannelMode.ToString(), requested =>
+            {
+                TryApplyProjectChange(
+                    "Set Channel Mode",
+                    current => current.ChannelMode = ParseChannelMode(requested));
+            });
+
+            AddInspectorFloatField(parent, "Master Gain (dB)", project.MasterGainDb, requested =>
+            {
+                TryApplyProjectChange(
+                    "Set Master Gain",
+                    current => current.MasterGainDb = requested,
+                    actualProject => NotifyClamp("Master Gain", requested, actualProject.MasterGainDb));
+            });
+        }
+
+        private void AddVoiceInspector(
+            VisualElement parent,
+            string header,
+            GameAudioVoiceSettings voice,
+            Action<string, Action<GameAudioVoiceSettings>, Action<GameAudioVoiceSettings>> applyVoiceChange)
+        {
+            var voiceFoldout = new Foldout
+            {
+                text = header,
+                value = true
+            };
+            voiceFoldout.style.marginTop = 6.0f;
+            voiceFoldout.style.marginBottom = 6.0f;
+            parent.Add(voiceFoldout);
+
+            AddInspectorPopupField(voiceFoldout, "Waveform", GetSupportedWaveformOptions(), voice.Waveform.ToString(), requested =>
+            {
+                applyVoiceChange("Set Waveform", current => current.Waveform = ParseWaveform(requested), null);
+            });
+
+            AddInspectorFloatField(voiceFoldout, "Pulse Width", voice.PulseWidth, requested =>
+            {
+                applyVoiceChange(
+                    "Set Pulse Width",
+                    current => current.PulseWidth = requested,
+                    actualVoice => NotifyClamp("Pulse Width", requested, actualVoice.PulseWidth));
+            });
+
+            AddInspectorToggleField(voiceFoldout, "Noise Enabled", voice.NoiseEnabled, requested =>
+            {
+                applyVoiceChange("Toggle Noise", current => current.NoiseEnabled = requested, null);
+            });
+
+            AddInspectorPopupField(voiceFoldout, "Noise Type", GetSupportedNoiseTypeOptions(), voice.NoiseType.ToString(), requested =>
+            {
+                applyVoiceChange("Set Noise Type", current => current.NoiseType = ParseNoiseType(requested), null);
+            });
+
+            AddInspectorFloatField(voiceFoldout, "Noise Mix", voice.NoiseMix, requested =>
+            {
+                applyVoiceChange(
+                    "Set Noise Mix",
+                    current => current.NoiseMix = requested,
+                    actualVoice => NotifyClamp("Noise Mix", requested, actualVoice.NoiseMix));
+            });
+
+            var envelopeFoldout = new Foldout
+            {
+                text = "Envelope",
+                value = false
+            };
+            voiceFoldout.Add(envelopeFoldout);
+
+            AddInspectorIntegerField(envelopeFoldout, "Attack (ms)", voice.Adsr.AttackMs, requested =>
+            {
+                applyVoiceChange(
+                    "Set Attack",
+                    current => current.Adsr.AttackMs = requested,
+                    actualVoice => NotifyClamp("Attack", requested, actualVoice.Adsr.AttackMs));
+            });
+
+            AddInspectorIntegerField(envelopeFoldout, "Decay (ms)", voice.Adsr.DecayMs, requested =>
+            {
+                applyVoiceChange(
+                    "Set Decay",
+                    current => current.Adsr.DecayMs = requested,
+                    actualVoice => NotifyClamp("Decay", requested, actualVoice.Adsr.DecayMs));
+            });
+
+            AddInspectorFloatField(envelopeFoldout, "Sustain", voice.Adsr.Sustain, requested =>
+            {
+                applyVoiceChange(
+                    "Set Sustain",
+                    current => current.Adsr.Sustain = requested,
+                    actualVoice => NotifyClamp("Sustain", requested, actualVoice.Adsr.Sustain));
+            });
+
+            AddInspectorIntegerField(envelopeFoldout, "Release (ms)", voice.Adsr.ReleaseMs, requested =>
+            {
+                applyVoiceChange(
+                    "Set Release",
+                    current => current.Adsr.ReleaseMs = requested,
+                    actualVoice => NotifyClamp("Release", requested, actualVoice.Adsr.ReleaseMs));
+            });
+
+            var effectFoldout = new Foldout
+            {
+                text = "Effect",
+                value = false
+            };
+            voiceFoldout.Add(effectFoldout);
+
+            AddInspectorFloatField(effectFoldout, "Volume (dB)", voice.Effect.VolumeDb, requested =>
+            {
+                applyVoiceChange(
+                    "Set Voice Volume",
+                    current => current.Effect.VolumeDb = requested,
+                    actualVoice => NotifyClamp("Voice Volume", requested, actualVoice.Effect.VolumeDb));
+            });
+
+            AddInspectorFloatField(effectFoldout, "Pan", voice.Effect.Pan, requested =>
+            {
+                applyVoiceChange(
+                    "Set Voice Pan",
+                    current => current.Effect.Pan = requested,
+                    actualVoice => NotifyClamp("Voice Pan", requested, actualVoice.Effect.Pan));
+            });
+
+            AddInspectorFloatField(effectFoldout, "Pitch (semitone)", voice.Effect.PitchSemitone, requested =>
+            {
+                applyVoiceChange(
+                    "Set Voice Pitch",
+                    current => current.Effect.PitchSemitone = requested,
+                    actualVoice => NotifyClamp("Voice Pitch", requested, actualVoice.Effect.PitchSemitone));
+            });
+
+            AddInspectorIntegerField(effectFoldout, "Fade In (ms)", voice.Effect.FadeInMs, requested =>
+            {
+                applyVoiceChange(
+                    "Set Fade In",
+                    current => current.Effect.FadeInMs = requested,
+                    actualVoice => NotifyClamp("Fade In", requested, actualVoice.Effect.FadeInMs));
+            });
+
+            AddInspectorIntegerField(effectFoldout, "Fade Out (ms)", voice.Effect.FadeOutMs, requested =>
+            {
+                applyVoiceChange(
+                    "Set Fade Out",
+                    current => current.Effect.FadeOutMs = requested,
+                    actualVoice => NotifyClamp("Fade Out", requested, actualVoice.Effect.FadeOutMs));
+            });
+
+            var delayFoldout = new Foldout
+            {
+                text = "Delay",
+                value = false
+            };
+            effectFoldout.Add(delayFoldout);
+
+            AddInspectorToggleField(delayFoldout, "Enabled", voice.Effect.Delay.Enabled, requested =>
+            {
+                applyVoiceChange("Toggle Delay", current => current.Effect.Delay.Enabled = requested, null);
+            });
+
+            AddInspectorIntegerField(delayFoldout, "Time (ms)", voice.Effect.Delay.TimeMs, requested =>
+            {
+                applyVoiceChange(
+                    "Set Delay Time",
+                    current => current.Effect.Delay.TimeMs = requested,
+                    actualVoice => NotifyClamp("Delay Time", requested, actualVoice.Effect.Delay.TimeMs));
+            });
+
+            AddInspectorFloatField(delayFoldout, "Feedback", voice.Effect.Delay.Feedback, requested =>
+            {
+                applyVoiceChange(
+                    "Set Delay Feedback",
+                    current => current.Effect.Delay.Feedback = requested,
+                    actualVoice => NotifyClamp("Delay Feedback", requested, actualVoice.Effect.Delay.Feedback));
+            });
+
+            AddInspectorFloatField(delayFoldout, "Mix", voice.Effect.Delay.Mix, requested =>
+            {
+                applyVoiceChange(
+                    "Set Delay Mix",
+                    current => current.Effect.Delay.Mix = requested,
+                    actualVoice => NotifyClamp("Delay Mix", requested, actualVoice.Effect.Delay.Mix));
+            });
+        }
+
         private void CreateNewProject()
         {
             if (!ConfirmDiscardIfDirty())
@@ -358,6 +965,220 @@ namespace TorusEdison.Editor.Windows
 
             BindProject(CreateConfiguredProject(), true, string.Empty, Array.Empty<string>());
             RefreshView();
+        }
+
+        private IReadOnlyList<SelectedNoteContext> GetSelectedNoteContexts(GameAudioProject project)
+        {
+            var selections = new List<SelectedNoteContext>();
+            if (project?.Tracks == null || _selectedNoteIds.Count == 0)
+            {
+                return selections;
+            }
+
+            foreach (GameAudioTrack track in project.Tracks)
+            {
+                foreach (GameAudioNote note in track.Notes)
+                {
+                    if (_selectedNoteIds.Contains(note.Id))
+                    {
+                        selections.Add(new SelectedNoteContext(track, note));
+                    }
+                }
+            }
+
+            return selections;
+        }
+
+        private static GameAudioTrack FindTrackById(GameAudioProject project, string trackId)
+        {
+            return project?.Tracks?.FirstOrDefault(track => string.Equals(track.Id, trackId, StringComparison.Ordinal));
+        }
+
+        private static IEnumerable<string> GetSupportedTimeSignatureOptions()
+        {
+            yield return "4/4";
+            yield return "3/4";
+            yield return "6/8";
+        }
+
+        private static IEnumerable<string> GetSupportedSampleRateOptions()
+        {
+            yield return FormatSampleRateOption(GameAudioToolInfo.DefaultSampleRate);
+            yield return FormatSampleRateOption(GameAudioToolInfo.AlternateSampleRate);
+        }
+
+        private static IEnumerable<string> GetSupportedChannelModeOptions()
+        {
+            yield return GameAudioChannelMode.Mono.ToString();
+            yield return GameAudioChannelMode.Stereo.ToString();
+        }
+
+        private static IEnumerable<string> GetSupportedWaveformOptions()
+        {
+            return Enum.GetNames(typeof(GameAudioWaveformType));
+        }
+
+        private static IEnumerable<string> GetSupportedNoiseTypeOptions()
+        {
+            return Enum.GetNames(typeof(GameAudioNoiseType));
+        }
+
+        private static string FormatTimeSignature(GameAudioTimeSignature timeSignature)
+        {
+            return $"{timeSignature?.Numerator ?? 4}/{timeSignature?.Denominator ?? 4}";
+        }
+
+        private static GameAudioTimeSignature ParseTimeSignature(string option)
+        {
+            return option switch
+            {
+                "3/4" => new GameAudioTimeSignature { Numerator = 3, Denominator = 4 },
+                "6/8" => new GameAudioTimeSignature { Numerator = 6, Denominator = 8 },
+                _ => new GameAudioTimeSignature { Numerator = 4, Denominator = 4 }
+            };
+        }
+
+        private static string FormatSampleRateOption(int sampleRate)
+        {
+            return string.Format(CultureInfo.InvariantCulture, "{0} Hz", sampleRate);
+        }
+
+        private static int ParseSampleRateOption(string option)
+        {
+            string digits = new string((option ?? string.Empty).Where(char.IsDigit).ToArray());
+            return int.TryParse(digits, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed)
+                ? parsed
+                : GameAudioToolInfo.DefaultSampleRate;
+        }
+
+        private static GameAudioChannelMode ParseChannelMode(string option)
+        {
+            return string.Equals(option, GameAudioChannelMode.Mono.ToString(), StringComparison.Ordinal)
+                ? GameAudioChannelMode.Mono
+                : GameAudioChannelMode.Stereo;
+        }
+
+        private static GameAudioWaveformType ParseWaveform(string option)
+        {
+            return Enum.TryParse(option, true, out GameAudioWaveformType parsed)
+                ? parsed
+                : GameAudioWaveformType.Square;
+        }
+
+        private static GameAudioNoiseType ParseNoiseType(string option)
+        {
+            return Enum.TryParse(option, true, out GameAudioNoiseType parsed)
+                ? parsed
+                : GameAudioNoiseType.White;
+        }
+
+        private static bool IsFinite(float value)
+        {
+            return !float.IsNaN(value) && !float.IsInfinity(value);
+        }
+
+        private void NotifyClamp(string fieldName, int requestedValue, int actualValue)
+        {
+            if (requestedValue != actualValue)
+            {
+                ShowNotification(new GUIContent($"{fieldName} clamped to {actualValue}."));
+            }
+        }
+
+        private void NotifyClamp(string fieldName, float requestedValue, float actualValue)
+        {
+            if (Math.Abs(requestedValue - actualValue) > 0.0001f)
+            {
+                ShowNotification(new GUIContent(string.Format(CultureInfo.InvariantCulture, "{0} clamped to {1:0.###}.", fieldName, actualValue)));
+            }
+        }
+
+        private void ShowInvalidNumberMessage(string fieldName)
+        {
+            ShowNotification(new GUIContent($"{fieldName} requires a finite number."));
+        }
+
+        private void ShowEditorException(Exception exception)
+        {
+            EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+        }
+
+        private void TryApplyProjectChange(string displayName, Action<GameAudioProject> applyChange, Action<GameAudioProject> afterApply = null)
+        {
+            GameAudioProject project = CurrentProject;
+            if (project == null)
+            {
+                return;
+            }
+
+            try
+            {
+                ApplyEditorCommand(
+                    GameAudioProjectCommandFactory.ChangeProject(project, displayName, applyChange),
+                    false,
+                    () => afterApply?.Invoke(CurrentProject));
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception);
+            }
+        }
+
+        private void TryApplyTrackChange(string displayName, string trackId, Action<GameAudioTrack> applyChange, Action<GameAudioTrack> afterApply = null)
+        {
+            GameAudioProject project = CurrentProject;
+            if (project == null || string.IsNullOrWhiteSpace(trackId))
+            {
+                return;
+            }
+
+            try
+            {
+                ApplyEditorCommand(
+                    GameAudioProjectCommandFactory.ChangeTracks(project, new[] { trackId }, displayName, applyChange),
+                    false,
+                    () =>
+                    {
+                        GameAudioTrack updatedTrack = FindTrackById(CurrentProject, trackId);
+                        if (updatedTrack != null)
+                        {
+                            afterApply?.Invoke(updatedTrack);
+                        }
+                    });
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception);
+            }
+        }
+
+        private void TryApplySelectedNotesChange(string displayName, Action<GameAudioNote> applyChange, Action<IReadOnlyList<SelectedNoteContext>> afterApply = null)
+        {
+            GameAudioProject project = CurrentProject;
+            if (project == null || _selectedNoteIds.Count == 0)
+            {
+                return;
+            }
+
+            string[] noteIds = _selectedNoteIds.ToArray();
+            try
+            {
+                ApplyEditorCommand(
+                    GameAudioProjectCommandFactory.ChangeNotes(project, noteIds, displayName, applyChange),
+                    false,
+                    () =>
+                    {
+                        IReadOnlyList<SelectedNoteContext> updatedNotes = GetSelectedNoteContexts(CurrentProject);
+                        if (updatedNotes.Count > 0)
+                        {
+                            afterApply?.Invoke(updatedNotes);
+                        }
+                    });
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception);
+            }
         }
 
         private void OpenProject()
@@ -523,8 +1344,27 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+                ShowEditorException(exception);
             }
+        }
+
+        private void OnToolbarBpmChanged(ChangeEvent<int> evt)
+        {
+            GameAudioProject project = CurrentProject;
+            if (project == null || project.Bpm == evt.newValue)
+            {
+                return;
+            }
+
+            TryApplyProjectChange(
+                "Set BPM",
+                current => current.Bpm = evt.newValue,
+                actualProject => NotifyClamp("BPM", evt.newValue, actualProject.Bpm));
+        }
+
+        private void OnToolbarGridChanged(ChangeEvent<string> evt)
+        {
+            SetGridDivision(evt.newValue);
         }
 
         private void HandlePreviewTick()
@@ -582,7 +1422,18 @@ namespace TorusEdison.Editor.Windows
             }
 
             int nextIndex = (currentIndex + 1) % divisions.Count;
-            _currentGridDivision = divisions[nextIndex];
+            SetGridDivision(divisions[nextIndex]);
+        }
+
+        private void SetGridDivision(string division)
+        {
+            string normalized = GameAudioTimelineGridUtility.NormalizeDivision(division);
+            if (string.Equals(_currentGridDivision, normalized, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _currentGridDivision = normalized;
             RefreshView();
         }
 
@@ -709,6 +1560,7 @@ namespace TorusEdison.Editor.Windows
             _editorSession = new GameAudioEditorSession(_project, _commonConfigSerializer.LoadOrDefault().UndoHistoryLimit);
             _selectedNoteIds.Clear();
             _selectedTrackId = _project.Tracks.FirstOrDefault()?.Id ?? string.Empty;
+            _inspectorStateKey = string.Empty;
             CancelTimelineInteraction();
             _timelineScrollPosition = Vector2.zero;
             ResetPreviewState();
@@ -1424,6 +2276,9 @@ namespace TorusEdison.Editor.Windows
             _tracksValue.text = project.Tracks.Count.ToString();
             _pathValue.text = string.IsNullOrWhiteSpace(_projectPath) ? "(unsaved)" : _projectPath;
             _statusValue.text = _isDirty ? "Unsaved changes" : "Saved";
+            _toolbarBpmField?.SetValueWithoutNotify(project.Bpm);
+            _toolbarGridField?.SetValueWithoutNotify(GameAudioTimelineGridUtility.NormalizeDivision(_currentGridDivision));
+            _toolbarLoopToggle?.SetValueWithoutNotify(project.LoopPlayback);
             _loopToggle.SetValueWithoutNotify(project.LoopPlayback);
 
             if (_undoButton != null)
@@ -1489,6 +2344,7 @@ namespace TorusEdison.Editor.Windows
                 _warningBox.style.display = DisplayStyle.None;
             }
 
+            RefreshInspectorPanel(project);
             _timelineSurface?.MarkDirtyRepaint();
             Repaint();
         }
@@ -1565,6 +2421,19 @@ namespace TorusEdison.Editor.Windows
             _previewTicker?.Pause();
             _previewTicker = null;
             _previewPlaybackService.Dispose();
+        }
+
+        private readonly struct SelectedNoteContext
+        {
+            public SelectedNoteContext(GameAudioTrack track, GameAudioNote note)
+            {
+                Track = track;
+                Note = note;
+            }
+
+            public GameAudioTrack Track { get; }
+
+            public GameAudioNote Note { get; }
         }
 
         private sealed class TimelineDragState
