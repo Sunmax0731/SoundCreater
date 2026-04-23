@@ -2,30 +2,32 @@
 
 Japanese version: [Manual.ja.md](Manual.ja.md)
 
+Related documents:
+
+- [TermsOfUse.md](TermsOfUse.md)
+- [ReleaseNotes.md](ReleaseNotes.md)
+- [ValidationChecklist.md](ValidationChecklist.md)
+
 ## Overview
 
-`Torus Edison` is a Unity Editor extension for authoring reusable game-audio project data.
+`Torus Edison` is a Unity Editor extension for creating, editing, previewing, saving, and exporting reusable game-audio project data.
 
 Current implementation scope:
 
-- open the editor from `Tools/Torus Edison/Open Editor`
-- create a new project shell
-- save and load `.gats.json` project files
-- render project data into deterministic offline audio buffers
-- preview those buffers in the Unity Editor with Play / Stop / Rewind / Loop transport controls
-- keep package samples and configuration foundations in place
-
-Not implemented yet in this package revision:
-
-- timeline note editing UI
+- file workflows through `New`, `Open`, `Save`, and `Save As`
+- `.gats.json` project persistence
+- timeline note editing
+- note, track, and project inspector editing
+- preview rendering and transport controls
 - WAV export
-- Undo / Redo command history
+- undo and redo
+- bundled sample projects for validation
 
-## Installation
+## Supported Environment
 
-1. Place this package under `Packages/com.sunmax.trusedison`.
-2. Open the Unity project.
-3. Wait for package import to complete.
+- Unity `6000.0` or newer
+- Unity Editor workflows on Windows
+- offline use
 
 ## Launch
 
@@ -33,45 +35,142 @@ Open the tool from:
 
 - `Tools/Torus Edison/Open Editor`
 
+## Workspace Pages
+
+The current editor window is split into five top tabs.
+
+### File
+
+Use this page for:
+
+- checking the current project path and basic status
+- creating a new project
+- opening or saving `.gats.json` files
+- creating local sample copies
+- loading bundled `Basic SE` and `Simple Loop` samples
+
+### Edit
+
+Use this page for:
+
+- creating notes on the timeline
+- moving notes across beats and tracks
+- resizing notes
+- duplicating and deleting selected notes
+- editing note, track, and project values from the inspector
+
+Current shortcuts:
+
+- `Ctrl+D` duplicate selected notes
+- `Delete` remove selected notes
+- `Ctrl+Z` undo
+- `Ctrl+Y` redo
+
+### Preview
+
+Use this page for preview playback.
+
+Available controls:
+
+- `Render Preview`
+- `Play`
+- `Pause`
+- `Stop`
+- `Rewind`
+- `Loop`
+
+Loop playback uses `Total Bars` as the loop length.
+
+### Export
+
+Use this page for WAV export.
+
+Available controls:
+
+- `Export WAV`
+- `Open Export Folder`
+- common default folder
+- project override folder
+- auto refresh toggle for `Assets/` exports
+
+### Settings
+
+Use this page for:
+
+- project-level values such as BPM, total bars, sample rate, and channel mode
+- current foundation diagnostics
+- validation warnings from loaded project data
+
 ## Save And Load
 
-- `New` creates a fresh project shell with one default track.
+- `New` creates a fresh project shell.
 - `Open` reads `.gats.json` project files and rejects broken schema or unsupported format versions.
 - `Save` writes the current project to disk.
 - `Save As` normalizes the selected path to the `.gats.json` session extension.
 
 The canonical session format is `.gats.json`.
 
+## Editing Notes
+
+Current editing support includes:
+
+- note creation by dragging on an empty lane
+- note move by dragging an existing note
+- note resize by dragging note edges
+- multi-selection aware note changes
+- inspector-driven edits for pitch, velocity, and related values
+- undo and redo for major edit operations
+
 ## Preview Playback
 
-- `Render Preview` builds the current project into an `AudioClip`-backed editor preview buffer.
-- `Play` starts preview playback from the beginning.
-- `Stop` stops playback and returns the cursor to the start.
-- `Rewind` resets the cursor without rebuilding the preview buffer.
-- `Loop` is stored on the project and uses `Total Bars` as the loop length while one-shot playback still includes rendered effect tails.
+Preview rendering builds an offline audio buffer from the current project and plays it back through the Unity Editor preview path.
 
-Config file behavior in the current foundation:
+Current implementation includes:
+
+- waveform and white-noise rendering
+- ADSR and delay support
+- track and project mixdown
+- play, pause, stop, rewind, and loop transport
+
+## WAV Export
+
+Current WAV export behavior:
+
+- exports 16-bit PCM `.wav`
+- supports `48000` and `44100` Hz
+- supports mono and stereo output
+- sanitizes file names
+- creates export folders if needed
+- refreshes `AssetDatabase` when exporting under `Assets/`
+
+## Configuration Files
+
+Current configuration files:
 
 - common settings: `%LocalAppData%/GameAudioTool/config.json`
 - project settings: `ProjectSettings/GameAudioToolSettings.json`
-- project settings override common defaults for sample rate, channel mode, and export directory
-- malformed config JSON falls back to built-in defaults so the editor can still open
+
+Project settings override common defaults for sample rate, channel mode, export directory, and auto-refresh behavior.
 
 ## Samples
 
-Included samples:
+Bundled samples:
 
 - `Samples~/BasicSE/basic-se.gats.json`
 - `Samples~/SimpleLoop/simple-loop.gats.json`
 
-These are intended for playback, export, and release-readiness checks.
-
-Sample notes and manual validation steps:
+Sample notes and validation steps:
 
 - [Samples~/README.md](../Samples~/README.md)
 - [ValidationChecklist.md](ValidationChecklist.md)
 
+## Known Limitations
+
+- live mouse interaction feel still needs real-editor confirmation
+- export behavior under `Assets/` should still be spot-checked in Unity
+- Japanese, English, and Chinese UI switching is not implemented yet
+- debug logging mode and log level switching are not implemented yet
+
 ## Current Notes
 
-This manual reflects the current package foundation, not the full MVP in the specification documents.
-As timeline, playback, export, and command systems are added, this manual should be expanded alongside the implementation.
+This manual reflects the current implementation in the repository. It is intended to stay aligned with the package rather than the original MVP planning state.
