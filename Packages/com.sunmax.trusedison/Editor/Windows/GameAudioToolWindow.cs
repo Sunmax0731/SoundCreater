@@ -3494,20 +3494,23 @@ namespace TorusEdison.Editor.Windows
             }
 
             _pendingUiRebuild = true;
+            EditorApplication.delayCall -= RebuildUiAfterDelay;
+            EditorApplication.delayCall += RebuildUiAfterDelay;
+        }
 
-            if (rootVisualElement != null)
+        private void RebuildUiAfterDelay()
+        {
+            EditorApplication.delayCall -= RebuildUiAfterDelay;
+
+            if (this == null)
             {
-                rootVisualElement.schedule.Execute(() =>
-                {
-                    _pendingUiRebuild = false;
-                    CreateGUI();
-                });
-
                 return;
             }
 
             _pendingUiRebuild = false;
             CreateGUI();
+            rootVisualElement?.Focus();
+            Repaint();
         }
 
         private void OnRootKeyDown(KeyDownEvent evt)
@@ -3700,6 +3703,7 @@ namespace TorusEdison.Editor.Windows
 
         private void OnDisable()
         {
+            EditorApplication.delayCall -= RebuildUiAfterDelay;
             _previewTicker?.Pause();
             _previewTicker = null;
             _previewPlaybackService.Dispose();
