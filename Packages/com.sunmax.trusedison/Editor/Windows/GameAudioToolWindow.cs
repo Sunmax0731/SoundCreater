@@ -1131,13 +1131,13 @@ namespace TorusEdison.Editor.Windows
                     current => current.TimeSignature = ParseTimeSignature(requested));
             });
 
-            AddInspectorIntegerSliderField(parent, T("inspector.project.totalBars", "Total Bars"), project.TotalBars, 1, 32, requested =>
+            AddInspectorIntegerSliderField(parent, T("inspector.project.totalBars", "Total Bars"), project.TotalBars, 1, GameAudioToolInfo.MaxTotalBars, requested =>
             {
                 TryApplyProjectChange(
                     "Set Total Bars",
                     current => current.TotalBars = requested,
                     actualProject => NotifyClamp("Total Bars", requested, actualProject.TotalBars));
-            }, value => value.ToString(CultureInfo.InvariantCulture));
+            }, value => string.Format(CultureInfo.InvariantCulture, "{0} bars", value));
 
             AddInspectorPopupField(parent, T("inspector.project.sampleRate", "Sample Rate"), GetSupportedSampleRateOptions(), FormatSampleRateOption(project.SampleRate), requested =>
             {

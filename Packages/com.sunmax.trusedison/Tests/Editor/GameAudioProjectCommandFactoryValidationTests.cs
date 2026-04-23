@@ -133,7 +133,7 @@ namespace TorusEdison.Editor.Tests
                 {
                     project.Name = " ";
                     project.Bpm = 0;
-                    project.TotalBars = 0;
+                    project.TotalBars = 999;
                     project.SampleRate = 12345;
                     project.ChannelMode = (GameAudioChannelMode)999;
                     project.MasterGainDb = 24.0f;
@@ -144,7 +144,7 @@ namespace TorusEdison.Editor.Tests
             GameAudioProject project = session.CurrentProject;
             Assert.That(project.Name, Is.EqualTo("New Audio Project"));
             Assert.That(project.Bpm, Is.EqualTo(1));
-            Assert.That(project.TotalBars, Is.EqualTo(1));
+            Assert.That(project.TotalBars, Is.EqualTo(GameAudioToolInfo.MaxTotalBars));
             Assert.That(project.SampleRate, Is.EqualTo(GameAudioToolInfo.DefaultSampleRate));
             Assert.That(project.ChannelMode, Is.EqualTo(GameAudioChannelMode.Stereo));
             Assert.That(project.MasterGainDb, Is.EqualTo(6.0f));

@@ -55,6 +55,7 @@ Use this page for:
 
 - preview transport and render controls while editing
 - rendered preview waveform display
+- project lengths up to `128 bars`
 - creating notes on the timeline
 - moving notes across beats and tracks
 - resizing notes

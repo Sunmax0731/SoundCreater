@@ -292,7 +292,7 @@ namespace TorusEdison.Editor.Application
             project.Id = EnsureId(project.Id, "proj");
             project.Name = string.IsNullOrWhiteSpace(project.Name) ? "New Audio Project" : project.Name.Trim();
             project.Bpm = Math.Max(1, project.Bpm);
-            project.TotalBars = Math.Max(1, project.TotalBars);
+            project.TotalBars = GameAudioValidationUtility.ClampInt(project.TotalBars, 1, GameAudioToolInfo.MaxTotalBars);
             project.SampleRate = GameAudioValidationUtility.IsSupportedSampleRate(project.SampleRate)
                 ? project.SampleRate
                 : GameAudioToolInfo.DefaultSampleRate;
