@@ -34,6 +34,7 @@
 次のメニューから起動します。
 
 - `Tools/Torus Edison/Open Editor`
+- `Tools/Torus Edison/Version & License`
 
 ## ワークスペース構成
 

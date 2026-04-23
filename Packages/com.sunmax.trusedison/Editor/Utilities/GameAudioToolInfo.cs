@@ -3,6 +3,8 @@ namespace TorusEdison.Editor.Utilities
     internal static class GameAudioToolInfo
     {
         public const string DisplayName = "Torus Edison";
+        public const string PackageIdentifier = "com.sunmax.trusedison";
+        public const string RepositoryUrl = "https://github.com/Sunmax0731/SoundCreater";
         public const string ToolVersion = "0.1.1";
         public const string SessionFileExtension = ".gats.json";
         public const int MaxTrackCount = 32;

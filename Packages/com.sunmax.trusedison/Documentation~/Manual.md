@@ -34,6 +34,7 @@ Current implementation scope:
 Open the tool from:
 
 - `Tools/Torus Edison/Open Editor`
+- `Tools/Torus Edison/Version & License`
 
 ## Workspace Pages
 
