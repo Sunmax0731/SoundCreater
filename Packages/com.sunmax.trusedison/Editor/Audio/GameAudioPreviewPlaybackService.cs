@@ -1,5 +1,6 @@
 using System;
 using TorusEdison.Editor.Domain;
+using TorusEdison.Editor.Utilities;
 using UnityEditor;
 using UnityEngine;
 
@@ -53,6 +54,7 @@ namespace TorusEdison.Editor.Audio
         public GameAudioPreviewState Prepare(GameAudioProject project)
         {
             EnsurePreview(project);
+            GameAudioDiagnosticLogger.Info("Preview", $"Prepared preview for {project?.Name ?? "(null)"}. Status={_statusText}");
             return State;
         }
 
@@ -84,11 +86,13 @@ namespace TorusEdison.Editor.Audio
                 _statusText = _loopPlayback
                     ? "Loop preview playing."
                     : "Preview playing.";
+                GameAudioDiagnosticLogger.Info("Preview", $"Playback started. Loop={_loopPlayback}; ResumeSeconds={resumeSeconds:0.###}");
             }
             catch (Exception exception)
             {
                 StopInternal(true, "Preview start failed.");
                 _errorText = exception.Message;
+                GameAudioDiagnosticLogger.Exception("Preview", exception, "Preview playback start failed");
             }
 
             return State;
@@ -112,6 +116,7 @@ namespace TorusEdison.Editor.Audio
 
             _playbackSeconds = CalculatePlaybackSeconds(Math.Max(0.0d, EditorApplication.timeSinceStartup - _playbackStartedAt));
             StopInternal(false, _loopPlayback ? "Loop preview paused." : "Preview paused.", true);
+            GameAudioDiagnosticLogger.Info("Preview", $"Playback paused at {_playbackSeconds:0.###} seconds.");
             return State;
         }
 
@@ -124,6 +129,7 @@ namespace TorusEdison.Editor.Audio
             }
 
             StopInternal(true, "Preview stopped.");
+            GameAudioDiagnosticLogger.Info("Preview", "Playback stopped.");
             return State;
         }
 
@@ -136,6 +142,7 @@ namespace TorusEdison.Editor.Audio
             }
 
             StopInternal(true, "Preview rewound.");
+            GameAudioDiagnosticLogger.Info("Preview", "Playback rewound.");
             return State;
         }
 
@@ -206,6 +213,7 @@ namespace TorusEdison.Editor.Audio
                         {
                             StopInternal(true, "Preview loop restart failed.");
                             _errorText = exception.Message;
+                            GameAudioDiagnosticLogger.Exception("Preview", exception, "Loop restart failed");
                             return true;
                         }
                     }
@@ -223,6 +231,7 @@ namespace TorusEdison.Editor.Audio
                 _isPlaying = false;
                 _isPaused = false;
                 _statusText = "Preview complete.";
+                GameAudioDiagnosticLogger.Info("Preview", "Playback completed.");
                 return true;
             }
 
@@ -283,6 +292,9 @@ namespace TorusEdison.Editor.Audio
                 : _renderResult.PeakAmplitude <= 0.0001f
                     ? "Preview ready (silent buffer)."
                     : "Preview ready.";
+            GameAudioDiagnosticLogger.Verbose(
+                "Preview",
+                $"Preview buffer ready. Frames={_renderResult.FrameCount}; ProjectFrames={_renderResult.ProjectFrameCount}; Channels={_renderResult.ChannelCount}; Peak={_renderResult.PeakAmplitude:0.000}");
         }
 
         private static double NormalizeLoopSeconds(double elapsedSeconds, double loopDurationSeconds)

@@ -25,8 +25,9 @@ namespace TorusEdison.Editor.Persistence
             {
                 return Deserialize(File.ReadAllText(resolvedPath, Utf8WithoutBom));
             }
-            catch (Exception)
+            catch (Exception exception)
             {
+                GameAudioDiagnosticLogger.Warning("Config", $"Common config fallback was applied for {resolvedPath}. {exception.Message}");
                 return new GameAudioCommonConfig();
             }
         }
@@ -70,7 +71,9 @@ namespace TorusEdison.Editor.Persistence
                     ? "1/16"
                     : config.DefaultGridDivision,
                 undoHistoryLimit = GameAudioValidationUtility.ClampInt(config.UndoHistoryLimit, 1, 1000),
-                displayLanguage = config.DisplayLanguage.ToString()
+                displayLanguage = config.DisplayLanguage.ToString(),
+                enableDiagnosticLogging = config.EnableDiagnosticLogging,
+                diagnosticLogLevel = config.DiagnosticLogLevel.ToString()
             };
 
             return JsonUtility.ToJson(dto, true) + "\n";
@@ -88,8 +91,9 @@ namespace TorusEdison.Editor.Persistence
             {
                 dto = JsonUtility.FromJson<GameAudioCommonConfigDto>(json);
             }
-            catch (Exception)
+            catch (Exception exception)
             {
+                GameAudioDiagnosticLogger.Warning("Config", $"Common config JSON could not be parsed. {exception.Message}");
                 return new GameAudioCommonConfig();
             }
 
@@ -117,7 +121,11 @@ namespace TorusEdison.Editor.Persistence
                 UndoHistoryLimit = GameAudioValidationUtility.ClampInt(dto.undoHistoryLimit <= 0 ? 100 : dto.undoHistoryLimit, 1, 1000),
                 DisplayLanguage = Enum.TryParse(dto.displayLanguage, true, out GameAudioLanguageMode displayLanguage)
                     ? displayLanguage
-                    : GameAudioLanguageMode.Auto
+                    : GameAudioLanguageMode.Auto,
+                EnableDiagnosticLogging = dto.enableDiagnosticLogging,
+                DiagnosticLogLevel = Enum.TryParse(dto.diagnosticLogLevel, true, out GameAudioDiagnosticLogLevel diagnosticLogLevel)
+                    ? diagnosticLogLevel
+                    : GameAudioDiagnosticLogLevel.Info
             };
         }
     }

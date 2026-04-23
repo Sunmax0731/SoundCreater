@@ -1,5 +1,6 @@
 using TorusEdison.Editor.Domain;
 using TorusEdison.Editor.Localization;
+using TorusEdison.Editor.Utilities;
 
 namespace TorusEdison.Editor.Config
 {
@@ -20,5 +21,9 @@ namespace TorusEdison.Editor.Config
         public int UndoHistoryLimit { get; set; } = 100;
 
         public GameAudioLanguageMode DisplayLanguage { get; set; } = GameAudioLanguageMode.Auto;
+
+        public bool EnableDiagnosticLogging { get; set; } = false;
+
+        public GameAudioDiagnosticLogLevel DiagnosticLogLevel { get; set; } = GameAudioDiagnosticLogLevel.Info;
     }
 }

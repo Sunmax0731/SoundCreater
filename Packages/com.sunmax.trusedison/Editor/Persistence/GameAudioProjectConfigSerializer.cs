@@ -24,8 +24,9 @@ namespace TorusEdison.Editor.Persistence
             {
                 return Deserialize(File.ReadAllText(resolvedPath, Utf8WithoutBom));
             }
-            catch (Exception)
+            catch (Exception exception)
             {
+                GameAudioDiagnosticLogger.Warning("Config", $"Project config fallback was applied for {resolvedPath}. {exception.Message}");
                 return new GameAudioProjectConfig();
             }
         }
@@ -77,8 +78,9 @@ namespace TorusEdison.Editor.Persistence
             {
                 dto = JsonUtility.FromJson<GameAudioProjectConfigDto>(json);
             }
-            catch (Exception)
+            catch (Exception exception)
             {
+                GameAudioDiagnosticLogger.Warning("Config", $"Project config JSON could not be parsed. {exception.Message}");
                 return new GameAudioProjectConfig();
             }
 

@@ -100,6 +100,7 @@ namespace TorusEdison.Editor.Windows
         {
             _commonConfig = _commonConfigSerializer.LoadOrDefault();
             _projectConfig = _projectConfigSerializer.LoadOrDefault(GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
+            GameAudioDiagnosticLogger.Configure(_commonConfig);
             _currentGridDivision = GameAudioTimelineGridUtility.NormalizeDivision(_commonConfig.DefaultGridDivision);
             _displayLanguage = GameAudioLocalization.ResolveLanguage(_commonConfig.DisplayLanguage);
 
@@ -998,6 +999,21 @@ namespace TorusEdison.Editor.Windows
             parent.Add(CreateInspectorHelpBox(
                 T("inspector.language.help", "Auto follows the current Unity Editor language when available. Override is useful for support and screenshot consistency."),
                 HelpBoxMessageType.Info));
+            AddInspectorToggleField(
+                parent,
+                T("inspector.debugMode", "Debug Mode"),
+                _commonConfig?.EnableDiagnosticLogging ?? false,
+                OnDiagnosticLoggingChanged);
+            AddInspectorPopupField(
+                parent,
+                T("inspector.logLevel", "Log Level"),
+                GetSupportedDiagnosticLogLevels(),
+                _commonConfig?.DiagnosticLogLevel ?? GameAudioDiagnosticLogLevel.Info,
+                option => GameAudioLocalization.GetDiagnosticLogLevelLabel(_displayLanguage, option),
+                OnDiagnosticLogLevelChanged);
+            parent.Add(CreateInspectorHelpBox(
+                T("inspector.diagnostics.help", "When enabled, Torus Edison writes diagnostic flow and failure logs to the Unity Console. Increase the level when troubleshooting with end users."),
+                HelpBoxMessageType.Info));
         }
 
         private void AddVoiceInspector(
@@ -1232,6 +1248,11 @@ namespace TorusEdison.Editor.Windows
             yield return FormatSampleRateOption(GameAudioToolInfo.AlternateSampleRate);
         }
 
+        private static IEnumerable<GameAudioDiagnosticLogLevel> GetSupportedDiagnosticLogLevels()
+        {
+            return (GameAudioDiagnosticLogLevel[])Enum.GetValues(typeof(GameAudioDiagnosticLogLevel));
+        }
+
         private static IEnumerable<GameAudioChannelMode> GetSupportedChannelModeOptions()
         {
             return (GameAudioChannelMode[])Enum.GetValues(typeof(GameAudioChannelMode));
@@ -1301,8 +1322,9 @@ namespace TorusEdison.Editor.Windows
             ShowNotification(new GUIContent(TF("notification.requiresFinite", "{0} requires a finite number.", fieldName)));
         }
 
-        private void ShowEditorException(Exception exception)
+        private void ShowEditorException(Exception exception, string area = "Window", string context = null)
         {
+            GameAudioDiagnosticLogger.Exception(area, exception, context);
             EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
         }
 
@@ -1323,7 +1345,7 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                ShowEditorException(exception);
+                ShowEditorException(exception, "Edit", $"Project change failed: {displayName}");
             }
         }
 
@@ -1351,7 +1373,7 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                ShowEditorException(exception);
+                ShowEditorException(exception, "Edit", $"Track change failed: {displayName}");
             }
         }
 
@@ -1380,7 +1402,7 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                ShowEditorException(exception);
+                ShowEditorException(exception, "Edit", $"Note change failed: {displayName}");
             }
         }
 
@@ -1441,12 +1463,13 @@ namespace TorusEdison.Editor.Windows
                 _projectSerializer.SaveToFile(resolvedPath, CurrentProject);
                 _projectPath = resolvedPath;
                 _isDirty = false;
+                GameAudioDiagnosticLogger.Info("Project", $"Saved project to {resolvedPath}.");
                 ShowNotification(new GUIContent(T("status.projectSaved", "Project saved.")));
                 RefreshView();
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
+                ShowEditorException(exception, "Project", $"Saving project failed: {targetPath}");
             }
         }
 
@@ -1517,8 +1540,44 @@ namespace TorusEdison.Editor.Windows
 
             _commonConfig.DisplayLanguage = nextLanguage;
             SaveCommonConfig();
+            GameAudioDiagnosticLogger.Configure(_commonConfig);
             _displayLanguage = GameAudioLocalization.ResolveLanguage(nextLanguage);
+            GameAudioDiagnosticLogger.Info("Settings", $"Display language changed to {nextLanguage}.");
             CreateGUI();
+        }
+
+        private void OnDiagnosticLoggingChanged(bool enabled)
+        {
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            if (_commonConfig.EnableDiagnosticLogging == enabled)
+            {
+                return;
+            }
+
+            _commonConfig.EnableDiagnosticLogging = enabled;
+            SaveCommonConfig();
+            GameAudioDiagnosticLogger.Configure(_commonConfig);
+            if (enabled)
+            {
+                GameAudioDiagnosticLogger.Info("Settings", $"Diagnostic logging enabled at {_commonConfig.DiagnosticLogLevel}.");
+            }
+
+            RefreshView();
+        }
+
+        private void OnDiagnosticLogLevelChanged(GameAudioDiagnosticLogLevel nextLogLevel)
+        {
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            if (_commonConfig.DiagnosticLogLevel == nextLogLevel)
+            {
+                return;
+            }
+
+            _commonConfig.DiagnosticLogLevel = nextLogLevel;
+            SaveCommonConfig();
+            GameAudioDiagnosticLogger.Configure(_commonConfig);
+            GameAudioDiagnosticLogger.Info("Settings", $"Diagnostic log level changed to {nextLogLevel}.");
+            RefreshView();
         }
 
         private void OnCommonExportDirectoryChanged(ChangeEvent<string> evt)
@@ -1535,11 +1594,13 @@ namespace TorusEdison.Editor.Windows
             {
                 _commonConfig.DefaultExportDirectory = normalizedValue;
                 SaveCommonConfig();
+                GameAudioDiagnosticLogger.Configure(_commonConfig);
+                GameAudioDiagnosticLogger.Verbose("Settings", $"Common export directory set to {normalizedValue}.");
                 RefreshView();
             }
             catch (Exception exception)
             {
-                ShowEditorException(exception);
+                ShowEditorException(exception, "Settings", "Saving common export directory failed");
             }
         }
 
@@ -1556,11 +1617,12 @@ namespace TorusEdison.Editor.Windows
             {
                 _projectConfig.ExportDirectory = nextValue;
                 SaveProjectConfig();
+                GameAudioDiagnosticLogger.Verbose("Settings", $"Project export directory set to {nextValue}.");
                 RefreshView();
             }
             catch (Exception exception)
             {
-                ShowEditorException(exception);
+                ShowEditorException(exception, "Settings", "Saving project export directory failed");
             }
         }
 
@@ -1576,11 +1638,12 @@ namespace TorusEdison.Editor.Windows
             {
                 _projectConfig.AutoRefreshAfterExport = evt.newValue;
                 SaveProjectConfig();
+                GameAudioDiagnosticLogger.Verbose("Settings", $"Auto refresh after export set to {evt.newValue}.");
                 RefreshView();
             }
             catch (Exception exception)
             {
-                ShowEditorException(exception);
+                ShowEditorException(exception, "Settings", "Saving auto refresh setting failed");
             }
         }
 
@@ -1605,6 +1668,7 @@ namespace TorusEdison.Editor.Windows
                     AssetDatabase.Refresh();
                 }
 
+                GameAudioDiagnosticLogger.Info("Export", $"Exported WAV to {exportPath}. AutoRefresh={shouldRefresh}.");
                 ShowNotification(new GUIContent(shouldRefresh
                     ? T("status.wavExportedAndRefreshed", "WAV exported and assets refreshed.")
                     : T("status.wavExported", "WAV exported.")));
@@ -1612,7 +1676,7 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                ShowEditorException(exception);
+                ShowEditorException(exception, "Export", "WAV export failed");
             }
         }
 
@@ -1622,11 +1686,12 @@ namespace TorusEdison.Editor.Windows
             {
                 string exportDirectory = GetResolvedExportDirectory();
                 Directory.CreateDirectory(exportDirectory);
+                GameAudioDiagnosticLogger.Verbose("Export", $"Opening export folder {exportDirectory}.");
                 EditorUtility.RevealInFinder(exportDirectory);
             }
             catch (Exception exception)
             {
-                ShowEditorException(exception);
+                ShowEditorException(exception, "Export", "Opening export folder failed");
             }
         }
 
@@ -1640,7 +1705,7 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
+                ShowEditorException(exception, "Preview", "Preview render failed");
             }
         }
 
@@ -1654,25 +1719,28 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
+                ShowEditorException(exception, "Preview", "Preview playback failed");
             }
         }
 
         private void StopPreview()
         {
             _previewPlaybackService.Stop();
+            GameAudioDiagnosticLogger.Verbose("Preview", "Preview stop requested.");
             RefreshView();
         }
 
         private void PausePreview()
         {
             _previewPlaybackService.Pause();
+            GameAudioDiagnosticLogger.Verbose("Preview", "Preview pause requested.");
             RefreshView();
         }
 
         private void RewindPreview()
         {
             _previewPlaybackService.Rewind();
+            GameAudioDiagnosticLogger.Verbose("Preview", "Preview rewind requested.");
             RefreshView();
         }
 
@@ -1692,7 +1760,7 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                ShowEditorException(exception);
+                ShowEditorException(exception, "Preview", "Loop playback toggle failed");
             }
         }
 
@@ -1800,7 +1868,7 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
+                ShowEditorException(exception, "Edit", "Duplicating notes failed");
             }
         }
 
@@ -1821,7 +1889,7 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
+                ShowEditorException(exception, "Edit", "Deleting notes failed");
             }
         }
 
@@ -1830,11 +1898,12 @@ namespace TorusEdison.Editor.Windows
             try
             {
                 EnsureSampleProjects();
+                GameAudioDiagnosticLogger.Info("Samples", $"Sample projects ensured at {GetUserProjectFolderPath()}.");
                 ShowNotification(new GUIContent(T("status.samplesCreated", "Sample projects created.")));
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
+                ShowEditorException(exception, "Samples", "Creating sample projects failed");
             }
         }
 
@@ -1853,11 +1922,12 @@ namespace TorusEdison.Editor.Windows
             try
             {
                 EnsureSampleProjects();
+                GameAudioDiagnosticLogger.Verbose("Samples", $"Opening sample folder {GetUserProjectFolderPath()}.");
                 EditorUtility.RevealInFinder(GetUserProjectFolderPath());
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
+                ShowEditorException(exception, "Samples", "Opening sample folder failed");
             }
         }
 
@@ -1871,11 +1941,12 @@ namespace TorusEdison.Editor.Windows
             try
             {
                 EnsureSampleProjects();
+                GameAudioDiagnosticLogger.Verbose("Samples", $"Loading sample project {fileName}.");
                 LoadProjectFromPath(Path.Combine(GetUserProjectFolderPath(), fileName));
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
+                ShowEditorException(exception, "Samples", $"Loading sample project failed: {fileName}");
             }
         }
 
@@ -1885,12 +1956,18 @@ namespace TorusEdison.Editor.Windows
             {
                 GameAudioProjectLoadResult loadResult = _projectSerializer.LoadFromFile(path);
                 BindProject(loadResult.Project, false, path, loadResult.Warnings);
+                if (loadResult.Warnings.Count > 0)
+                {
+                    GameAudioDiagnosticLogger.Warning("Project", $"Loaded project with {loadResult.Warnings.Count} warning(s): {path}");
+                }
+
+                GameAudioDiagnosticLogger.Info("Project", $"Loaded project from {path}.");
                 ShowNotification(new GUIContent(T("status.projectLoaded", "Project loaded.")));
                 RefreshView();
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
+                ShowEditorException(exception, "Project", $"Loading project failed: {path}");
             }
         }
 
@@ -1936,6 +2013,8 @@ namespace TorusEdison.Editor.Windows
             {
                 ShowNotification(new GUIContent(command.DisplayName));
             }
+
+            GameAudioDiagnosticLogger.Verbose("Edit", $"Executed command: {command.DisplayName}");
         }
 
         private void DrawTimelineGui()
@@ -2379,7 +2458,7 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
+                ShowEditorException(exception, "Edit", "Timeline interaction commit failed");
                 CancelTimelineInteraction();
                 RefreshView();
             }

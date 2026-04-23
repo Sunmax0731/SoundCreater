@@ -108,6 +108,8 @@ namespace TorusEdison.Editor.Persistence
         public string defaultGridDivision;
         public int undoHistoryLimit;
         public string displayLanguage;
+        public bool enableDiagnosticLogging;
+        public string diagnosticLogLevel;
     }
 
     [Serializable]

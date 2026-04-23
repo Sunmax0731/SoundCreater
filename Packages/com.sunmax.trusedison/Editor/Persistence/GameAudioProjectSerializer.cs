@@ -42,6 +42,7 @@ namespace TorusEdison.Editor.Persistence
             }
 
             File.WriteAllText(resolvedPath, Serialize(project), Utf8WithoutBom);
+            GameAudioDiagnosticLogger.Verbose("ProjectSerializer", $"Serialized project file to {resolvedPath}.");
         }
 
         public GameAudioProjectLoadResult LoadFromFile(string path)
@@ -59,7 +60,9 @@ namespace TorusEdison.Editor.Persistence
             }
 
             string json = File.ReadAllText(path, Utf8WithoutBom);
-            return Deserialize(json);
+            GameAudioProjectLoadResult result = Deserialize(json);
+            GameAudioDiagnosticLogger.Verbose("ProjectSerializer", $"Loaded project file {path} with {result.Warnings.Count} warning(s).");
+            return result;
         }
 
         public GameAudioProjectLoadResult Deserialize(string json)
