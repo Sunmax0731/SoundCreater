@@ -235,6 +235,7 @@ namespace TorusEdison.Editor.Audio
                 outputChannelCount == 1 ? GameAudioChannelMode.Mono : GameAudioChannelMode.Stereo);
 
             project.Name = projectName;
+            project.SampleRate = targetSampleRate;
             project.TotalBars = CalculateTotalBars(sourceClip.length, project.Bpm, project.TimeSignature?.Numerator ?? 4, project.TimeSignature?.Denominator ?? 4);
             if (project.Tracks.Count > 0)
             {

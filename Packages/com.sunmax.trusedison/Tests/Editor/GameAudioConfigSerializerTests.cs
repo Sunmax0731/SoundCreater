@@ -85,7 +85,9 @@ namespace TorusEdison.Editor.Tests
 
             Assert.That(GameAudioConfigResolver.ResolveSampleRate(commonConfig, projectConfig), Is.EqualTo(44100));
             Assert.That(GameAudioConfigResolver.ResolveChannelMode(commonConfig, projectConfig), Is.EqualTo(GameAudioChannelMode.Mono));
-            Assert.That(GameAudioConfigResolver.ResolveExportDirectory(commonConfig, projectConfig, "D:/Project"), Is.EqualTo("D:/Audio/Out"));
+            Assert.That(
+                GameAudioConfigResolver.ResolveExportDirectory(commonConfig, projectConfig, "D:/Project").Replace('\\', '/'),
+                Is.EqualTo("D:/Audio/Out"));
         }
 
         [Test]

@@ -131,10 +131,8 @@ namespace TorusEdison.Editor.Persistence
                     numerator = project.TimeSignature?.Numerator ?? 4,
                     denominator = project.TimeSignature?.Denominator ?? 4
                 },
-                totalBars = Math.Max(1, project.TotalBars),
-                sampleRate = GameAudioValidationUtility.IsSupportedSampleRate(project.SampleRate)
-                    ? project.SampleRate
-                    : GameAudioToolInfo.DefaultSampleRate,
+                totalBars = GameAudioValidationUtility.ClampInt(project.TotalBars, 1, GameAudioToolInfo.MaxTotalBars),
+                sampleRate = NormalizeSerializedSampleRate(project),
                 channelMode = project.ChannelMode.ToString(),
                 masterGainDb = GameAudioValidationUtility.ClampFloat(project.MasterGainDb, -24.0f, 6.0f),
                 loopPlayback = project.LoopPlayback,
@@ -240,18 +238,19 @@ namespace TorusEdison.Editor.Persistence
                 throw new GameAudioPersistenceException($"Track count exceeds the supported maximum of {GameAudioToolInfo.MaxTrackCount}.");
             }
 
+            GameAudioImportedAudioConversion importedAudioConversion = ReadImportedAudioConversion(dto.importedAudioConversion, warnings);
             var project = new GameAudioProject
             {
                 Id = ReadId(dto.id, "proj", warnings, "project"),
                 Name = ReadRequiredText(dto.name, "New Audio Project", warnings, "project.name"),
                 Bpm = ReadPositive(dto.bpm, GameAudioToolInfo.DefaultBpm, warnings, "project.bpm"),
                 TimeSignature = ReadTimeSignature(dto.timeSignature, warnings),
-                TotalBars = ReadPositive(dto.totalBars, GameAudioToolInfo.DefaultTotalBars, warnings, "project.totalBars"),
-                SampleRate = ReadSampleRate(dto.sampleRate, warnings, "project.sampleRate"),
+                TotalBars = ReadTotalBars(dto.totalBars, warnings),
+                SampleRate = ReadSampleRate(dto.sampleRate, warnings, "project.sampleRate", importedAudioConversion != null),
                 ChannelMode = ReadChannelMode(dto.channelMode, GameAudioChannelMode.Stereo, warnings, "project.channelMode"),
                 MasterGainDb = ReadClamped(dto.masterGainDb, -24.0f, 6.0f, 0.0f, warnings, "project.masterGainDb"),
                 LoopPlayback = dto.loopPlayback,
-                ImportedAudioConversion = ReadImportedAudioConversion(dto.importedAudioConversion, warnings)
+                ImportedAudioConversion = importedAudioConversion
             };
 
             for (int index = 0; index < trackDtos.Length; index++)
@@ -265,7 +264,7 @@ namespace TorusEdison.Editor.Persistence
 
         private static GameAudioImportedAudioConversion ReadImportedAudioConversion(GameAudioImportedAudioConversionDto dto, List<string> warnings)
         {
-            if (dto == null)
+            if (!HasImportedAudioConversionPayload(dto))
             {
                 return null;
             }
@@ -328,7 +327,7 @@ namespace TorusEdison.Editor.Persistence
                 Velocity = dto == null
                     ? 0.8f
                     : ReadClamped(dto.velocity, 0.0f, 1.0f, 0.8f, warnings, $"{path}.velocity"),
-                VoiceOverride = dto?.voiceOverride == null ? null : FromDto(dto.voiceOverride, warnings, $"{path}.voiceOverride")
+                VoiceOverride = HasVoicePayload(dto?.voiceOverride) ? FromDto(dto.voiceOverride, warnings, $"{path}.voiceOverride") : null
             };
 
             return note;
@@ -445,9 +444,27 @@ namespace TorusEdison.Editor.Persistence
             return fallback;
         }
 
-        private static int ReadSampleRate(int sampleRate, List<string> warnings, string path)
+        private static int ReadTotalBars(int totalBars, List<string> warnings)
         {
-            if (GameAudioValidationUtility.IsSupportedSampleRate(sampleRate))
+            if (totalBars <= 0)
+            {
+                warnings.Add($"project.totalBars must be positive; defaulted to {GameAudioToolInfo.DefaultTotalBars}.");
+                return GameAudioToolInfo.DefaultTotalBars;
+            }
+
+            int clampedValue = GameAudioValidationUtility.ClampInt(totalBars, 1, GameAudioToolInfo.MaxTotalBars);
+            if (clampedValue != totalBars)
+            {
+                warnings.Add($"project.totalBars was out of range and was clamped to {clampedValue}.");
+            }
+
+            return clampedValue;
+        }
+
+        private static int ReadSampleRate(int sampleRate, List<string> warnings, string path, bool allowImportedConversionRate)
+        {
+            if (GameAudioValidationUtility.IsSupportedSampleRate(sampleRate)
+                || (allowImportedConversionRate && sampleRate > 0))
             {
                 return sampleRate;
             }
@@ -528,6 +545,78 @@ namespace TorusEdison.Editor.Persistence
         {
             warnings.Add(message);
             return value;
+        }
+
+        private static bool ShouldPreserveImportedConversionSampleRate(GameAudioProject project)
+        {
+            return project.ImportedAudioConversion != null && project.SampleRate > 0;
+        }
+
+        private static int NormalizeSerializedSampleRate(GameAudioProject project)
+        {
+            if (ShouldPreserveImportedConversionSampleRate(project))
+            {
+                return project.SampleRate;
+            }
+
+            return GameAudioValidationUtility.IsSupportedSampleRate(project.SampleRate)
+                ? project.SampleRate
+                : GameAudioToolInfo.DefaultSampleRate;
+        }
+
+        private static bool HasImportedAudioConversionPayload(GameAudioImportedAudioConversionDto dto)
+        {
+            return dto != null
+                && (!string.IsNullOrWhiteSpace(dto.sourceClipName)
+                    || !string.IsNullOrWhiteSpace(dto.sourceAssetPath)
+                    || dto.sourceSampleRate > 0
+                    || dto.sourceChannelCount > 0
+                    || dto.sourceDurationSeconds > 0.0f
+                    || dto.targetSampleRate > 0
+                    || !string.IsNullOrWhiteSpace(dto.targetChannelMode)
+                    || dto.outputChannelCount > 0
+                    || !string.IsNullOrWhiteSpace(dto.outputWaveFileName));
+        }
+
+        private static bool HasVoicePayload(GameAudioVoiceDto dto)
+        {
+            return dto != null
+                && (!string.IsNullOrWhiteSpace(dto.waveform)
+                    || !Mathf.Approximately(dto.pulseWidth, 0.0f)
+                    || dto.noiseEnabled
+                    || !string.IsNullOrWhiteSpace(dto.noiseType)
+                    || !Mathf.Approximately(dto.noiseMix, 0.0f)
+                    || HasEnvelopePayload(dto.adsr)
+                    || HasEffectPayload(dto.effect));
+        }
+
+        private static bool HasEnvelopePayload(GameAudioEnvelopeDto dto)
+        {
+            return dto != null
+                && (dto.attackMs != 0
+                    || dto.decayMs != 0
+                    || !Mathf.Approximately(dto.sustain, 0.0f)
+                    || dto.releaseMs != 0);
+        }
+
+        private static bool HasEffectPayload(GameAudioEffectDto dto)
+        {
+            return dto != null
+                && (!Mathf.Approximately(dto.volumeDb, 0.0f)
+                    || !Mathf.Approximately(dto.pan, 0.0f)
+                    || !Mathf.Approximately(dto.pitchSemitone, 0.0f)
+                    || dto.fadeInMs != 0
+                    || dto.fadeOutMs != 0
+                    || HasDelayPayload(dto.delay));
+        }
+
+        private static bool HasDelayPayload(GameAudioDelayDto dto)
+        {
+            return dto != null
+                && (dto.enabled
+                    || dto.timeMs != 0
+                    || !Mathf.Approximately(dto.feedback, 0.0f)
+                    || !Mathf.Approximately(dto.mix, 0.0f));
         }
     }
 }

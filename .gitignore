@@ -29,6 +29,7 @@ Desktop.ini
 *.unitypackage
 *.zip
 ReleaseBuilds/
+/Validation/
 
 # Editor preview cache
 Assets/__TorusEdisonPreviewCache__/

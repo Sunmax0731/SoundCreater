@@ -32,6 +32,21 @@ Current automated coverage in this package includes:
 - diagnostic logger tests under `Tests/Editor/GameAudioDiagnosticLoggerTests.cs`
 - acceptance-scenario tests under `Tests/Editor/GameAudioAcceptanceScenarioTests.cs`
 
+Run the repository-standard automated check from the repository root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\validation\run-editmode-tests.ps1
+```
+
+This script starts Unity in batchmode, waits for the spawned Unity process to exit, and fails if:
+
+- Unity returns a non-zero exit code
+- the EditMode result XML is missing or empty
+- no tests were executed
+- the result XML reports failed tests
+
+Do not add `-quit` to ad-hoc `-runTests` commands. The Unity Test Framework command-line runner exits the editor after the test run has finished, and `-quit` can terminate before result XML is written.
+
 ## Bundled Samples
 
 The package now includes ten bundled sample projects.
@@ -179,7 +194,7 @@ Expected:
 
 - Live mouse interaction feel still requires manual confirmation in Unity.
 - Export behavior under `Assets/` should still be spot-checked in a real editor session.
-- `-testResults` XML should be inspected only after the spawned Unity process exits; reading too early can look like a missing result file.
+- `-testResults` XML should be inspected only after the spawned Unity process exits; use `tools\validation\run-editmode-tests.ps1` for the standard flow.
 - End-user generated files such as local projects, exports, logs, and temp files are intentionally ignored by git.
 
 ## Release Gate

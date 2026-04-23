@@ -2,12 +2,13 @@ param(
     [string]$UnityPath = "C:\Program Files\Unity\6000.4.0f1\Editor\Unity.exe",
     [string]$ProjectPath = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path,
     [string]$OutputRoot = "",
-    [switch]$SkipUnityPackage
+    [switch]$SkipUnityPackage,
+    [switch]$SkipEditModeTests
 )
 
 $ErrorActionPreference = "Stop"
 
-if (-not (Test-Path -LiteralPath $UnityPath)) {
+if ((-not $SkipUnityPackage -or -not $SkipEditModeTests) -and -not (Test-Path -LiteralPath $UnityPath)) {
     throw "Unity executable was not found: $UnityPath"
 }
 
@@ -38,6 +39,19 @@ $unityPackagePath = Join-Path $stageRoot "$toolName-$version.unitypackage"
 $zipPath = Join-Path $outputRoot "$toolName-$version-release.zip"
 $manifestPath = Join-Path $stageRoot "release-manifest.txt"
 $packageSamplesRoot = Join-Path $packageRoot "Samples~"
+
+if (-not $SkipEditModeTests) {
+    $validationScript = Join-Path $projectPath "tools\validation\run-editmode-tests.ps1"
+    if (-not (Test-Path -LiteralPath $validationScript)) {
+        throw "EditMode validation script was not found: $validationScript"
+    }
+
+    & $validationScript `
+        -UnityPath $UnityPath `
+        -ProjectPath $projectPath `
+        -ResultsPath (Join-Path $outputRoot "Validation\editmode-results.xml") `
+        -LogPath (Join-Path $outputRoot "Validation\editmode-tests.log")
+}
 
 if (Test-Path -LiteralPath $stageRoot) {
     Remove-Item -LiteralPath $stageRoot -Recurse -Force
