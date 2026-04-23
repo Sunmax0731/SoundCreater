@@ -89,6 +89,7 @@ namespace TorusEdison.Editor.Windows
         private PopupField<GameAudioConversionChannelMode> _conversionChannelModeField;
         private Label _conversionLastResultValue;
         private Label _conversionLastProjectValue;
+        private IntegerField _timelineBarsField;
         private IntegerField _toolbarBpmField;
         private PopupField<string> _toolbarGridField;
         private Toggle _toolbarLoopToggle;
@@ -347,7 +348,18 @@ namespace TorusEdison.Editor.Windows
             actionRow.Add(_gridButton);
             actionRow.Add(helpButton);
 
+            _timelineBarsField = new IntegerField
+            {
+                isDelayed = true
+            };
+            _timelineBarsField.style.width = 72.0f;
+            _timelineBarsField.RegisterValueChangedCallback(OnTimelineBarsChanged);
+            actionRow.Add(CreateToolbarValueGroup(T("timeline.bars", "Bars"), _timelineBarsField));
+
             panel.Add(actionRow);
+            panel.Add(CreateInspectorHelpBox(
+                T("timeline.lengthHelp", "Use the Bars field here or the Total Bars field in Settings to change project length."),
+                HelpBoxMessageType.Info));
 
             _timelineSurface = new IMGUIContainer(DrawTimelineGui)
             {
@@ -2116,6 +2128,20 @@ namespace TorusEdison.Editor.Windows
             RefreshView();
         }
 
+        private void OnTimelineBarsChanged(ChangeEvent<int> evt)
+        {
+            GameAudioProject project = CurrentProject;
+            if (project == null || project.TotalBars == evt.newValue)
+            {
+                return;
+            }
+
+            TryApplyProjectChange(
+                "Set Total Bars",
+                current => current.TotalBars = evt.newValue,
+                actualProject => NotifyClamp("Total Bars", evt.newValue, actualProject.TotalBars));
+        }
+
         private void ExportWav()
         {
             GameAudioProject project = CurrentProject;
@@ -3353,6 +3379,7 @@ namespace TorusEdison.Editor.Windows
             _toolbarBpmField?.SetValueWithoutNotify(project.Bpm);
             _toolbarGridField?.SetValueWithoutNotify(GameAudioTimelineGridUtility.NormalizeDivision(_currentGridDivision));
             _toolbarLoopToggle?.SetValueWithoutNotify(project.LoopPlayback);
+            _timelineBarsField?.SetValueWithoutNotify(project.TotalBars);
             _loopToggle.SetValueWithoutNotify(project.LoopPlayback);
             if (_commonExportDirectoryField != null)
             {
