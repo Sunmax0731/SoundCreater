@@ -59,6 +59,7 @@
 Unity プロジェクトを開き、パッケージの読み込みが終わったあとに次のメニューから起動します。
 
 - `Tools/Torus Edison/Open Editor`
+- `Tools/Torus Edison/Version & License`
 
 ## サポートと補足情報
 
