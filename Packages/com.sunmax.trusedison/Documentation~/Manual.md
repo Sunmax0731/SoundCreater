@@ -10,16 +10,18 @@ Related documents:
 
 ## Overview
 
-`Torus Edison` is a Unity Editor extension for creating, editing, previewing, saving, and exporting reusable game-audio project data.
+`Torus Edison` is a Unity Editor extension for sketching short game sound effects and loopable audio ideas directly inside a Unity project.
+It stores project data as `.gats.json` files and supports editing, previewing, and exporting without leaving the Unity Editor.
 
 Current implementation scope:
 
-- file workflows through `New`, `Open`, `Save`, and `Save As`
-- `.gats.json` project persistence
+- `New`, `Open`, `Save`, and `Save As`
+- `.gats.json` persistence
 - timeline note editing
 - note, track, and project inspector editing
 - preview rendering and transport controls
-- WAV export
+- 16-bit WAV export
+- 8-bit WAV conversion for imported `AudioClip` assets
 - undo and redo
 - bundled sample projects for validation
 
@@ -44,29 +46,29 @@ The current editor window is split into four top tabs.
 
 Use this page for:
 
-- checking the current project path and basic status
+- checking the current project path and status
 - creating a new project
-- opening or saving `.gats.json` files
+- opening and saving `.gats.json` files
 - creating local sample copies
 - loading bundled `Basic SE` and `Simple Loop` samples
 
 ### Edit
 
-Use this page for:
+Use this page for editing and preview work in one place.
 
-- preview transport and render controls while editing
+- preview rendering and transport controls
 - rendered preview waveform display
 - project lengths up to `128 bars`
 - creating notes on the timeline
 - moving notes across beats and tracks
 - resizing notes
 - duplicating and deleting selected notes
+- adding tracks from the footer `+ Add Track` button
 - editing note, track, and project values from the inspector
+- opening the timeline help window from `?`
 
 Current shortcuts:
 
-- `Render Preview`, `Play`, `Pause`, `Stop`, `Rewind`, `Loop`
-- `?` opens a modal help window for timeline gestures and shortcuts
 - `Ctrl+D` duplicate selected notes
 - `Delete` remove selected notes
 - `Ctrl+Z` undo
@@ -88,9 +90,12 @@ Available controls:
 
 ### Settings
 
-Use this page for:
+Use this page for project-level and tool-level settings.
 
-- project-level values such as BPM, total bars, sample rate, and channel mode
+- BPM
+- Total Bars
+- Sample Rate
+- Channel Mode
 - UI language mode
 - diagnostic mode and log level
 - current foundation diagnostics
@@ -105,7 +110,7 @@ Use this page for:
 
 The canonical session format is `.gats.json`.
 
-## Editing Notes
+## Timeline Editing
 
 Current editing support includes:
 
@@ -114,6 +119,8 @@ Current editing support includes:
 - note resize by dragging note edges
 - multi-selection aware note changes
 - inspector-driven edits for pitch, velocity, and related values
+- track creation from the timeline footer
+- project length edits from the Edit page `Bars` field
 - undo and redo for major edit operations
 
 ## Preview Playback
@@ -126,7 +133,7 @@ Current implementation includes:
 - ADSR and delay support
 - track and project mixdown
 - preview waveform display
-- play, pause, stop, rewind, and loop transport
+- `Render Preview`, `Play`, `Pause`, `Stop`, `Rewind`, and `Loop`
 
 ## WAV Export
 
@@ -152,6 +159,10 @@ The Export page also includes a conversion flow for imported `AudioClip` assets.
 
 This feature converts audio that you already brought into Unity. It does not download or extract audio from YouTube or other external services.
 
+## Version And License Window
+
+Use `Tools/Torus Edison/Version & License` to check the current package version, the license entry point, and the release source.
+
 ## Configuration Files
 
 Current configuration files:
@@ -175,11 +186,11 @@ Sample notes and validation steps:
 
 ## Known Limitations
 
-- live mouse interaction feel still needs real-editor confirmation
+- live mouse interaction feel still benefits from confirmation in a real Unity Editor session
 - export behavior under `Assets/` should still be spot-checked in Unity
 - UI localization currently supports Japanese, English, and Chinese only
 - diagnostic logging is intended for local support work through the Unity Console
 
 ## Current Notes
 
-This manual reflects the current implementation in the repository. It is intended to stay aligned with the package rather than the original MVP planning state.
+This manual reflects the current implementation in the repository and is intended to stay aligned with the package as it evolves.

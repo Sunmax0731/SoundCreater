@@ -6,6 +6,9 @@
 - Windows 上の Unity headless validation は、起動した `Unity` プロセスを待機してから `-logFile` と `-testResults` を確認する。呼び出し元が先に戻っても検証完了とはみなさない。
 - full EditMode suite に無関係の既知 failure がある場合は、今回触った範囲の targeted fixture を先に使い、残りの failure は issue / PR に切り分けて記録する。
 - 日本語や中国語が PowerShell 上で文字化けして見えても、それだけでファイルを書き換えない。UTF-8 ソースと Unity 上の表示が壊れていることを確認してから修正する。
+- `CreateGUI()` などで UI ツリーを組み直す実装では、Inspector や表示キャッシュを明示的に無効化する。表示言語のように見た目へ影響する状態はキャッシュキーにも含める。
+- タイムラインの footer や helper row のような補助領域は、通常の track hit-test から除外する。`trackCount` をそのまま配列 index として使う経路を残さない。
+- release prep では、package version、`GameAudioToolInfo.ToolVersion`、sample の `toolVersion`、README / manual / release body / BOOTH 紹介文を同じ作業単位で更新する。版番号だけ先に進めない。
 
 
 ## 目的

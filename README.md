@@ -1,80 +1,82 @@
 # Torus Edison
 
-`Torus Edison` は、Unity Editor 上でゲーム向けの効果音やループ素材を試作し、音声プロジェクトとして保存、試聴、書き出しできるツールです。
+`Torus Edison` は、Unity Editor 上でゲーム向けの短い効果音やループ素材を試作するためのツールです。
+音声プロジェクトを `.gats.json` 形式で保存し、Unity 上で内容を確認しながらプレビュー再生や WAV 書き出しを行えます。
 
-この GitHub リポジトリ名は `SoundCreater` ですが、BOOTH や配布物での公開名は `Torus Edison` です。
+GitHub 上のリポジトリ名は `SoundCreater` ですが、BOOTH や配布物での公開名は `Torus Edison` です。
 
 ## BOOTH ご購入者の方へ
 
-この README は概要案内です。詳しい使い方や画面ごとの説明は、以下のドキュメントをご確認ください。
+この README は概要案内です。実際の導入手順や画面ごとの操作方法は、以下のドキュメントをご確認ください。
 
 - GitHub Release 配布ページ: https://github.com/Sunmax0731/SoundCreater/releases
-- 使い方マニュアル 日本語版: [Manual.ja.md](Packages/com.sunmax.trusedison/Documentation~/Manual.ja.md)
-- 使い方マニュアル 英語版: [Manual.md](Packages/com.sunmax.trusedison/Documentation~/Manual.md)
+- 日本語マニュアル: [Manual.ja.md](Packages/com.sunmax.trusedison/Documentation~/Manual.ja.md)
+- English manual: [Manual.md](Packages/com.sunmax.trusedison/Documentation~/Manual.md)
 - 利用規約: [TermsOfUse.md](Packages/com.sunmax.trusedison/Documentation~/TermsOfUse.md)
 - リリースノート: [ReleaseNotes.md](Packages/com.sunmax.trusedison/Documentation~/ReleaseNotes.md)
 - 検証チェックリスト: [ValidationChecklist.md](Packages/com.sunmax.trusedison/Documentation~/ValidationChecklist.md)
 
-## Torus Edison でできること
+## 主な機能
 
-- 音声プロジェクトの新規作成、保存、読み込み
-- `.gats.json` 形式でのセッション管理
-- タイムライン上でのノート作成、移動、リサイズ、複製、削除
-- `Total Bars` は最大 `128` まで設定可能
-- note / track / project の Inspector 編集
-- `Render Preview / Play / Pause / Stop / Rewind / Loop` によるプレビュー再生
-- preview 波形表示
-- WAV 書き出し
-- Undo / Redo
+- `New / Open / Save / Save As` によるプロジェクト管理
+- `.gats.json` 形式での保存と読み込み
+- Edit 画面でのプレビュー生成、再生、波形確認
+- タイムライン上でのノート作成、移動、長さ変更、複製、削除
+- タイムライン下部の `+ Add Track` ボタンによるトラック追加
+- Edit 画面と Settings 画面からの `Total Bars` 変更
+- note / track / project 単位の Inspector 編集
+- 16-bit PCM WAV 書き出し
+- Unity に取り込んだ `AudioClip` の 8-bit WAV 変換
+- 変換した WAV と同じフォルダへの変換用 `.gats.json` 自動生成
+- `Tools/Torus Edison/Version & License` から開けるバージョン / ライセンス画面
 - 日本語 / 英語 / 中国語 UI
-- Debug Mode と Log Level 切替による診断ログ
-- サンプルプロジェクトを使った動作確認
+- Debug Mode と Log Level による診断ログ出力
 
 ## 対応環境
 
 - Unity `6000.0` 以降
-- Windows 11 を前提とした Unity Editor 利用
+- Windows 11 上の Unity Editor 利用
 - オフライン利用
 
-## 現在の対象外機能
+## 対象外機能
 
 - 人声や歌声の生成
 - MP3 書き出し
 - オンライン連携
-- ランタイム向け再生プレイヤー機能
-- DAW 級の高度なミキサー機能
+- ランタイム向け音声プレイヤー機能
+- DAW のような本格的な音楽制作機能
 
-## 最初に確認する場所
+## 最初に確認する資料
 
-導入後にまず確認したい情報は、以下の順番がおすすめです。
+導入後は、まず次の順番で確認するのがおすすめです。
 
-1. [使い方マニュアル 日本語版](Packages/com.sunmax.trusedison/Documentation~/Manual.ja.md)
-2. [使い方マニュアル 英語版](Packages/com.sunmax.trusedison/Documentation~/Manual.md)
+1. [日本語マニュアル](Packages/com.sunmax.trusedison/Documentation~/Manual.ja.md)
+2. [English manual](Packages/com.sunmax.trusedison/Documentation~/Manual.md)
 3. [利用規約](Packages/com.sunmax.trusedison/Documentation~/TermsOfUse.md)
 4. [リリースノート](Packages/com.sunmax.trusedison/Documentation~/ReleaseNotes.md)
 5. [検証チェックリスト](Packages/com.sunmax.trusedison/Documentation~/ValidationChecklist.md)
 
 ## ツールの起動
 
-Unity プロジェクトを開き、パッケージの読み込みが終わったあとに次のメニューから起動します。
+Unity プロジェクトを開いたあと、次のメニューから起動します。
 
 - `Tools/Torus Edison/Open Editor`
 - `Tools/Torus Edison/Version & License`
 
-## サポートと補足情報
+## サポート情報
 
-- リポジトリ名: `SoundCreater`
-- ツール名: `Torus Edison`
-- 公開や更新は GitHub Release / BOOTH を前提に進めています
-- 同梱サンプルは `Basic SE` と `Simple Loop` です
-
-不具合確認や問い合わせ時は、以下が分かると切り分けしやすくなります。
+問い合わせや不具合報告の際は、以下の情報があると切り分けしやすくなります。
 
 - 使用している Unity バージョン
 - Torus Edison のバージョン
 - 読み込んだ `.gats.json` ファイル名
 - 再現手順
-- Console に出たエラーや警告
+- Unity Console に表示されたエラーや警告
+
+補足:
+
+- GitHub Release と BOOTH では、同一成果物を配布する前提です
+- 同梱サンプルは `Basic SE` と `Simple Loop` です
 
 ## 開発者向け情報
 

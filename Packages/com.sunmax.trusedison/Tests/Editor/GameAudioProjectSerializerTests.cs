@@ -74,7 +74,7 @@ namespace TorusEdison.Editor.Tests
         {
             const string json = @"{
   ""formatVersion"": ""2.0.0"",
-  ""toolVersion"": ""0.1.1"",
+  ""toolVersion"": ""0.2.0"",
   ""project"": {
     ""id"": ""proj-001"",
     ""name"": ""Invalid"",
@@ -99,7 +99,7 @@ namespace TorusEdison.Editor.Tests
         {
             const string json = @"{
   ""formatVersion"": ""1.0.0"",
-  ""toolVersion"": ""0.1.1"",
+  ""toolVersion"": ""0.2.0"",
   ""project"": {
     ""id"": ""proj-001"",
     ""bpm"": 120,
@@ -123,7 +123,7 @@ namespace TorusEdison.Editor.Tests
         {
             const string json = @"{
   ""formatVersion"": ""1.0.0"",
-  ""toolVersion"": ""0.1.1"",
+  ""toolVersion"": ""0.2.0"",
   ""project"": {
     ""id"": ""proj-001"",
     ""name"": ""Clamp"",
@@ -218,7 +218,7 @@ namespace TorusEdison.Editor.Tests
 
             string json = @"{
   ""formatVersion"": ""1.0.0"",
-  ""toolVersion"": ""0.1.1"",
+  ""toolVersion"": ""0.2.0"",
   ""project"": {
     ""id"": ""proj-001"",
     ""name"": ""TooManyTracks"",
@@ -242,7 +242,7 @@ namespace TorusEdison.Editor.Tests
         {
             const string json = @"{
   ""formatVersion"": ""1.0.0"",
-  ""toolVersion"": ""0.1.1"",
+  ""toolVersion"": ""0.2.0"",
   ""project"": {
     ""id"": ""proj-001"",
     ""name"": ""LongForm"",
