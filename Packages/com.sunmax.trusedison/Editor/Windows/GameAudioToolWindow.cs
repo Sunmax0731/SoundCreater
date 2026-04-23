@@ -29,6 +29,7 @@ namespace TorusEdison.Editor.Windows
         private const float TimelineViewportHeight = 340.0f;
         private const float TimelineResizeHandleWidth = 6.0f;
         private const float InspectorValueWidth = 92.0f;
+        private const float PreviewWaveformHeight = 108.0f;
 
         private readonly GameAudioCommonConfigSerializer _commonConfigSerializer = new GameAudioCommonConfigSerializer();
         private readonly GameAudioPreviewPlaybackService _previewPlaybackService = new GameAudioPreviewPlaybackService();
@@ -84,6 +85,7 @@ namespace TorusEdison.Editor.Windows
         private VisualElement _projectInspectorContainer;
         private Label _timelineHintValue;
         private IMGUIContainer _timelineSurface;
+        private IMGUIContainer _previewWaveformView;
         private string _inspectorStateKey = string.Empty;
 
         [MenuItem("Tools/Torus Edison/Open Editor")]
@@ -405,6 +407,12 @@ namespace TorusEdison.Editor.Windows
             _previewProgressBar.highValue = 100.0f;
             _previewProgressBar.style.marginTop = 4;
             panel.Add(_previewProgressBar);
+
+            _previewWaveformView = new IMGUIContainer(DrawPreviewWaveformGui);
+            _previewWaveformView.style.height = PreviewWaveformHeight;
+            _previewWaveformView.style.marginTop = 8.0f;
+            _previewWaveformView.style.marginBottom = 4.0f;
+            panel.Add(_previewWaveformView);
 
             _previewHelpBox = new HelpBox(string.Empty, HelpBoxMessageType.Warning)
             {
@@ -2449,6 +2457,64 @@ namespace TorusEdison.Editor.Windows
             }
         }
 
+        private void DrawPreviewWaveformGui()
+        {
+            Rect rect = GUILayoutUtility.GetRect(0.0f, PreviewWaveformHeight, GUILayout.ExpandWidth(true));
+            GUI.Box(rect, GUIContent.none, EditorStyles.helpBox);
+
+            Rect innerRect = new Rect(rect.x + 8.0f, rect.y + 8.0f, rect.width - 16.0f, rect.height - 16.0f);
+            if (innerRect.width <= 4.0f || innerRect.height <= 4.0f)
+            {
+                return;
+            }
+
+            EditorGUI.DrawRect(innerRect, new Color(0.09f, 0.12f, 0.16f));
+
+            GameAudioProject project = CurrentProject;
+            GameAudioPreviewState previewState = _previewPlaybackService.State;
+            if (project == null || !previewState.IsPreviewReady || previewState.RenderResult == null)
+            {
+                DrawWaveformPlaceholder(innerRect, T("preview.waveform.empty", "Render preview to see waveform."));
+                return;
+            }
+
+            double waveformDurationSeconds = GetWaveformDurationSeconds(previewState);
+            if (!previewState.LoopPlayback
+                && previewState.OutputDurationSeconds > previewState.ProjectDurationSeconds
+                && waveformDurationSeconds > 0.0d)
+            {
+                float projectWidth = (float)(innerRect.width * (previewState.ProjectDurationSeconds / waveformDurationSeconds));
+                EditorGUI.DrawRect(
+                    new Rect(innerRect.x + projectWidth, innerRect.y, innerRect.width - projectWidth, innerRect.height),
+                    new Color(0.17f, 0.13f, 0.10f, 0.65f));
+            }
+
+            EditorGUI.DrawRect(
+                new Rect(innerRect.x, innerRect.center.y, innerRect.width, 1.0f),
+                new Color(0.18f, 0.30f, 0.40f, 0.8f));
+
+            GameAudioPreviewWaveformData waveform = GameAudioPreviewWaveformBuilder.Build(
+                previewState.RenderResult,
+                Mathf.Max(32, Mathf.RoundToInt(innerRect.width)));
+
+            if (waveform.Bins.Length == 0)
+            {
+                DrawWaveformPlaceholder(innerRect, T("preview.waveform.empty", "Render preview to see waveform."));
+                return;
+            }
+
+            if (waveform.IsSilent)
+            {
+                DrawWaveformPlaceholder(innerRect, T("preview.waveform.silent", "Preview buffer is silent."));
+            }
+            else
+            {
+                DrawWaveformBins(innerRect, waveform);
+            }
+
+            DrawWaveformCursor(innerRect, previewState);
+        }
+
         private void DrawTimelineTrackHeaders(GameAudioProject project, TimelineMetrics metrics)
         {
             for (int trackIndex = 0; trackIndex < project.Tracks.Count; trackIndex++)
@@ -3122,6 +3188,7 @@ namespace TorusEdison.Editor.Windows
 
             RefreshInspectorPanel(project);
             _timelineSurface?.MarkDirtyRepaint();
+            _previewWaveformView?.MarkDirtyRepaint();
             Repaint();
         }
 
@@ -3242,6 +3309,68 @@ namespace TorusEdison.Editor.Windows
             };
         }
 
+        private static double GetWaveformDurationSeconds(GameAudioPreviewState previewState)
+        {
+            if (previewState == null)
+            {
+                return 0.0d;
+            }
+
+            return previewState.LoopPlayback
+                ? Math.Max(0.0d, previewState.ProjectDurationSeconds)
+                : Math.Max(previewState.ProjectDurationSeconds, previewState.OutputDurationSeconds);
+        }
+
+        private static float CalculateWaveformCursorProgress(GameAudioPreviewState previewState)
+        {
+            double totalDurationSeconds = GetWaveformDurationSeconds(previewState);
+            if (previewState == null || totalDurationSeconds <= 0.0d)
+            {
+                return 0.0f;
+            }
+
+            double playbackSeconds = previewState.LoopPlayback
+                ? Math.Min(previewState.ProjectDurationSeconds, previewState.PlaybackSeconds)
+                : Math.Min(totalDurationSeconds, previewState.PlaybackSeconds);
+            return Mathf.Clamp01((float)(playbackSeconds / totalDurationSeconds));
+        }
+
+        private static void DrawWaveformBins(Rect rect, GameAudioPreviewWaveformData waveform)
+        {
+            float centerY = rect.center.y;
+            float amplitudeHeight = (rect.height * 0.5f) - 2.0f;
+            int binCount = waveform.Bins.Length;
+            float binWidth = Mathf.Max(1.0f, rect.width / binCount);
+            Color waveformColor = new Color(0.18f, 0.84f, 0.95f, 0.95f);
+
+            for (int index = 0; index < binCount; index++)
+            {
+                GameAudioPreviewWaveformBin bin = waveform.Bins[index];
+                float minY = centerY - (bin.Max * amplitudeHeight);
+                float maxY = centerY - (bin.Min * amplitudeHeight);
+                float x = rect.x + (index * binWidth);
+                float height = Mathf.Max(1.0f, maxY - minY);
+                EditorGUI.DrawRect(new Rect(x, minY, Mathf.Max(1.0f, binWidth), height), waveformColor);
+            }
+        }
+
+        private static void DrawWaveformCursor(Rect rect, GameAudioPreviewState previewState)
+        {
+            float progress = CalculateWaveformCursorProgress(previewState);
+            float cursorX = rect.x + (rect.width * progress);
+            EditorGUI.DrawRect(new Rect(cursorX, rect.y, 2.0f, rect.height), new Color(1.0f, 0.88f, 0.35f, 0.95f));
+        }
+
+        private static void DrawWaveformPlaceholder(Rect rect, string label)
+        {
+            GUIStyle centeredLabel = new GUIStyle(EditorStyles.centeredGreyMiniLabel)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                wordWrap = true
+            };
+            GUI.Label(rect, label, centeredLabel);
+        }
+
         private void OnDisable()
         {
             _previewTicker?.Pause();
@@ -3266,7 +3395,6 @@ namespace TorusEdison.Editor.Windows
         {
             File,
             Edit,
-            Preview,
             Export,
             Settings
         }

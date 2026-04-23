@@ -54,6 +54,7 @@ Use this page for:
 Use this page for:
 
 - preview transport and render controls while editing
+- rendered preview waveform display
 - creating notes on the timeline
 - moving notes across beats and tracks
 - resizing notes
@@ -119,6 +120,7 @@ Current implementation includes:
 - waveform and white-noise rendering
 - ADSR and delay support
 - track and project mixdown
+- preview waveform display
 - play, pause, stop, rewind, and loop transport
 
 ## WAV Export
