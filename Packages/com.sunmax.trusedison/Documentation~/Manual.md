@@ -74,11 +74,12 @@ Current shortcuts:
 
 ### Export
 
-Use this page for WAV export.
+Use this page for WAV export and imported `AudioClip` conversion.
 
 Available controls:
 
 - `Export WAV`
+- imported `AudioClip` to 8-bit WAV conversion
 - `Open Export Folder`
 - common default folder
 - project override folder
@@ -136,6 +137,18 @@ Current WAV export behavior:
 - sanitizes file names
 - creates export folders if needed
 - refreshes `AssetDatabase` when exporting under `Assets/`
+
+## 8-bit WAV Conversion
+
+The Export page also includes a conversion flow for imported `AudioClip` assets.
+
+- select a source `AudioClip` that already exists in the Unity project
+- choose the output name
+- choose the target sample rate
+- choose `Preserve Source`, `Mono`, or `Stereo`
+- export as 8-bit PCM `.wav`
+
+This feature converts audio that you already brought into Unity. It does not download or extract audio from YouTube or other external services.
 
 ## Configuration Files
 

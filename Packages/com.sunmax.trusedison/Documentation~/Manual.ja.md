@@ -75,11 +75,12 @@
 
 ### Export
 
-この画面では WAV 書き出しを扱います。
+この画面では WAV 書き出しと、Unity に取り込んだ `AudioClip` の 8-bit 変換を扱います。
 
 利用できる操作:
 
 - `Export WAV`
+- Unity に取り込んだ `AudioClip` の 8-bit WAV 変換
 - `Open Export Folder`
 - 共通既定フォルダ設定
 - プロジェクト上書きフォルダ設定
@@ -146,6 +147,18 @@
 - ファイル名禁止文字の補正
 - 出力先フォルダ自動作成
 - `Assets/` 配下書き出し時の `AssetDatabase.Refresh()`
+
+## 8-bit WAV 変換
+
+Export 画面には、Unity に取り込んだ `AudioClip` アセットを 8-bit PCM `.wav` に変換する機能もあります。
+
+- 変換元 `AudioClip` を選択
+- 出力名を指定
+- 変換後サンプルレートを指定
+- `Preserve Source` / `Mono` / `Stereo` を選択
+- 8-bit PCM `.wav` として書き出し
+
+この機能は、すでに Unity へ取り込んだ音声を変換するためのものです。YouTube など外部サービスから音源を取得する機能は含みません。
 
 ## 設定ファイル
 

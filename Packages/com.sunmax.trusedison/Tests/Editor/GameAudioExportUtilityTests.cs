@@ -106,6 +106,46 @@ namespace TorusEdison.Editor.Tests
         }
 
         [Test]
+        public void EncodePcm8_WritesExpectedWaveHeader()
+        {
+            byte[] wavBytes = GameAudioWavEncoder.EncodePcm8(new[] { -1.0f, 0.0f, 1.0f, 0.5f }, 22050, 1);
+
+            using var stream = new MemoryStream(wavBytes);
+            using var reader = new BinaryReader(stream, Encoding.ASCII);
+
+            string riff = new string(reader.ReadChars(4));
+            int riffChunkSize = reader.ReadInt32();
+            string wave = new string(reader.ReadChars(4));
+            string fmt = new string(reader.ReadChars(4));
+            int fmtChunkSize = reader.ReadInt32();
+            short audioFormat = reader.ReadInt16();
+            short channelCount = reader.ReadInt16();
+            int sampleRate = reader.ReadInt32();
+            int byteRate = reader.ReadInt32();
+            short blockAlign = reader.ReadInt16();
+            short bitsPerSample = reader.ReadInt16();
+            string data = new string(reader.ReadChars(4));
+            int dataLength = reader.ReadInt32();
+
+            Assert.That(riff, Is.EqualTo("RIFF"));
+            Assert.That(riffChunkSize, Is.EqualTo(wavBytes.Length - 8));
+            Assert.That(wave, Is.EqualTo("WAVE"));
+            Assert.That(fmt, Is.EqualTo("fmt "));
+            Assert.That(fmtChunkSize, Is.EqualTo(16));
+            Assert.That(audioFormat, Is.EqualTo(1));
+            Assert.That(channelCount, Is.EqualTo(1));
+            Assert.That(sampleRate, Is.EqualTo(22050));
+            Assert.That(byteRate, Is.EqualTo(22050));
+            Assert.That(blockAlign, Is.EqualTo(1));
+            Assert.That(bitsPerSample, Is.EqualTo(8));
+            Assert.That(data, Is.EqualTo("data"));
+            Assert.That(dataLength, Is.EqualTo(4));
+
+            byte[] payload = reader.ReadBytes(dataLength);
+            Assert.That(payload, Is.EqualTo(new byte[] { 0, 128, 255, 191 }));
+        }
+
+        [Test]
         public void Export_WritesWaveFileToDisk()
         {
             string root = Path.Combine(Path.GetTempPath(), "TorusEdisonTests", Path.GetRandomFileName());
