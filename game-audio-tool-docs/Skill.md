@@ -10,6 +10,7 @@
 - localization で `CreateGUI()` を呼び直す場合、`RefreshInspectorPanel` のような差分更新キャッシュは無効化する。表示言語が変わるのに state key が変わらないと、空の UI が「更新済み」と判定されうる。
 - タイムラインの `+ Add Track` footer のような補助行は、track row と同じ hit-test に流さない。`GetTrackIndex()` は実トラック領域外で `-1` を返すようにし、`Tracks[trackCount]` を読ませない。
 - release prep では、package version、`ToolVersion`、sample / spec の `toolVersion`、release body、BOOTH 商品紹介文、README、manual を同時に更新する。版番号だけ先行すると配布物の整合が崩れる。
+- Save / Save As / WAV export / 8-bit conversion で作るファイル名は `GameAudioValidationUtility.SanitizeExportFileName` を唯一の入口にする。`CON`、`PRN`、`AUX`、`NUL`、`COM1`、`LPT1` などのWindows予約名と、先頭末尾のドットや空白を必ずテストする。
 
 
 ## 名称
@@ -83,6 +84,7 @@ MVPでは以下を狙わない。
 - MVPの正式保存形式は JSON
 - JSONには `formatVersion` を必ず持たせる
 - スキーマ変更時は、必ず互換性方針を仕様書と合わせて更新する
+- Save / Save As / WAV export / 8-bit conversion のファイル名生成は共通サニタイズを使い、Windows で保存できない予約名や不安定な末尾文字を残さない
 
 ### 5. 設定管理
 

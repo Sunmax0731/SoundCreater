@@ -9,6 +9,7 @@
 - `CreateGUI()` などで UI ツリーを組み直す実装では、Inspector や表示キャッシュを明示的に無効化する。表示言語のように見た目へ影響する状態はキャッシュキーにも含める。
 - タイムラインの footer や helper row のような補助領域は、通常の track hit-test から除外する。`trackCount` をそのまま配列 index として使う経路を残さない。
 - release prep では、package version、`GameAudioToolInfo.ToolVersion`、sample の `toolVersion`、README / manual / release body / BOOTH 紹介文を同じ作業単位で更新する。版番号だけ先に進めない。
+- Save / Save As / WAV export / 8-bit conversion でユーザー由来の名前をファイル名にする場合は、`GameAudioValidationUtility.SanitizeExportFileName` を通す。Windows 予約名、先頭末尾のドット、空白だけの名前もテスト対象に含める。
 
 
 ## 目的

@@ -15,7 +15,7 @@ namespace TorusEdison.Editor.Persistence
 
             if (HasSessionFileExtension(path))
             {
-                return path;
+                return SanitizeSessionFilePath(path);
             }
 
             string directoryPath = Path.GetDirectoryName(path);
@@ -25,6 +25,7 @@ namespace TorusEdison.Editor.Persistence
                 fileName = "GameAudio";
             }
 
+            fileName = GameAudioValidationUtility.SanitizeExportFileName(fileName);
             return string.IsNullOrWhiteSpace(directoryPath)
                 ? $"{fileName}{GameAudioToolInfo.SessionFileExtension}"
                 : Path.Combine(directoryPath, $"{fileName}{GameAudioToolInfo.SessionFileExtension}");
@@ -42,6 +43,18 @@ namespace TorusEdison.Editor.Persistence
         {
             return !string.IsNullOrWhiteSpace(path)
                 && path.EndsWith(GameAudioToolInfo.SessionFileExtension, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string SanitizeSessionFilePath(string path)
+        {
+            string directoryPath = Path.GetDirectoryName(path);
+            string fileName = Path.GetFileName(path);
+            string baseName = fileName.Substring(0, fileName.Length - GameAudioToolInfo.SessionFileExtension.Length);
+            string sanitizedFileName = $"{GameAudioValidationUtility.SanitizeExportFileName(baseName)}{GameAudioToolInfo.SessionFileExtension}";
+
+            return string.IsNullOrWhiteSpace(directoryPath)
+                ? sanitizedFileName
+                : Path.Combine(directoryPath, sanitizedFileName);
         }
     }
 }

@@ -5,6 +5,7 @@ using TorusEdison.Editor.Audio;
 using TorusEdison.Editor.Application;
 using TorusEdison.Editor.Config;
 using TorusEdison.Editor.Domain;
+using TorusEdison.Editor.Persistence;
 using TorusEdison.Editor.Utilities;
 
 namespace TorusEdison.Editor.Tests
@@ -37,12 +38,53 @@ namespace TorusEdison.Editor.Tests
             Assert.That(path.Replace('\\', '/'), Is.EqualTo("D:/Exports/Boss_SE_.wav"));
         }
 
+        [TestCase("CON", "CON_.wav")]
+        [TestCase("prn", "prn_.wav")]
+        [TestCase("AUX.wav", "AUX_.wav")]
+        [TestCase("COM1", "COM1_.wav")]
+        [TestCase("LPT9 ", "LPT9_.wav")]
+        [TestCase("...", "GameAudio.wav")]
+        [TestCase(" Project. ", "Project.wav")]
+        public void BuildWaveFilePath_SanitizesWindowsReservedAndUnstableNames(string projectName, string expectedFileName)
+        {
+            string path = GameAudioExportUtility.BuildWaveFilePath("D:/Exports", projectName);
+
+            Assert.That(path.Replace('\\', '/'), Is.EqualTo($"D:/Exports/{expectedFileName}"));
+        }
+
+        [Test]
+        public void NormalizeWaveFileName_UsesSameReservedNameRulesAsExportPath()
+        {
+            Assert.That(GameAudioExportUtility.NormalizeWaveFileName("CON"), Is.EqualTo("CON_.wav"));
+            Assert.That(GameAudioExportUtility.NormalizeWaveFileName("AUX.wav"), Is.EqualTo("AUX_.wav"));
+        }
+
         [Test]
         public void BuildProjectFilePath_SanitizesNameAndAppendsSessionExtension()
         {
             string path = GameAudioExportUtility.BuildProjectFilePath("D:/Exports", "Boss:SE?");
 
             Assert.That(path.Replace('\\', '/'), Is.EqualTo("D:/Exports/Boss_SE_.gats.json"));
+        }
+
+        [TestCase("NUL", "NUL_.gats.json")]
+        [TestCase("COM1.gats.json", "COM1_.gats.json")]
+        [TestCase(" . ", "GameAudio.gats.json")]
+        public void BuildProjectFilePath_SanitizesWindowsReservedAndUnstableNames(string projectName, string expectedFileName)
+        {
+            string path = GameAudioExportUtility.BuildProjectFilePath("D:/Exports", projectName);
+
+            Assert.That(path.Replace('\\', '/'), Is.EqualTo($"D:/Exports/{expectedFileName}"));
+        }
+
+        [TestCase("D:/Exports/CON", "D:/Exports/CON_.gats.json")]
+        [TestCase("D:/Exports/AUX.gats.json", "D:/Exports/AUX_.gats.json")]
+        [TestCase("D:/Exports/ .gats.json", "D:/Exports/GameAudio.gats.json")]
+        public void NormalizeSavePath_SanitizesWindowsReservedProjectFileNames(string path, string expectedPath)
+        {
+            string resolved = GameAudioProjectFileUtility.NormalizeSavePath(path);
+
+            Assert.That(resolved.Replace('\\', '/'), Is.EqualTo(expectedPath));
         }
 
         [Test]
