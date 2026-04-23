@@ -1,0 +1,148 @@
+{
+  "formatVersion": "1.0.0",
+  "toolVersion": "0.2.0",
+  "project": {
+    "id": "proj-power-up-rise",
+    "name": "PowerUpRise",
+    "bpm": 128,
+    "timeSignature": {
+      "numerator": 4,
+      "denominator": 4
+    },
+    "totalBars": 2,
+    "sampleRate": 48000,
+    "channelMode": "Stereo",
+    "masterGainDb": -1.0,
+    "loopPlayback": false,
+    "tracks": [
+      {
+        "id": "track-power-rise",
+        "name": "Rise",
+        "mute": false,
+        "solo": false,
+        "volumeDb": 0.0,
+        "pan": -0.05,
+        "defaultVoice": {
+          "waveform": "Saw",
+          "pulseWidth": 0.5,
+          "noiseEnabled": false,
+          "noiseType": "White",
+          "noiseMix": 0.0,
+          "adsr": {
+            "attackMs": 10,
+            "decayMs": 120,
+            "sustain": 0.45,
+            "releaseMs": 180
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": 0.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": true,
+              "timeMs": 180,
+              "feedback": 0.2,
+              "mix": 0.14
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "power-rise-01",
+            "startBeat": 0.0,
+            "durationBeat": 0.5,
+            "midiNote": 60,
+            "velocity": 0.72
+          },
+          {
+            "id": "power-rise-02",
+            "startBeat": 0.5,
+            "durationBeat": 0.5,
+            "midiNote": 64,
+            "velocity": 0.76
+          },
+          {
+            "id": "power-rise-03",
+            "startBeat": 1.0,
+            "durationBeat": 0.5,
+            "midiNote": 67,
+            "velocity": 0.82
+          },
+          {
+            "id": "power-rise-04",
+            "startBeat": 1.5,
+            "durationBeat": 0.75,
+            "midiNote": 72,
+            "velocity": 0.88
+          },
+          {
+            "id": "power-rise-05",
+            "startBeat": 2.25,
+            "durationBeat": 0.75,
+            "midiNote": 79,
+            "velocity": 0.92
+          }
+        ]
+      },
+      {
+        "id": "track-power-spark",
+        "name": "Spark",
+        "mute": false,
+        "solo": false,
+        "volumeDb": -7.0,
+        "pan": 0.08,
+        "defaultVoice": {
+          "waveform": "Square",
+          "pulseWidth": 0.25,
+          "noiseEnabled": false,
+          "noiseType": "White",
+          "noiseMix": 0.0,
+          "adsr": {
+            "attackMs": 0,
+            "decayMs": 70,
+            "sustain": 0.1,
+            "releaseMs": 90
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": 12.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": false,
+              "timeMs": 100,
+              "feedback": 0.1,
+              "mix": 0.08
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "power-spark-01",
+            "startBeat": 0.25,
+            "durationBeat": 0.125,
+            "midiNote": 84,
+            "velocity": 0.55
+          },
+          {
+            "id": "power-spark-02",
+            "startBeat": 1.25,
+            "durationBeat": 0.125,
+            "midiNote": 88,
+            "velocity": 0.6
+          },
+          {
+            "id": "power-spark-03",
+            "startBeat": 2.5,
+            "durationBeat": 0.1875,
+            "midiNote": 91,
+            "velocity": 0.7
+          }
+        ]
+      }
+    ]
+  }
+}

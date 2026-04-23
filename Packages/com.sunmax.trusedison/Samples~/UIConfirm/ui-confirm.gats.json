@@ -1,0 +1,113 @@
+{
+  "formatVersion": "1.0.0",
+  "toolVersion": "0.2.0",
+  "project": {
+    "id": "proj-ui-confirm",
+    "name": "UIConfirm",
+    "bpm": 126,
+    "timeSignature": {
+      "numerator": 4,
+      "denominator": 4
+    },
+    "totalBars": 1,
+    "sampleRate": 48000,
+    "channelMode": "Stereo",
+    "masterGainDb": -1.0,
+    "loopPlayback": false,
+    "tracks": [
+      {
+        "id": "track-ui-confirm-tone",
+        "name": "Tone",
+        "mute": false,
+        "solo": false,
+        "volumeDb": -1.0,
+        "pan": -0.05,
+        "defaultVoice": {
+          "waveform": "Triangle",
+          "pulseWidth": 0.5,
+          "noiseEnabled": false,
+          "noiseType": "White",
+          "noiseMix": 0.0,
+          "adsr": {
+            "attackMs": 0,
+            "decayMs": 140,
+            "sustain": 0.25,
+            "releaseMs": 140
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": 0.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": true,
+              "timeMs": 130,
+              "feedback": 0.18,
+              "mix": 0.14
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "ui-confirm-tone-01",
+            "startBeat": 0.0,
+            "durationBeat": 0.25,
+            "midiNote": 79,
+            "velocity": 0.86
+          },
+          {
+            "id": "ui-confirm-tone-02",
+            "startBeat": 0.25,
+            "durationBeat": 0.3125,
+            "midiNote": 84,
+            "velocity": 0.92
+          }
+        ]
+      },
+      {
+        "id": "track-ui-confirm-sparkle",
+        "name": "Sparkle",
+        "mute": false,
+        "solo": false,
+        "volumeDb": -6.0,
+        "pan": 0.1,
+        "defaultVoice": {
+          "waveform": "Square",
+          "pulseWidth": 0.5,
+          "noiseEnabled": false,
+          "noiseType": "White",
+          "noiseMix": 0.0,
+          "adsr": {
+            "attackMs": 0,
+            "decayMs": 80,
+            "sustain": 0.1,
+            "releaseMs": 90
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": 12.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": false,
+              "timeMs": 110,
+              "feedback": 0.12,
+              "mix": 0.1
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "ui-confirm-sparkle-01",
+            "startBeat": 0.125,
+            "durationBeat": 0.125,
+            "midiNote": 91,
+            "velocity": 0.6
+          }
+        ]
+      }
+    ]
+  }
+}

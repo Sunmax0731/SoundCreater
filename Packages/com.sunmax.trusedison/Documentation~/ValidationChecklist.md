@@ -34,7 +34,8 @@ Current automated coverage in this package includes:
 
 ## Bundled Samples
 
-Release validation should use both bundled samples.
+The package now includes ten bundled sample projects.
+Release validation should at minimum use the two core samples below.
 
 ### Basic SE
 

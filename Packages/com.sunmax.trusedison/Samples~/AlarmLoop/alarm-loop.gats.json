@@ -1,0 +1,148 @@
+{
+  "formatVersion": "1.0.0",
+  "toolVersion": "0.2.0",
+  "project": {
+    "id": "proj-alarm-loop",
+    "name": "AlarmLoop",
+    "bpm": 120,
+    "timeSignature": {
+      "numerator": 4,
+      "denominator": 4
+    },
+    "totalBars": 2,
+    "sampleRate": 48000,
+    "channelMode": "Stereo",
+    "masterGainDb": -1.5,
+    "loopPlayback": true,
+    "tracks": [
+      {
+        "id": "track-alarm-a",
+        "name": "Alarm A",
+        "mute": false,
+        "solo": false,
+        "volumeDb": -1.0,
+        "pan": -0.15,
+        "defaultVoice": {
+          "waveform": "Square",
+          "pulseWidth": 0.5,
+          "noiseEnabled": false,
+          "noiseType": "White",
+          "noiseMix": 0.0,
+          "adsr": {
+            "attackMs": 0,
+            "decayMs": 90,
+            "sustain": 0.25,
+            "releaseMs": 100
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": 0.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": false,
+              "timeMs": 130,
+              "feedback": 0.15,
+              "mix": 0.1
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "alarm-a-01",
+            "startBeat": 0.0,
+            "durationBeat": 0.5,
+            "midiNote": 76,
+            "velocity": 0.95
+          },
+          {
+            "id": "alarm-a-02",
+            "startBeat": 2.0,
+            "durationBeat": 0.5,
+            "midiNote": 76,
+            "velocity": 0.95
+          },
+          {
+            "id": "alarm-a-03",
+            "startBeat": 4.0,
+            "durationBeat": 0.5,
+            "midiNote": 76,
+            "velocity": 0.95
+          },
+          {
+            "id": "alarm-a-04",
+            "startBeat": 6.0,
+            "durationBeat": 0.5,
+            "midiNote": 76,
+            "velocity": 0.95
+          }
+        ]
+      },
+      {
+        "id": "track-alarm-b",
+        "name": "Alarm B",
+        "mute": false,
+        "solo": false,
+        "volumeDb": -2.0,
+        "pan": 0.15,
+        "defaultVoice": {
+          "waveform": "Triangle",
+          "pulseWidth": 0.5,
+          "noiseEnabled": false,
+          "noiseType": "White",
+          "noiseMix": 0.0,
+          "adsr": {
+            "attackMs": 0,
+            "decayMs": 110,
+            "sustain": 0.22,
+            "releaseMs": 110
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": 0.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": false,
+              "timeMs": 120,
+              "feedback": 0.1,
+              "mix": 0.08
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "alarm-b-01",
+            "startBeat": 1.0,
+            "durationBeat": 0.5,
+            "midiNote": 72,
+            "velocity": 0.82
+          },
+          {
+            "id": "alarm-b-02",
+            "startBeat": 3.0,
+            "durationBeat": 0.5,
+            "midiNote": 72,
+            "velocity": 0.82
+          },
+          {
+            "id": "alarm-b-03",
+            "startBeat": 5.0,
+            "durationBeat": 0.5,
+            "midiNote": 72,
+            "velocity": 0.82
+          },
+          {
+            "id": "alarm-b-04",
+            "startBeat": 7.0,
+            "durationBeat": 0.5,
+            "midiNote": 72,
+            "velocity": 0.82
+          }
+        ]
+      }
+    ]
+  }
+}

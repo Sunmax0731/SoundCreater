@@ -1,0 +1,77 @@
+{
+  "formatVersion": "1.0.0",
+  "toolVersion": "0.2.0",
+  "project": {
+    "id": "proj-ui-cancel",
+    "name": "UICancel",
+    "bpm": 124,
+    "timeSignature": {
+      "numerator": 4,
+      "denominator": 4
+    },
+    "totalBars": 1,
+    "sampleRate": 48000,
+    "channelMode": "Stereo",
+    "masterGainDb": -1.5,
+    "loopPlayback": false,
+    "tracks": [
+      {
+        "id": "track-ui-cancel",
+        "name": "Cancel",
+        "mute": false,
+        "solo": false,
+        "volumeDb": -0.5,
+        "pan": 0.0,
+        "defaultVoice": {
+          "waveform": "Saw",
+          "pulseWidth": 0.5,
+          "noiseEnabled": true,
+          "noiseType": "White",
+          "noiseMix": 0.12,
+          "adsr": {
+            "attackMs": 0,
+            "decayMs": 110,
+            "sustain": 0.12,
+            "releaseMs": 90
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": -2.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": false,
+              "timeMs": 100,
+              "feedback": 0.15,
+              "mix": 0.08
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "ui-cancel-01",
+            "startBeat": 0.0,
+            "durationBeat": 0.1875,
+            "midiNote": 83,
+            "velocity": 0.9
+          },
+          {
+            "id": "ui-cancel-02",
+            "startBeat": 0.1875,
+            "durationBeat": 0.1875,
+            "midiNote": 76,
+            "velocity": 0.75
+          },
+          {
+            "id": "ui-cancel-03",
+            "startBeat": 0.375,
+            "durationBeat": 0.25,
+            "midiNote": 69,
+            "velocity": 0.65
+          }
+        ]
+      }
+    ]
+  }
+}

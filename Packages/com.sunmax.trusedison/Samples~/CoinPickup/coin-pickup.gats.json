@@ -1,0 +1,113 @@
+{
+  "formatVersion": "1.0.0",
+  "toolVersion": "0.2.0",
+  "project": {
+    "id": "proj-coin-pickup",
+    "name": "CoinPickup",
+    "bpm": 140,
+    "timeSignature": {
+      "numerator": 4,
+      "denominator": 4
+    },
+    "totalBars": 1,
+    "sampleRate": 48000,
+    "channelMode": "Stereo",
+    "masterGainDb": -1.0,
+    "loopPlayback": false,
+    "tracks": [
+      {
+        "id": "track-coin-bell",
+        "name": "Bell",
+        "mute": false,
+        "solo": false,
+        "volumeDb": 0.0,
+        "pan": 0.05,
+        "defaultVoice": {
+          "waveform": "Square",
+          "pulseWidth": 0.5,
+          "noiseEnabled": false,
+          "noiseType": "White",
+          "noiseMix": 0.0,
+          "adsr": {
+            "attackMs": 0,
+            "decayMs": 180,
+            "sustain": 0.2,
+            "releaseMs": 180
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": 12.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": true,
+              "timeMs": 120,
+              "feedback": 0.22,
+              "mix": 0.18
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "coin-bell-01",
+            "startBeat": 0.0,
+            "durationBeat": 0.125,
+            "midiNote": 88,
+            "velocity": 0.95
+          },
+          {
+            "id": "coin-bell-02",
+            "startBeat": 0.125,
+            "durationBeat": 0.25,
+            "midiNote": 95,
+            "velocity": 0.9
+          }
+        ]
+      },
+      {
+        "id": "track-coin-body",
+        "name": "Body",
+        "mute": false,
+        "solo": false,
+        "volumeDb": -5.0,
+        "pan": -0.05,
+        "defaultVoice": {
+          "waveform": "Triangle",
+          "pulseWidth": 0.5,
+          "noiseEnabled": false,
+          "noiseType": "White",
+          "noiseMix": 0.0,
+          "adsr": {
+            "attackMs": 0,
+            "decayMs": 90,
+            "sustain": 0.15,
+            "releaseMs": 120
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": 0.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": false,
+              "timeMs": 90,
+              "feedback": 0.12,
+              "mix": 0.1
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "coin-body-01",
+            "startBeat": 0.0,
+            "durationBeat": 0.125,
+            "midiNote": 76,
+            "velocity": 0.55
+          }
+        ]
+      }
+    ]
+  }
+}
