@@ -167,7 +167,6 @@ namespace TorusEdison.Editor.Windows
 
             AddWorkspaceTabButton(container, WorkspacePage.File, T("workspace.file", "File"));
             AddWorkspaceTabButton(container, WorkspacePage.Edit, T("workspace.edit", "Edit"));
-            AddWorkspaceTabButton(container, WorkspacePage.Preview, T("workspace.preview", "Preview"));
             AddWorkspaceTabButton(container, WorkspacePage.Export, T("workspace.export", "Export"));
             AddWorkspaceTabButton(container, WorkspacePage.Settings, T("workspace.settings", "Settings"));
 
@@ -192,17 +191,10 @@ namespace TorusEdison.Editor.Windows
             {
                 page.Add(BuildPageHeader(
                     T("page.edit.title", "Edit"),
-                    T("page.edit.description", "Timeline editing and selection-scoped note or track changes.")));
+                    T("page.edit.description", "Timeline editing, preview playback, and selection-scoped note or track changes in one workspace.")));
+                page.Add(BuildPreviewPanel());
                 page.Add(BuildTimelinePanel());
                 page.Add(BuildSelectionInspectorPanel());
-            }));
-
-            container.Add(CreateWorkspacePage(WorkspacePage.Preview, page =>
-            {
-                page.Add(BuildPageHeader(
-                    T("page.preview.title", "Preview"),
-                    T("page.preview.description", "Render and audition the current project without leaving the editor.")));
-                page.Add(BuildPreviewPanel());
             }));
 
             container.Add(CreateWorkspacePage(WorkspacePage.Export, page =>
@@ -270,6 +262,11 @@ namespace TorusEdison.Editor.Windows
 
         private void SetWorkspacePage(WorkspacePage page)
         {
+            if (!_workspacePages.ContainsKey(page))
+            {
+                page = WorkspacePage.Edit;
+            }
+
             _currentWorkspacePage = page;
 
             foreach (KeyValuePair<WorkspacePage, ScrollView> entry in _workspacePages)

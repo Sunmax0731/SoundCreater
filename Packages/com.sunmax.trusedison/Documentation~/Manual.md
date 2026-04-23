@@ -37,7 +37,7 @@ Open the tool from:
 
 ## Workspace Pages
 
-The current editor window is split into five top tabs.
+The current editor window is split into four top tabs.
 
 ### File
 
@@ -53,6 +53,7 @@ Use this page for:
 
 Use this page for:
 
+- preview transport and render controls while editing
 - creating notes on the timeline
 - moving notes across beats and tracks
 - resizing notes
@@ -61,25 +62,11 @@ Use this page for:
 
 Current shortcuts:
 
+- `Render Preview`, `Play`, `Pause`, `Stop`, `Rewind`, `Loop`
 - `Ctrl+D` duplicate selected notes
 - `Delete` remove selected notes
 - `Ctrl+Z` undo
 - `Ctrl+Y` redo
-
-### Preview
-
-Use this page for preview playback.
-
-Available controls:
-
-- `Render Preview`
-- `Play`
-- `Pause`
-- `Stop`
-- `Rewind`
-- `Loop`
-
-Loop playback uses `Total Bars` as the loop length.
 
 ### Export
 
