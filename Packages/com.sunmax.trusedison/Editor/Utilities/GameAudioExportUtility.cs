@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using TorusEdison.Editor.Persistence;
 
 namespace TorusEdison.Editor.Utilities
 {
@@ -78,6 +79,22 @@ namespace TorusEdison.Editor.Utilities
             }
 
             return Path.Combine(exportDirectory, NormalizeWaveFileName(projectName));
+        }
+
+        public static string BuildProjectFilePath(string exportDirectory, string projectName)
+        {
+            if (string.IsNullOrWhiteSpace(exportDirectory))
+            {
+                throw new ArgumentException("Export directory is required.", nameof(exportDirectory));
+            }
+
+            string sanitizedName = GameAudioValidationUtility.SanitizeExportFileName(projectName);
+            if (string.IsNullOrWhiteSpace(sanitizedName))
+            {
+                sanitizedName = "GameAudio";
+            }
+
+            return GameAudioProjectFileUtility.NormalizeSavePath(Path.Combine(exportDirectory, sanitizedName));
         }
 
         public static bool ShouldRefreshAssetDatabase(string filePath, string projectRoot)

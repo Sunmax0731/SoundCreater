@@ -22,7 +22,22 @@ namespace TorusEdison.Editor.Persistence
         public string channelMode;
         public float masterGainDb;
         public bool loopPlayback;
+        public GameAudioImportedAudioConversionDto importedAudioConversion;
         public GameAudioTrackDto[] tracks;
+    }
+
+    [Serializable]
+    internal sealed class GameAudioImportedAudioConversionDto
+    {
+        public string sourceClipName;
+        public string sourceAssetPath;
+        public int sourceSampleRate;
+        public int sourceChannelCount;
+        public float sourceDurationSeconds;
+        public int targetSampleRate;
+        public string targetChannelMode;
+        public int outputChannelCount;
+        public string outputWaveFileName;
     }
 
     [Serializable]
