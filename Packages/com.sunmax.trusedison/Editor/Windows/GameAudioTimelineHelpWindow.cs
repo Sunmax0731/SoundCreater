@@ -15,13 +15,21 @@ namespace TorusEdison.Editor.Windows
 
         public static void Open(GameAudioDisplayLanguage displayLanguage, string hintText)
         {
-            var window = CreateInstance<GameAudioTimelineHelpWindow>();
+            GameAudioTimelineHelpWindow window = HasOpenInstances<GameAudioTimelineHelpWindow>()
+                ? GetWindow<GameAudioTimelineHelpWindow>()
+                : CreateInstance<GameAudioTimelineHelpWindow>();
             window._displayLanguage = displayLanguage;
             window._hintText = hintText ?? string.Empty;
             window.titleContent = new GUIContent(GameAudioLocalization.Get(displayLanguage, "timeline.help.title", "Timeline Editing Help"));
             window.minSize = new Vector2(440.0f, 300.0f);
             window.maxSize = new Vector2(560.0f, 420.0f);
-            window.ShowModalUtility();
+            if (window.rootVisualElement.childCount > 0)
+            {
+                window.CreateGUI();
+            }
+
+            window.ShowUtility();
+            window.Focus();
         }
 
         private void CreateGUI()
@@ -39,7 +47,7 @@ namespace TorusEdison.Editor.Windows
             titleLabel.style.marginBottom = 8.0f;
             rootVisualElement.Add(titleLabel);
 
-            var summaryLabel = new Label(T("timeline.help.summary", "Open this when you need a quick reminder of the current timeline mouse and keyboard shortcuts."));
+            var summaryLabel = new Label(T("timeline.help.summary", "Leave this window open when you need a quick reminder of the current timeline mouse and keyboard shortcuts while continuing to edit."));
             summaryLabel.style.whiteSpace = WhiteSpace.Normal;
             summaryLabel.style.marginBottom = 12.0f;
             rootVisualElement.Add(summaryLabel);
