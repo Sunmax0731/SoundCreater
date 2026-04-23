@@ -107,6 +107,7 @@ namespace TorusEdison.Editor.Persistence
         public bool rememberLastProject;
         public string defaultGridDivision;
         public int undoHistoryLimit;
+        public string displayLanguage;
     }
 
     [Serializable]

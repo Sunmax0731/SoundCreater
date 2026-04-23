@@ -9,6 +9,7 @@ using TorusEdison.Editor.Audio;
 using TorusEdison.Editor.Commands;
 using TorusEdison.Editor.Config;
 using TorusEdison.Editor.Domain;
+using TorusEdison.Editor.Localization;
 using TorusEdison.Editor.Persistence;
 using TorusEdison.Editor.Utilities;
 using UnityEditor;
@@ -51,6 +52,7 @@ namespace TorusEdison.Editor.Windows
         private string _selectedTrackId = string.Empty;
         private string _currentGridDivision = "1/16";
         private WorkspacePage _currentWorkspacePage = WorkspacePage.File;
+        private GameAudioDisplayLanguage _displayLanguage = GameAudioDisplayLanguage.English;
 
         private Label _nameValue;
         private Label _bpmValue;
@@ -99,6 +101,7 @@ namespace TorusEdison.Editor.Windows
             _commonConfig = _commonConfigSerializer.LoadOrDefault();
             _projectConfig = _projectConfigSerializer.LoadOrDefault(GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
             _currentGridDivision = GameAudioTimelineGridUtility.NormalizeDivision(_commonConfig.DefaultGridDivision);
+            _displayLanguage = GameAudioLocalization.ResolveLanguage(_commonConfig.DisplayLanguage);
 
             if (_project == null)
             {
@@ -127,6 +130,16 @@ namespace TorusEdison.Editor.Windows
             RefreshView();
         }
 
+        private string T(string key, string englishText)
+        {
+            return GameAudioLocalization.Get(_displayLanguage, key, englishText);
+        }
+
+        private string TF(string key, string englishFormat, params object[] args)
+        {
+            return GameAudioLocalization.Format(_displayLanguage, key, englishFormat, args);
+        }
+
         private VisualElement BuildToolbar()
         {
             var container = new VisualElement();
@@ -135,10 +148,10 @@ namespace TorusEdison.Editor.Windows
             container.style.flexWrap = Wrap.Wrap;
             container.style.marginBottom = 12;
 
-            container.Add(CreateToolbarButton("New", CreateNewProject));
-            container.Add(CreateToolbarButton("Open", OpenProject));
-            container.Add(CreateToolbarButton("Save", SaveProject));
-            container.Add(CreateToolbarButton("Save As", SaveProjectAs));
+            container.Add(CreateToolbarButton(T("toolbar.new", "New"), CreateNewProject));
+            container.Add(CreateToolbarButton(T("toolbar.open", "Open"), OpenProject));
+            container.Add(CreateToolbarButton(T("toolbar.save", "Save"), SaveProject));
+            container.Add(CreateToolbarButton(T("toolbar.saveAs", "Save As"), SaveProjectAs));
 
             return container;
         }
@@ -150,11 +163,11 @@ namespace TorusEdison.Editor.Windows
             container.style.flexWrap = Wrap.Wrap;
             container.style.marginBottom = 12.0f;
 
-            AddWorkspaceTabButton(container, WorkspacePage.File, "File");
-            AddWorkspaceTabButton(container, WorkspacePage.Edit, "Edit");
-            AddWorkspaceTabButton(container, WorkspacePage.Preview, "Preview");
-            AddWorkspaceTabButton(container, WorkspacePage.Export, "Export");
-            AddWorkspaceTabButton(container, WorkspacePage.Settings, "Settings");
+            AddWorkspaceTabButton(container, WorkspacePage.File, T("workspace.file", "File"));
+            AddWorkspaceTabButton(container, WorkspacePage.Edit, T("workspace.edit", "Edit"));
+            AddWorkspaceTabButton(container, WorkspacePage.Preview, T("workspace.preview", "Preview"));
+            AddWorkspaceTabButton(container, WorkspacePage.Export, T("workspace.export", "Export"));
+            AddWorkspaceTabButton(container, WorkspacePage.Settings, T("workspace.settings", "Settings"));
 
             return container;
         }
@@ -166,33 +179,43 @@ namespace TorusEdison.Editor.Windows
 
             container.Add(CreateWorkspacePage(WorkspacePage.File, page =>
             {
-                page.Add(BuildPageHeader("File", "Project files, current status, and sample workflows."));
+                page.Add(BuildPageHeader(
+                    T("page.file.title", "File"),
+                    T("page.file.description", "Project files, current status, and sample workflows.")));
                 page.Add(BuildSummaryPanel());
                 page.Add(BuildSamplePanel());
             }));
 
             container.Add(CreateWorkspacePage(WorkspacePage.Edit, page =>
             {
-                page.Add(BuildPageHeader("Edit", "Timeline editing and selection-scoped note or track changes."));
+                page.Add(BuildPageHeader(
+                    T("page.edit.title", "Edit"),
+                    T("page.edit.description", "Timeline editing and selection-scoped note or track changes.")));
                 page.Add(BuildTimelinePanel());
                 page.Add(BuildSelectionInspectorPanel());
             }));
 
             container.Add(CreateWorkspacePage(WorkspacePage.Preview, page =>
             {
-                page.Add(BuildPageHeader("Preview", "Render and audition the current project without leaving the editor."));
+                page.Add(BuildPageHeader(
+                    T("page.preview.title", "Preview"),
+                    T("page.preview.description", "Render and audition the current project without leaving the editor.")));
                 page.Add(BuildPreviewPanel());
             }));
 
             container.Add(CreateWorkspacePage(WorkspacePage.Export, page =>
             {
-                page.Add(BuildPageHeader("Export", "Write WAV files and confirm the current output destination."));
+                page.Add(BuildPageHeader(
+                    T("page.export.title", "Export"),
+                    T("page.export.description", "Write WAV files and confirm the current output destination.")));
                 page.Add(BuildExportPanel());
             }));
 
             container.Add(CreateWorkspacePage(WorkspacePage.Settings, page =>
             {
-                page.Add(BuildPageHeader("Settings", "Project-level settings and foundation diagnostics."));
+                page.Add(BuildPageHeader(
+                    T("page.settings.title", "Settings"),
+                    T("page.settings.description", "Project-level settings and foundation diagnostics.")));
                 page.Add(BuildProjectInspectorPanel());
                 page.Add(BuildInfoPanel());
             }));
@@ -271,13 +294,13 @@ namespace TorusEdison.Editor.Windows
         {
             var panel = CreateSectionPanel(new Color(0.16f, 0.16f, 0.16f));
 
-            panel.Add(CreateSectionTitle("Current Project"));
-            _nameValue = AddKeyValue(panel, "Name");
-            _bpmValue = AddKeyValue(panel, "BPM");
-            _barsValue = AddKeyValue(panel, "Bars");
-            _tracksValue = AddKeyValue(panel, "Tracks");
-            _pathValue = AddKeyValue(panel, "File");
-            _statusValue = AddKeyValue(panel, "Status");
+            panel.Add(CreateSectionTitle(T("summary.currentProject", "Current Project")));
+            _nameValue = AddKeyValue(panel, T("summary.name", "Name"));
+            _bpmValue = AddKeyValue(panel, T("summary.bpm", "BPM"));
+            _barsValue = AddKeyValue(panel, T("summary.bars", "Bars"));
+            _tracksValue = AddKeyValue(panel, T("summary.tracks", "Tracks"));
+            _pathValue = AddKeyValue(panel, T("summary.file", "File"));
+            _statusValue = AddKeyValue(panel, T("summary.status", "Status"));
 
             return panel;
         }
@@ -286,7 +309,7 @@ namespace TorusEdison.Editor.Windows
         {
             var panel = CreateSectionPanel(new Color(0.12f, 0.12f, 0.12f));
 
-            panel.Add(CreateSectionTitle("Timeline Editing"));
+            panel.Add(CreateSectionTitle(T("timeline.title", "Timeline Editing")));
 
             var actionRow = new VisualElement();
             actionRow.style.flexDirection = FlexDirection.Row;
@@ -294,9 +317,9 @@ namespace TorusEdison.Editor.Windows
             actionRow.style.flexWrap = Wrap.Wrap;
             actionRow.style.marginBottom = 8;
 
-            _undoButton = CreateToolbarButton("Undo", UndoLastEdit);
-            _redoButton = CreateToolbarButton("Redo", RedoLastEdit);
-            _gridButton = CreateToolbarButton("Grid 1/16", CycleGridDivision);
+            _undoButton = CreateToolbarButton(T("timeline.undo", "Undo"), UndoLastEdit);
+            _redoButton = CreateToolbarButton(T("timeline.redo", "Redo"), RedoLastEdit);
+            _gridButton = CreateToolbarButton(TF("timeline.grid", "Grid {0}", "1/16"), CycleGridDivision);
 
             actionRow.Add(_undoButton);
             actionRow.Add(_redoButton);
@@ -325,7 +348,7 @@ namespace TorusEdison.Editor.Windows
         {
             var panel = CreateSectionPanel(new Color(0.14f, 0.14f, 0.14f));
 
-            panel.Add(CreateSectionTitle("Selection Inspector"));
+            panel.Add(CreateSectionTitle(T("selectionInspector.title", "Selection Inspector")));
 
             _selectionInspectorContainer = new VisualElement();
             _selectionInspectorContainer.style.marginBottom = 12.0f;
@@ -338,7 +361,7 @@ namespace TorusEdison.Editor.Windows
         {
             var panel = CreateSectionPanel(new Color(0.14f, 0.14f, 0.14f));
 
-            panel.Add(CreateSectionTitle("Project Inspector"));
+            panel.Add(CreateSectionTitle(T("projectInspector.title", "Project Inspector")));
 
             _projectInspectorContainer = new VisualElement();
             panel.Add(_projectInspectorContainer);
@@ -350,7 +373,7 @@ namespace TorusEdison.Editor.Windows
         {
             var panel = CreateSectionPanel(new Color(0.13f, 0.13f, 0.13f));
 
-            panel.Add(CreateSectionTitle("Preview Playback"));
+            panel.Add(CreateSectionTitle(T("preview.title", "Preview Playback")));
 
             var transportRow = new VisualElement();
             transportRow.style.flexDirection = FlexDirection.Row;
@@ -358,26 +381,26 @@ namespace TorusEdison.Editor.Windows
             transportRow.style.flexWrap = Wrap.Wrap;
             transportRow.style.marginBottom = 8;
 
-            transportRow.Add(CreateToolbarButton("Render Preview", RenderPreview));
-            transportRow.Add(CreateToolbarButton("Play", PlayPreview));
-            transportRow.Add(CreateToolbarButton("Pause", PausePreview));
-            transportRow.Add(CreateToolbarButton("Stop", StopPreview));
-            transportRow.Add(CreateToolbarButton("Rewind", RewindPreview));
+            transportRow.Add(CreateToolbarButton(T("preview.render", "Render Preview"), RenderPreview));
+            transportRow.Add(CreateToolbarButton(T("preview.play", "Play"), PlayPreview));
+            transportRow.Add(CreateToolbarButton(T("preview.pause", "Pause"), PausePreview));
+            transportRow.Add(CreateToolbarButton(T("preview.stop", "Stop"), StopPreview));
+            transportRow.Add(CreateToolbarButton(T("preview.rewind", "Rewind"), RewindPreview));
 
-            _loopToggle = new Toggle("Loop");
+            _loopToggle = new Toggle(T("preview.loop", "Loop"));
             _loopToggle.style.marginLeft = 4;
             _loopToggle.RegisterValueChangedCallback(OnLoopPlaybackChanged);
             transportRow.Add(_loopToggle);
 
             panel.Add(transportRow);
 
-            _previewStateValue = AddKeyValue(panel, "Preview");
-            _previewBufferValue = AddKeyValue(panel, "Buffer");
-            _previewCursorValue = AddKeyValue(panel, "Cursor");
+            _previewStateValue = AddKeyValue(panel, T("preview.key.preview", "Preview"));
+            _previewBufferValue = AddKeyValue(panel, T("preview.key.buffer", "Buffer"));
+            _previewCursorValue = AddKeyValue(panel, T("preview.key.cursor", "Cursor"));
 
             _previewProgressBar = new ProgressBar
             {
-                title = "Cursor not started"
+                title = T("preview.cursorNotStarted", "Cursor not started")
             };
             _previewProgressBar.lowValue = 0.0f;
             _previewProgressBar.highValue = 100.0f;
@@ -400,38 +423,38 @@ namespace TorusEdison.Editor.Windows
         {
             var panel = CreateSectionPanel(new Color(0.15f, 0.14f, 0.13f));
 
-            panel.Add(CreateSectionTitle("WAV Export"));
+            panel.Add(CreateSectionTitle(T("export.title", "WAV Export")));
 
             var actionRow = new VisualElement();
             actionRow.style.flexDirection = FlexDirection.Row;
             actionRow.style.alignItems = Align.Center;
             actionRow.style.flexWrap = Wrap.Wrap;
             actionRow.style.marginBottom = 8.0f;
-            actionRow.Add(CreateToolbarButton("Export WAV", ExportWav));
-            actionRow.Add(CreateToolbarButton("Open Export Folder", OpenExportFolder));
+            actionRow.Add(CreateToolbarButton(T("export.exportWav", "Export WAV"), ExportWav));
+            actionRow.Add(CreateToolbarButton(T("export.openFolder", "Open Export Folder"), OpenExportFolder));
             panel.Add(actionRow);
 
-            _exportResolvedPathValue = AddKeyValue(panel, "Resolved Folder");
-            _exportFileNameValue = AddKeyValue(panel, "Export File");
-            _exportLastResultValue = AddKeyValue(panel, "Last Export");
+            _exportResolvedPathValue = AddKeyValue(panel, T("export.resolvedFolder", "Resolved Folder"));
+            _exportFileNameValue = AddKeyValue(panel, T("export.exportFile", "Export File"));
+            _exportLastResultValue = AddKeyValue(panel, T("export.lastExport", "Last Export"));
 
             _commonExportDirectoryField = new TextField
             {
                 isDelayed = true
             };
             _commonExportDirectoryField.RegisterValueChangedCallback(OnCommonExportDirectoryChanged);
-            panel.Add(CreateInspectorRow("Common Default Folder", _commonExportDirectoryField));
+            panel.Add(CreateInspectorRow(T("export.commonDefaultFolder", "Common Default Folder"), _commonExportDirectoryField));
 
             _projectExportDirectoryField = new TextField
             {
                 isDelayed = true
             };
             _projectExportDirectoryField.RegisterValueChangedCallback(OnProjectExportDirectoryChanged);
-            panel.Add(CreateInspectorRow("Project Override Folder", _projectExportDirectoryField));
+            panel.Add(CreateInspectorRow(T("export.projectOverrideFolder", "Project Override Folder"), _projectExportDirectoryField));
 
             _autoRefreshAfterExportToggle = new Toggle();
             _autoRefreshAfterExportToggle.RegisterValueChangedCallback(OnAutoRefreshAfterExportChanged);
-            panel.Add(CreateInspectorRow("Auto Refresh Assets", _autoRefreshAfterExportToggle));
+            panel.Add(CreateInspectorRow(T("export.autoRefresh", "Auto Refresh Assets"), _autoRefreshAfterExportToggle));
 
             return panel;
         }
@@ -440,30 +463,30 @@ namespace TorusEdison.Editor.Windows
         {
             var panel = CreateSectionPanel(new Color(0.15f, 0.15f, 0.15f));
 
-            panel.Add(CreateSectionTitle("Samples And Workflow"));
+            panel.Add(CreateSectionTitle(T("sample.title", "Samples And Workflow")));
 
             var sampleRow = new VisualElement();
             sampleRow.style.flexDirection = FlexDirection.Row;
             sampleRow.style.flexWrap = Wrap.Wrap;
             sampleRow.style.marginBottom = 8;
 
-            sampleRow.Add(CreateToolbarButton("Create Samples", CreateSampleProjects));
-            sampleRow.Add(CreateToolbarButton("Load Basic SE", LoadBasicSampleProject));
-            sampleRow.Add(CreateToolbarButton("Load Simple Loop", LoadSimpleLoopSampleProject));
-            sampleRow.Add(CreateToolbarButton("Open Folder", OpenSampleProjectsFolder));
+            sampleRow.Add(CreateToolbarButton(T("sample.create", "Create Samples"), CreateSampleProjects));
+            sampleRow.Add(CreateToolbarButton(T("sample.loadBasic", "Load Basic SE"), LoadBasicSampleProject));
+            sampleRow.Add(CreateToolbarButton(T("sample.loadLoop", "Load Simple Loop"), LoadSimpleLoopSampleProject));
+            sampleRow.Add(CreateToolbarButton(T("sample.openFolder", "Open Folder"), OpenSampleProjectsFolder));
 
             panel.Add(sampleRow);
 
-            var sampleLocationLabel = new Label($"Sample files are stored under {GetUserProjectFolderPath()}");
+            var sampleLocationLabel = new Label(TF("sample.location", "Sample files are stored under {0}", GetUserProjectFolderPath()));
             sampleLocationLabel.style.marginBottom = 4;
             panel.Add(sampleLocationLabel);
 
-            var editingLabel = new Label("Timeline editing and inspector editing are now available. Use the Edit tab to create notes, move them, resize them, and adjust note or track parameters without leaving the editor.");
+            var editingLabel = new Label(T("sample.editing", "Timeline editing and inspector editing are now available. Use the Edit tab to create notes, move them, resize them, and adjust note or track parameters without leaving the editor."));
             editingLabel.style.whiteSpace = WhiteSpace.Normal;
             editingLabel.style.marginBottom = 4;
             panel.Add(editingLabel);
 
-            var fieldsLabel = new Label("JSON is still useful for bulk edits, review, and version control, but file actions, preview, export, and settings are now separated into dedicated tabs.");
+            var fieldsLabel = new Label(T("sample.json", "JSON is still useful for bulk edits, review, and version control, but file actions, preview, export, and settings are now separated into dedicated tabs."));
             fieldsLabel.style.whiteSpace = WhiteSpace.Normal;
             panel.Add(fieldsLabel);
 
@@ -475,12 +498,12 @@ namespace TorusEdison.Editor.Windows
             var panel = new VisualElement();
             panel.style.flexDirection = FlexDirection.Column;
 
-            panel.Add(CreateSectionTitle("Foundation Status"));
-            var currentScopeLabel = new Label("This window now separates file, edit, preview, export, and settings workflows while keeping the same project state, selection, playback, Undo / Redo, JSON save/load, and WAV export foundations.");
+            panel.Add(CreateSectionTitle(T("info.title", "Foundation Status")));
+            var currentScopeLabel = new Label(T("info.currentScope", "This window now separates file, edit, preview, export, and settings workflows while keeping the same project state, selection, playback, Undo / Redo, JSON save/load, and WAV export foundations."));
             currentScopeLabel.style.marginBottom = 4;
             panel.Add(currentScopeLabel);
 
-            var nextScopeLabel = new Label("Release validation, documentation sync, and distribution packaging are the next layers to connect.");
+            var nextScopeLabel = new Label(T("info.nextScope", "Release validation, documentation sync, and distribution packaging are the next layers to connect."));
             nextScopeLabel.style.marginBottom = 8;
             panel.Add(nextScopeLabel);
 
@@ -678,6 +701,21 @@ namespace TorusEdison.Editor.Windows
             parent.Add(CreateInspectorRow(label, field));
         }
 
+        private void AddInspectorPopupField<TValue>(
+            VisualElement parent,
+            string label,
+            IEnumerable<TValue> options,
+            TValue value,
+            Func<TValue, string> formatSelectedValue,
+            Action<TValue> onChanged)
+        {
+            List<TValue> choices = options.ToList();
+            int selectedIndex = Math.Max(0, choices.IndexOf(choices.Contains(value) ? value : choices[0]));
+            var field = new PopupField<TValue>(choices, selectedIndex, formatSelectedValue, formatSelectedValue);
+            field.RegisterValueChangedCallback(evt => onChanged?.Invoke(evt.newValue));
+            parent.Add(CreateInspectorRow(label, field));
+        }
+
         private void RefreshInspectorPanel(GameAudioProject project)
         {
             if (project == null || _selectionInspectorContainer == null || _projectInspectorContainer == null)
@@ -709,7 +747,7 @@ namespace TorusEdison.Editor.Windows
             _selectionInspectorContainer.Clear();
             _projectInspectorContainer.Clear();
 
-            _selectionInspectorContainer.Add(CreateInspectorGroupTitle("Selection"));
+            _selectionInspectorContainer.Add(CreateInspectorGroupTitle(T("inspector.selection", "Selection")));
 
             IReadOnlyList<SelectedNoteContext> selectedNotes = GetSelectedNoteContexts(project);
             if (selectedNotes.Count > 0)
@@ -721,7 +759,7 @@ namespace TorusEdison.Editor.Windows
                 GameAudioTrack selectedTrack = FindTrackById(project, _selectedTrackId) ?? project.Tracks.FirstOrDefault();
                 if (selectedTrack == null)
                 {
-                    _selectionInspectorContainer.Add(CreateInspectorHelpBox("Select a track header or note in the timeline to start editing.", HelpBoxMessageType.Info));
+                    _selectionInspectorContainer.Add(CreateInspectorHelpBox(T("inspector.selectTrackOrNote", "Select a track header or note in the timeline to start editing."), HelpBoxMessageType.Info));
                 }
                 else
                 {
@@ -729,7 +767,7 @@ namespace TorusEdison.Editor.Windows
                 }
             }
 
-            _projectInspectorContainer.Add(CreateInspectorGroupTitle("Project"));
+            _projectInspectorContainer.Add(CreateInspectorGroupTitle(T("inspector.project", "Project")));
             BuildProjectInspector(_projectInspectorContainer, project);
         }
 
@@ -742,11 +780,11 @@ namespace TorusEdison.Editor.Windows
                 .Count();
 
             string summaryText = selectedNotes.Count == 1
-                ? $"Editing note {primarySelection.Note.Id} on {primarySelection.Track.Name}."
-                : $"Editing {selectedNotes.Count} notes across {trackCount} tracks. Changes apply to every selected note.";
+                ? TF("inspector.note.singleSummary", "Editing note {0} on {1}.", primarySelection.Note.Id, primarySelection.Track.Name)
+                : TF("inspector.note.multiSummary", "Editing {0} notes across {1} tracks. Changes apply to every selected note.", selectedNotes.Count, trackCount);
             parent.Add(CreateInspectorSummaryLabel(summaryText));
 
-            AddInspectorFloatField(parent, "Start Beat", primarySelection.Note.StartBeat, requested =>
+            AddInspectorFloatField(parent, T("inspector.note.startBeat", "Start Beat"), primarySelection.Note.StartBeat, requested =>
             {
                 TryApplySelectedNotesChange(
                     "Set Note Start",
@@ -754,7 +792,7 @@ namespace TorusEdison.Editor.Windows
                     actualNotes => NotifyClamp("Start Beat", requested, actualNotes[0].Note.StartBeat));
             });
 
-            AddInspectorFloatField(parent, "Duration Beat", primarySelection.Note.DurationBeat, requested =>
+            AddInspectorFloatField(parent, T("inspector.note.durationBeat", "Duration Beat"), primarySelection.Note.DurationBeat, requested =>
             {
                 TryApplySelectedNotesChange(
                     "Set Note Duration",
@@ -762,7 +800,7 @@ namespace TorusEdison.Editor.Windows
                     actualNotes => NotifyClamp("Duration Beat", requested, actualNotes[0].Note.DurationBeat));
             });
 
-            AddInspectorIntegerField(parent, "MIDI Note", primarySelection.Note.MidiNote, requested =>
+            AddInspectorIntegerField(parent, T("inspector.note.midi", "MIDI Note"), primarySelection.Note.MidiNote, requested =>
             {
                 TryApplySelectedNotesChange(
                     "Set Note Pitch",
@@ -770,7 +808,7 @@ namespace TorusEdison.Editor.Windows
                     actualNotes => NotifyClamp("MIDI Note", requested, actualNotes[0].Note.MidiNote));
             });
 
-            AddInspectorFloatField(parent, "Velocity", primarySelection.Note.Velocity, requested =>
+            AddInspectorFloatField(parent, T("inspector.note.velocity", "Velocity"), primarySelection.Note.Velocity, requested =>
             {
                 TryApplySelectedNotesChange(
                     "Set Note Velocity",
@@ -780,7 +818,7 @@ namespace TorusEdison.Editor.Windows
 
             bool allHaveOverride = selectedNotes.All(selection => selection.Note.VoiceOverride != null);
             bool anyHaveOverride = selectedNotes.Any(selection => selection.Note.VoiceOverride != null);
-            AddInspectorToggleField(parent, "Use Voice Override", allHaveOverride, enabled =>
+            AddInspectorToggleField(parent, T("inspector.note.useVoiceOverride", "Use Voice Override"), allHaveOverride, enabled =>
             {
                 TryApplySelectedNotesChange(
                     enabled ? "Enable Voice Override" : "Disable Voice Override",
@@ -790,8 +828,8 @@ namespace TorusEdison.Editor.Windows
             if (!allHaveOverride)
             {
                 string message = anyHaveOverride
-                    ? "Some selected notes still use the track default voice. Enable voice override to apply explicit note-level voice settings to the full selection."
-                    : "Selected notes currently use each track's default voice. Enable voice override to edit per-note voice settings.";
+                    ? T("inspector.note.overridePartial", "Some selected notes still use the track default voice. Enable voice override to apply explicit note-level voice settings to the full selection.")
+                    : T("inspector.note.overrideNone", "Selected notes currently use each track's default voice. Enable voice override to edit per-note voice settings.");
                 parent.Add(CreateInspectorHelpBox(message, HelpBoxMessageType.Info));
                 return;
             }
@@ -799,7 +837,7 @@ namespace TorusEdison.Editor.Windows
             GameAudioVoiceSettings voice = primarySelection.Note.VoiceOverride ?? GameAudioProjectFactory.CreateDefaultVoice();
             AddVoiceInspector(
                 parent,
-                "Voice Override",
+                T("voice.override", "Voice Override"),
                 voice,
                 (displayName, applyVoiceChange, afterApply) =>
                 {
@@ -816,9 +854,9 @@ namespace TorusEdison.Editor.Windows
 
         private void BuildTrackInspector(VisualElement parent, GameAudioTrack track)
         {
-            parent.Add(CreateInspectorSummaryLabel($"Editing {track.Name}. Notes: {track.Notes.Count}."));
+            parent.Add(CreateInspectorSummaryLabel(TF("inspector.track.summary", "Editing {0}. Notes: {1}.", track.Name, track.Notes.Count)));
 
-            AddInspectorTextField(parent, "Track Name", track.Name, requested =>
+            AddInspectorTextField(parent, T("inspector.track.name", "Track Name"), track.Name, requested =>
             {
                 if (string.Equals(track.Name, requested, StringComparison.Ordinal))
                 {
@@ -828,7 +866,7 @@ namespace TorusEdison.Editor.Windows
                 TryApplyTrackChange("Rename Track", track.Id, current => current.Name = requested);
             });
 
-            AddInspectorToggleField(parent, "Mute", track.Mute, requested =>
+            AddInspectorToggleField(parent, T("inspector.track.mute", "Mute"), track.Mute, requested =>
             {
                 if (track.Mute == requested)
                 {
@@ -838,7 +876,7 @@ namespace TorusEdison.Editor.Windows
                 TryApplyTrackChange("Toggle Mute", track.Id, current => current.Mute = requested);
             });
 
-            AddInspectorToggleField(parent, "Solo", track.Solo, requested =>
+            AddInspectorToggleField(parent, T("inspector.track.solo", "Solo"), track.Solo, requested =>
             {
                 if (track.Solo == requested)
                 {
@@ -848,7 +886,7 @@ namespace TorusEdison.Editor.Windows
                 TryApplyTrackChange("Toggle Solo", track.Id, current => current.Solo = requested);
             });
 
-            AddInspectorFloatField(parent, "Volume (dB)", track.VolumeDb, requested =>
+            AddInspectorFloatField(parent, T("inspector.track.volume", "Volume (dB)"), track.VolumeDb, requested =>
             {
                 TryApplyTrackChange(
                     "Set Track Volume",
@@ -857,7 +895,7 @@ namespace TorusEdison.Editor.Windows
                     actualTrack => NotifyClamp("Track Volume", requested, actualTrack.VolumeDb));
             });
 
-            AddInspectorFloatField(parent, "Pan", track.Pan, requested =>
+            AddInspectorFloatField(parent, T("inspector.track.pan", "Pan"), track.Pan, requested =>
             {
                 TryApplyTrackChange(
                     "Set Track Pan",
@@ -868,7 +906,7 @@ namespace TorusEdison.Editor.Windows
 
             AddVoiceInspector(
                 parent,
-                "Default Voice",
+                T("voice.default", "Default Voice"),
                 track.DefaultVoice ?? GameAudioProjectFactory.CreateDefaultVoice(),
                 (displayName, applyVoiceChange, afterApply) =>
                 {
@@ -886,9 +924,9 @@ namespace TorusEdison.Editor.Windows
 
         private void BuildProjectInspector(VisualElement parent, GameAudioProject project)
         {
-            parent.Add(CreateInspectorSummaryLabel("Transport, output, and render settings for the current project."));
+            parent.Add(CreateInspectorSummaryLabel(T("inspector.project.summary", "Transport, output, and render settings for the current project.")));
 
-            AddInspectorTextField(parent, "Project Name", project.Name, requested =>
+            AddInspectorTextField(parent, T("inspector.project.name", "Project Name"), project.Name, requested =>
             {
                 if (string.Equals(project.Name, requested, StringComparison.Ordinal))
                 {
@@ -898,7 +936,7 @@ namespace TorusEdison.Editor.Windows
                 TryApplyProjectChange("Rename Project", current => current.Name = requested);
             });
 
-            AddInspectorIntegerField(parent, "BPM", project.Bpm, requested =>
+            AddInspectorIntegerField(parent, T("summary.bpm", "BPM"), project.Bpm, requested =>
             {
                 TryApplyProjectChange(
                     "Set BPM",
@@ -906,14 +944,14 @@ namespace TorusEdison.Editor.Windows
                     actualProject => NotifyClamp("BPM", requested, actualProject.Bpm));
             });
 
-            AddInspectorPopupField(parent, "Time Signature", GetSupportedTimeSignatureOptions(), FormatTimeSignature(project.TimeSignature), requested =>
+            AddInspectorPopupField(parent, T("inspector.project.timeSignature", "Time Signature"), GetSupportedTimeSignatureOptions(), FormatTimeSignature(project.TimeSignature), requested =>
             {
                 TryApplyProjectChange(
                     "Set Time Signature",
                     current => current.TimeSignature = ParseTimeSignature(requested));
             });
 
-            AddInspectorIntegerField(parent, "Total Bars", project.TotalBars, requested =>
+            AddInspectorIntegerField(parent, T("inspector.project.totalBars", "Total Bars"), project.TotalBars, requested =>
             {
                 TryApplyProjectChange(
                     "Set Total Bars",
@@ -921,27 +959,45 @@ namespace TorusEdison.Editor.Windows
                     actualProject => NotifyClamp("Total Bars", requested, actualProject.TotalBars));
             });
 
-            AddInspectorPopupField(parent, "Sample Rate", GetSupportedSampleRateOptions(), FormatSampleRateOption(project.SampleRate), requested =>
+            AddInspectorPopupField(parent, T("inspector.project.sampleRate", "Sample Rate"), GetSupportedSampleRateOptions(), FormatSampleRateOption(project.SampleRate), requested =>
             {
                 TryApplyProjectChange(
                     "Set Sample Rate",
                     current => current.SampleRate = ParseSampleRateOption(requested));
             });
 
-            AddInspectorPopupField(parent, "Channel Mode", GetSupportedChannelModeOptions(), project.ChannelMode.ToString(), requested =>
-            {
-                TryApplyProjectChange(
-                    "Set Channel Mode",
-                    current => current.ChannelMode = ParseChannelMode(requested));
-            });
+            AddInspectorPopupField(
+                parent,
+                T("inspector.project.channelMode", "Channel Mode"),
+                GetSupportedChannelModeOptions(),
+                project.ChannelMode,
+                option => GameAudioLocalization.GetChannelModeLabel(_displayLanguage, option),
+                requested =>
+                {
+                    TryApplyProjectChange(
+                        "Set Channel Mode",
+                        current => current.ChannelMode = requested);
+                });
 
-            AddInspectorFloatField(parent, "Master Gain (dB)", project.MasterGainDb, requested =>
+            AddInspectorFloatField(parent, T("inspector.project.masterGain", "Master Gain (dB)"), project.MasterGainDb, requested =>
             {
                 TryApplyProjectChange(
                     "Set Master Gain",
                     current => current.MasterGainDb = requested,
                     actualProject => NotifyClamp("Master Gain", requested, actualProject.MasterGainDb));
             });
+
+            parent.Add(CreateInspectorGroupTitle(T("inspector.toolSettings", "Tool Settings")));
+            AddInspectorPopupField(
+                parent,
+                T("inspector.language", "Display Language"),
+                GameAudioLocalization.GetSupportedLanguageModes(),
+                _commonConfig?.DisplayLanguage ?? GameAudioLanguageMode.Auto,
+                option => GameAudioLocalization.GetLanguageModeLabel(_displayLanguage, option),
+                OnDisplayLanguageChanged);
+            parent.Add(CreateInspectorHelpBox(
+                T("inspector.language.help", "Auto follows the current Unity Editor language when available. Override is useful for support and screenshot consistency."),
+                HelpBoxMessageType.Info));
         }
 
         private void AddVoiceInspector(
@@ -959,12 +1015,18 @@ namespace TorusEdison.Editor.Windows
             voiceFoldout.style.marginBottom = 6.0f;
             parent.Add(voiceFoldout);
 
-            AddInspectorPopupField(voiceFoldout, "Waveform", GetSupportedWaveformOptions(), voice.Waveform.ToString(), requested =>
-            {
-                applyVoiceChange("Set Waveform", current => current.Waveform = ParseWaveform(requested), null);
-            });
+            AddInspectorPopupField(
+                voiceFoldout,
+                T("voice.waveform", "Waveform"),
+                GetSupportedWaveformOptions(),
+                voice.Waveform,
+                option => GameAudioLocalization.GetWaveformLabel(_displayLanguage, option),
+                requested =>
+                {
+                    applyVoiceChange("Set Waveform", current => current.Waveform = requested, null);
+                });
 
-            AddInspectorFloatField(voiceFoldout, "Pulse Width", voice.PulseWidth, requested =>
+            AddInspectorFloatField(voiceFoldout, T("voice.pulseWidth", "Pulse Width"), voice.PulseWidth, requested =>
             {
                 applyVoiceChange(
                     "Set Pulse Width",
@@ -972,17 +1034,23 @@ namespace TorusEdison.Editor.Windows
                     actualVoice => NotifyClamp("Pulse Width", requested, actualVoice.PulseWidth));
             });
 
-            AddInspectorToggleField(voiceFoldout, "Noise Enabled", voice.NoiseEnabled, requested =>
+            AddInspectorToggleField(voiceFoldout, T("voice.noiseEnabled", "Noise Enabled"), voice.NoiseEnabled, requested =>
             {
                 applyVoiceChange("Toggle Noise", current => current.NoiseEnabled = requested, null);
             });
 
-            AddInspectorPopupField(voiceFoldout, "Noise Type", GetSupportedNoiseTypeOptions(), voice.NoiseType.ToString(), requested =>
-            {
-                applyVoiceChange("Set Noise Type", current => current.NoiseType = ParseNoiseType(requested), null);
-            });
+            AddInspectorPopupField(
+                voiceFoldout,
+                T("voice.noiseType", "Noise Type"),
+                GetSupportedNoiseTypeOptions(),
+                voice.NoiseType,
+                option => GameAudioLocalization.GetNoiseTypeLabel(_displayLanguage, option),
+                requested =>
+                {
+                    applyVoiceChange("Set Noise Type", current => current.NoiseType = requested, null);
+                });
 
-            AddInspectorFloatField(voiceFoldout, "Noise Mix", voice.NoiseMix, requested =>
+            AddInspectorFloatField(voiceFoldout, T("voice.noiseMix", "Noise Mix"), voice.NoiseMix, requested =>
             {
                 applyVoiceChange(
                     "Set Noise Mix",
@@ -992,12 +1060,12 @@ namespace TorusEdison.Editor.Windows
 
             var envelopeFoldout = new Foldout
             {
-                text = "Envelope",
+                text = T("voice.envelope", "Envelope"),
                 value = false
             };
             voiceFoldout.Add(envelopeFoldout);
 
-            AddInspectorIntegerField(envelopeFoldout, "Attack (ms)", voice.Adsr.AttackMs, requested =>
+            AddInspectorIntegerField(envelopeFoldout, T("voice.attack", "Attack (ms)"), voice.Adsr.AttackMs, requested =>
             {
                 applyVoiceChange(
                     "Set Attack",
@@ -1005,7 +1073,7 @@ namespace TorusEdison.Editor.Windows
                     actualVoice => NotifyClamp("Attack", requested, actualVoice.Adsr.AttackMs));
             });
 
-            AddInspectorIntegerField(envelopeFoldout, "Decay (ms)", voice.Adsr.DecayMs, requested =>
+            AddInspectorIntegerField(envelopeFoldout, T("voice.decay", "Decay (ms)"), voice.Adsr.DecayMs, requested =>
             {
                 applyVoiceChange(
                     "Set Decay",
@@ -1013,7 +1081,7 @@ namespace TorusEdison.Editor.Windows
                     actualVoice => NotifyClamp("Decay", requested, actualVoice.Adsr.DecayMs));
             });
 
-            AddInspectorFloatField(envelopeFoldout, "Sustain", voice.Adsr.Sustain, requested =>
+            AddInspectorFloatField(envelopeFoldout, T("voice.sustain", "Sustain"), voice.Adsr.Sustain, requested =>
             {
                 applyVoiceChange(
                     "Set Sustain",
@@ -1021,7 +1089,7 @@ namespace TorusEdison.Editor.Windows
                     actualVoice => NotifyClamp("Sustain", requested, actualVoice.Adsr.Sustain));
             });
 
-            AddInspectorIntegerField(envelopeFoldout, "Release (ms)", voice.Adsr.ReleaseMs, requested =>
+            AddInspectorIntegerField(envelopeFoldout, T("voice.release", "Release (ms)"), voice.Adsr.ReleaseMs, requested =>
             {
                 applyVoiceChange(
                     "Set Release",
@@ -1031,12 +1099,12 @@ namespace TorusEdison.Editor.Windows
 
             var effectFoldout = new Foldout
             {
-                text = "Effect",
+                text = T("voice.effect", "Effect"),
                 value = false
             };
             voiceFoldout.Add(effectFoldout);
 
-            AddInspectorFloatField(effectFoldout, "Volume (dB)", voice.Effect.VolumeDb, requested =>
+            AddInspectorFloatField(effectFoldout, T("voice.effectVolume", "Volume (dB)"), voice.Effect.VolumeDb, requested =>
             {
                 applyVoiceChange(
                     "Set Voice Volume",
@@ -1044,7 +1112,7 @@ namespace TorusEdison.Editor.Windows
                     actualVoice => NotifyClamp("Voice Volume", requested, actualVoice.Effect.VolumeDb));
             });
 
-            AddInspectorFloatField(effectFoldout, "Pan", voice.Effect.Pan, requested =>
+            AddInspectorFloatField(effectFoldout, T("voice.effectPan", "Pan"), voice.Effect.Pan, requested =>
             {
                 applyVoiceChange(
                     "Set Voice Pan",
@@ -1052,7 +1120,7 @@ namespace TorusEdison.Editor.Windows
                     actualVoice => NotifyClamp("Voice Pan", requested, actualVoice.Effect.Pan));
             });
 
-            AddInspectorFloatField(effectFoldout, "Pitch (semitone)", voice.Effect.PitchSemitone, requested =>
+            AddInspectorFloatField(effectFoldout, T("voice.effectPitch", "Pitch (semitone)"), voice.Effect.PitchSemitone, requested =>
             {
                 applyVoiceChange(
                     "Set Voice Pitch",
@@ -1060,7 +1128,7 @@ namespace TorusEdison.Editor.Windows
                     actualVoice => NotifyClamp("Voice Pitch", requested, actualVoice.Effect.PitchSemitone));
             });
 
-            AddInspectorIntegerField(effectFoldout, "Fade In (ms)", voice.Effect.FadeInMs, requested =>
+            AddInspectorIntegerField(effectFoldout, T("voice.fadeIn", "Fade In (ms)"), voice.Effect.FadeInMs, requested =>
             {
                 applyVoiceChange(
                     "Set Fade In",
@@ -1068,7 +1136,7 @@ namespace TorusEdison.Editor.Windows
                     actualVoice => NotifyClamp("Fade In", requested, actualVoice.Effect.FadeInMs));
             });
 
-            AddInspectorIntegerField(effectFoldout, "Fade Out (ms)", voice.Effect.FadeOutMs, requested =>
+            AddInspectorIntegerField(effectFoldout, T("voice.fadeOut", "Fade Out (ms)"), voice.Effect.FadeOutMs, requested =>
             {
                 applyVoiceChange(
                     "Set Fade Out",
@@ -1078,17 +1146,17 @@ namespace TorusEdison.Editor.Windows
 
             var delayFoldout = new Foldout
             {
-                text = "Delay",
+                text = T("voice.delay", "Delay"),
                 value = false
             };
             effectFoldout.Add(delayFoldout);
 
-            AddInspectorToggleField(delayFoldout, "Enabled", voice.Effect.Delay.Enabled, requested =>
+            AddInspectorToggleField(delayFoldout, T("voice.delayEnabled", "Enabled"), voice.Effect.Delay.Enabled, requested =>
             {
                 applyVoiceChange("Toggle Delay", current => current.Effect.Delay.Enabled = requested, null);
             });
 
-            AddInspectorIntegerField(delayFoldout, "Time (ms)", voice.Effect.Delay.TimeMs, requested =>
+            AddInspectorIntegerField(delayFoldout, T("voice.delayTime", "Time (ms)"), voice.Effect.Delay.TimeMs, requested =>
             {
                 applyVoiceChange(
                     "Set Delay Time",
@@ -1096,7 +1164,7 @@ namespace TorusEdison.Editor.Windows
                     actualVoice => NotifyClamp("Delay Time", requested, actualVoice.Effect.Delay.TimeMs));
             });
 
-            AddInspectorFloatField(delayFoldout, "Feedback", voice.Effect.Delay.Feedback, requested =>
+            AddInspectorFloatField(delayFoldout, T("voice.delayFeedback", "Feedback"), voice.Effect.Delay.Feedback, requested =>
             {
                 applyVoiceChange(
                     "Set Delay Feedback",
@@ -1104,7 +1172,7 @@ namespace TorusEdison.Editor.Windows
                     actualVoice => NotifyClamp("Delay Feedback", requested, actualVoice.Effect.Delay.Feedback));
             });
 
-            AddInspectorFloatField(delayFoldout, "Mix", voice.Effect.Delay.Mix, requested =>
+            AddInspectorFloatField(delayFoldout, T("voice.delayMix", "Mix"), voice.Effect.Delay.Mix, requested =>
             {
                 applyVoiceChange(
                     "Set Delay Mix",
@@ -1164,20 +1232,19 @@ namespace TorusEdison.Editor.Windows
             yield return FormatSampleRateOption(GameAudioToolInfo.AlternateSampleRate);
         }
 
-        private static IEnumerable<string> GetSupportedChannelModeOptions()
+        private static IEnumerable<GameAudioChannelMode> GetSupportedChannelModeOptions()
         {
-            yield return GameAudioChannelMode.Mono.ToString();
-            yield return GameAudioChannelMode.Stereo.ToString();
+            return (GameAudioChannelMode[])Enum.GetValues(typeof(GameAudioChannelMode));
         }
 
-        private static IEnumerable<string> GetSupportedWaveformOptions()
+        private static IEnumerable<GameAudioWaveformType> GetSupportedWaveformOptions()
         {
-            return Enum.GetNames(typeof(GameAudioWaveformType));
+            return (GameAudioWaveformType[])Enum.GetValues(typeof(GameAudioWaveformType));
         }
 
-        private static IEnumerable<string> GetSupportedNoiseTypeOptions()
+        private static IEnumerable<GameAudioNoiseType> GetSupportedNoiseTypeOptions()
         {
-            return Enum.GetNames(typeof(GameAudioNoiseType));
+            return (GameAudioNoiseType[])Enum.GetValues(typeof(GameAudioNoiseType));
         }
 
         private static string FormatTimeSignature(GameAudioTimeSignature timeSignature)
@@ -1208,27 +1275,6 @@ namespace TorusEdison.Editor.Windows
                 : GameAudioToolInfo.DefaultSampleRate;
         }
 
-        private static GameAudioChannelMode ParseChannelMode(string option)
-        {
-            return string.Equals(option, GameAudioChannelMode.Mono.ToString(), StringComparison.Ordinal)
-                ? GameAudioChannelMode.Mono
-                : GameAudioChannelMode.Stereo;
-        }
-
-        private static GameAudioWaveformType ParseWaveform(string option)
-        {
-            return Enum.TryParse(option, true, out GameAudioWaveformType parsed)
-                ? parsed
-                : GameAudioWaveformType.Square;
-        }
-
-        private static GameAudioNoiseType ParseNoiseType(string option)
-        {
-            return Enum.TryParse(option, true, out GameAudioNoiseType parsed)
-                ? parsed
-                : GameAudioNoiseType.White;
-        }
-
         private static bool IsFinite(float value)
         {
             return !float.IsNaN(value) && !float.IsInfinity(value);
@@ -1238,7 +1284,7 @@ namespace TorusEdison.Editor.Windows
         {
             if (requestedValue != actualValue)
             {
-                ShowNotification(new GUIContent($"{fieldName} clamped to {actualValue}."));
+                ShowNotification(new GUIContent(TF("notification.clampedInt", "{0} clamped to {1}.", fieldName, actualValue)));
             }
         }
 
@@ -1246,18 +1292,18 @@ namespace TorusEdison.Editor.Windows
         {
             if (Math.Abs(requestedValue - actualValue) > 0.0001f)
             {
-                ShowNotification(new GUIContent(string.Format(CultureInfo.InvariantCulture, "{0} clamped to {1:0.###}.", fieldName, actualValue)));
+                ShowNotification(new GUIContent(TF("notification.clampedFloat", "{0} clamped to {1:0.###}.", fieldName, actualValue)));
             }
         }
 
         private void ShowInvalidNumberMessage(string fieldName)
         {
-            ShowNotification(new GUIContent($"{fieldName} requires a finite number."));
+            ShowNotification(new GUIContent(TF("notification.requiresFinite", "{0} requires a finite number.", fieldName)));
         }
 
         private void ShowEditorException(Exception exception)
         {
-            EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+            EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
         }
 
         private void TryApplyProjectChange(string displayName, Action<GameAudioProject> applyChange, Action<GameAudioProject> afterApply = null)
@@ -1345,7 +1391,10 @@ namespace TorusEdison.Editor.Windows
                 return;
             }
 
-            string selectedPath = EditorUtility.OpenFilePanel("Open Game Audio Project", string.IsNullOrWhiteSpace(_projectPath) ? UnityEngine.Application.dataPath : _projectPath, "json");
+            string selectedPath = EditorUtility.OpenFilePanel(
+                T("dialog.openProject", "Open Game Audio Project"),
+                string.IsNullOrWhiteSpace(_projectPath) ? UnityEngine.Application.dataPath : _projectPath,
+                "json");
             if (string.IsNullOrWhiteSpace(selectedPath))
             {
                 return;
@@ -1371,7 +1420,7 @@ namespace TorusEdison.Editor.Windows
             string projectName = project == null ? "New Audio Project" : project.Name;
             string defaultFileName = $"{GameAudioValidationUtility.SanitizeExportFileName(projectName)}{GameAudioToolInfo.SessionFileExtension}";
             string selectedPath = EditorUtility.SaveFilePanel(
-                "Save Game Audio Project",
+                T("dialog.saveProject", "Save Game Audio Project"),
                 string.IsNullOrWhiteSpace(_projectPath) ? UnityEngine.Application.dataPath : Path.GetDirectoryName(_projectPath),
                 defaultFileName,
                 "json");
@@ -1392,12 +1441,12 @@ namespace TorusEdison.Editor.Windows
                 _projectSerializer.SaveToFile(resolvedPath, CurrentProject);
                 _projectPath = resolvedPath;
                 _isDirty = false;
-                ShowNotification(new GUIContent("Project saved."));
+                ShowNotification(new GUIContent(T("status.projectSaved", "Project saved.")));
                 RefreshView();
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
             }
         }
 
@@ -1410,10 +1459,10 @@ namespace TorusEdison.Editor.Windows
 
             int choice = EditorUtility.DisplayDialogComplex(
                 GameAudioToolInfo.DisplayName,
-                "Unsaved changes will be lost. Continue?",
-                "Discard Changes",
-                "Cancel",
-                "Save First");
+                T("dialog.discardMessage", "Unsaved changes will be lost. Continue?"),
+                T("dialog.discard", "Discard Changes"),
+                T("dialog.cancel", "Cancel"),
+                T("dialog.saveFirst", "Save First"));
 
             if (choice == 0)
             {
@@ -1456,6 +1505,20 @@ namespace TorusEdison.Editor.Windows
             _projectConfigSerializer.Save(
                 _projectConfig ?? new GameAudioProjectConfig(),
                 GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
+        }
+
+        private void OnDisplayLanguageChanged(GameAudioLanguageMode nextLanguage)
+        {
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            if (_commonConfig.DisplayLanguage == nextLanguage)
+            {
+                return;
+            }
+
+            _commonConfig.DisplayLanguage = nextLanguage;
+            SaveCommonConfig();
+            _displayLanguage = GameAudioLocalization.ResolveLanguage(nextLanguage);
+            CreateGUI();
         }
 
         private void OnCommonExportDirectoryChanged(ChangeEvent<string> evt)
@@ -1542,7 +1605,9 @@ namespace TorusEdison.Editor.Windows
                     AssetDatabase.Refresh();
                 }
 
-                ShowNotification(new GUIContent(shouldRefresh ? "WAV exported and assets refreshed." : "WAV exported."));
+                ShowNotification(new GUIContent(shouldRefresh
+                    ? T("status.wavExportedAndRefreshed", "WAV exported and assets refreshed.")
+                    : T("status.wavExported", "WAV exported.")));
                 RefreshView();
             }
             catch (Exception exception)
@@ -1571,11 +1636,11 @@ namespace TorusEdison.Editor.Windows
             {
                 _previewPlaybackService.Prepare(CurrentProject);
                 RefreshView();
-                ShowNotification(new GUIContent("Preview rendered."));
+                ShowNotification(new GUIContent(T("status.previewRendered", "Preview rendered.")));
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
             }
         }
 
@@ -1589,7 +1654,7 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
             }
         }
 
@@ -1735,7 +1800,7 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
             }
         }
 
@@ -1756,7 +1821,7 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
             }
         }
 
@@ -1765,11 +1830,11 @@ namespace TorusEdison.Editor.Windows
             try
             {
                 EnsureSampleProjects();
-                ShowNotification(new GUIContent("Sample projects created."));
+                ShowNotification(new GUIContent(T("status.samplesCreated", "Sample projects created.")));
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
             }
         }
 
@@ -1792,7 +1857,7 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
             }
         }
 
@@ -1810,7 +1875,7 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
             }
         }
 
@@ -1820,12 +1885,12 @@ namespace TorusEdison.Editor.Windows
             {
                 GameAudioProjectLoadResult loadResult = _projectSerializer.LoadFromFile(path);
                 BindProject(loadResult.Project, false, path, loadResult.Warnings);
-                ShowNotification(new GUIContent("Project loaded."));
+                ShowNotification(new GUIContent(T("status.projectLoaded", "Project loaded.")));
                 RefreshView();
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
             }
         }
 
@@ -1878,7 +1943,7 @@ namespace TorusEdison.Editor.Windows
             GameAudioProject project = CurrentProject;
             if (project == null)
             {
-                EditorGUILayout.LabelField("No project loaded.");
+                EditorGUILayout.LabelField(T("status.noProjectLoaded", "No project loaded."));
                 return;
             }
 
@@ -1950,7 +2015,7 @@ namespace TorusEdison.Editor.Windows
                 .ToList();
         }
 
-        private static void DrawTimelineBackground(GameAudioProject project, TimelineMetrics metrics)
+        private void DrawTimelineBackground(GameAudioProject project, TimelineMetrics metrics)
         {
             EditorGUI.DrawRect(new Rect(0.0f, 0.0f, metrics.ContentWidth, metrics.ContentHeight), new Color(0.10f, 0.10f, 0.10f));
             EditorGUI.DrawRect(new Rect(0.0f, 0.0f, metrics.HeaderWidth, metrics.ContentHeight), new Color(0.14f, 0.14f, 0.14f));
@@ -1962,7 +2027,10 @@ namespace TorusEdison.Editor.Windows
                 EditorGUI.DrawRect(new Rect(x, 0.0f, 1.0f, metrics.ContentHeight), new Color(0.30f, 0.30f, 0.30f));
                 if (barIndex < metrics.TotalBars)
                 {
-                    GUI.Label(new Rect(x + 4.0f, 4.0f, 80.0f, metrics.RulerHeight - 8.0f), $"Bar {barIndex + 1:00}", EditorStyles.miniBoldLabel);
+                    GUI.Label(
+                        new Rect(x + 4.0f, 4.0f, 80.0f, metrics.RulerHeight - 8.0f),
+                        TF("timeline.barLabel", "Bar {0:00}", barIndex + 1),
+                        EditorStyles.miniBoldLabel);
                 }
             }
 
@@ -1995,11 +2063,14 @@ namespace TorusEdison.Editor.Windows
                 Rect nameRect = new Rect(headerRect.x + 8.0f, headerRect.y + 6.0f, headerRect.width - 16.0f, 16.0f);
                 Rect infoRect = new Rect(headerRect.x + 8.0f, headerRect.y + 22.0f, headerRect.width - 16.0f, 16.0f);
                 GUI.Label(nameRect, track.Name, EditorStyles.boldLabel);
-                GUI.Label(infoRect, $"Notes {track.Notes.Count} / Pan {track.Pan:0.00}", EditorStyles.miniLabel);
+                GUI.Label(
+                    infoRect,
+                    TF("timeline.trackInfo", "Notes {0} / Pan {1:0.00}", track.Notes.Count, track.Pan),
+                    EditorStyles.miniLabel);
             }
         }
 
-        private static void DrawTimelineNotes(IEnumerable<TimelineRenderedNote> renderedNotes)
+        private void DrawTimelineNotes(IEnumerable<TimelineRenderedNote> renderedNotes)
         {
             foreach (TimelineRenderedNote renderedNote in renderedNotes)
             {
@@ -2016,7 +2087,10 @@ namespace TorusEdison.Editor.Windows
                 EditorGUI.DrawRect(new Rect(renderedNote.Rect.x, renderedNote.Rect.y, 1.0f, renderedNote.Rect.height), outlineColor);
                 EditorGUI.DrawRect(new Rect(renderedNote.Rect.xMax - 1.0f, renderedNote.Rect.y, 1.0f, renderedNote.Rect.height), outlineColor);
 
-                GUI.Label(new Rect(renderedNote.Rect.x + 4.0f, renderedNote.Rect.y + 2.0f, renderedNote.Rect.width - 8.0f, renderedNote.Rect.height - 4.0f), $"MIDI {renderedNote.MidiNote}", EditorStyles.whiteMiniLabel);
+                GUI.Label(
+                    new Rect(renderedNote.Rect.x + 4.0f, renderedNote.Rect.y + 2.0f, renderedNote.Rect.width - 8.0f, renderedNote.Rect.height - 4.0f),
+                    TF("timeline.noteLabel", "MIDI {0}", renderedNote.MidiNote),
+                    EditorStyles.whiteMiniLabel);
             }
         }
 
@@ -2305,7 +2379,7 @@ namespace TorusEdison.Editor.Windows
             }
             catch (Exception exception)
             {
-                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, "OK");
+                EditorUtility.DisplayDialog(GameAudioToolInfo.DisplayName, exception.Message, T("dialog.ok", "OK"));
                 CancelTimelineInteraction();
                 RefreshView();
             }
@@ -2547,6 +2621,11 @@ namespace TorusEdison.Editor.Windows
 
         private void RefreshView()
         {
+            if (EnsureDisplayLanguageCurrent())
+            {
+                return;
+            }
+
             GameAudioProject project = CurrentProject;
             titleContent = new GUIContent(_isDirty ? $"{GameAudioToolInfo.DisplayName}*" : GameAudioToolInfo.DisplayName);
 
@@ -2559,8 +2638,8 @@ namespace TorusEdison.Editor.Windows
             _bpmValue.text = project.Bpm.ToString();
             _barsValue.text = project.TotalBars.ToString();
             _tracksValue.text = project.Tracks.Count.ToString();
-            _pathValue.text = string.IsNullOrWhiteSpace(_projectPath) ? "(unsaved)" : _projectPath;
-            _statusValue.text = _isDirty ? "Unsaved changes" : "Saved";
+            _pathValue.text = string.IsNullOrWhiteSpace(_projectPath) ? T("status.unsavedFile", "(unsaved)") : _projectPath;
+            _statusValue.text = _isDirty ? T("status.unsaved", "Unsaved changes") : T("status.saved", "Saved");
             _toolbarBpmField?.SetValueWithoutNotify(project.Bpm);
             _toolbarGridField?.SetValueWithoutNotify(GameAudioTimelineGridUtility.NormalizeDivision(_currentGridDivision));
             _toolbarLoopToggle?.SetValueWithoutNotify(project.LoopPlayback);
@@ -2578,7 +2657,7 @@ namespace TorusEdison.Editor.Windows
             _autoRefreshAfterExportToggle?.SetValueWithoutNotify(_projectConfig?.AutoRefreshAfterExport ?? true);
             _exportResolvedPathValue.text = GetResolvedExportDirectory();
             _exportFileNameValue.text = GameAudioExportUtility.NormalizeWaveFileName(project.Name);
-            _exportLastResultValue.text = string.IsNullOrWhiteSpace(_lastExportedPath) ? "(not exported)" : _lastExportedPath;
+            _exportLastResultValue.text = string.IsNullOrWhiteSpace(_lastExportedPath) ? T("status.notExported", "(not exported)") : _lastExportedPath;
 
             if (_undoButton != null)
             {
@@ -2592,29 +2671,29 @@ namespace TorusEdison.Editor.Windows
 
             if (_gridButton != null)
             {
-                _gridButton.text = $"Grid {_currentGridDivision}";
+                _gridButton.text = TF("timeline.grid", "Grid {0}", _currentGridDivision);
             }
 
             if (_timelineHintValue != null)
             {
-                _timelineHintValue.text = $"Grid {_currentGridDivision} | Selected {_selectedNoteIds.Count} note(s) | Drag empty lane to create | Drag note to move | Drag edge to resize | Ctrl+D duplicate | Delete remove | Ctrl+Z / Ctrl+Y undo redo";
+                _timelineHintValue.text = TF("status.timelineHint", "Grid {0} | Selected {1} note(s) | Drag empty lane to create | Drag note to move | Drag edge to resize | Ctrl+D duplicate | Delete remove | Ctrl+Z / Ctrl+Y undo redo", _currentGridDivision, _selectedNoteIds.Count);
             }
 
             GameAudioPreviewState previewState = _previewPlaybackService.State;
             GameAudioPreviewCursorState cursorState = GameAudioPreviewCursorCalculator.Calculate(project, previewState);
-            _previewStateValue.text = previewState.StatusText;
+            _previewStateValue.text = LocalizePreviewStatus(previewState.StatusText);
             _previewBufferValue.text = BuildPreviewBufferText(previewState);
             _previewCursorValue.text = previewState.IsPreviewReady
                 ? BuildPreviewCursorText(cursorState)
-                : "(not rendered)";
+                : T("status.notRendered", "(not rendered)");
             _previewProgressBar.value = previewState.IsPreviewReady
                 ? cursorState.MusicalProgress * 100.0f
                 : 0.0f;
             _previewProgressBar.title = previewState.IsPreviewReady
                 ? cursorState.IsInTail
-                    ? $"Playback tail +{cursorState.TailSeconds:0.00}s"
-                    : $"Bar {cursorState.CurrentBar:00} / Beat {cursorState.BeatInBar:0.00}"
-                : "Cursor not started";
+                    ? TF("status.previewTail", "Playback tail +{0:0.00}s", cursorState.TailSeconds)
+                    : TF("status.previewProgress", "Bar {0:00} / Beat {1:0.00}", cursorState.CurrentBar, cursorState.BeatInBar)
+                : T("preview.cursorNotStarted", "Cursor not started");
 
             if (!string.IsNullOrWhiteSpace(previewState.ErrorText))
             {
@@ -2623,7 +2702,7 @@ namespace TorusEdison.Editor.Windows
             }
             else if (previewState.IsPreviewReady && !GameAudioEditorAudioUtility.IsAvailable)
             {
-                _previewHelpBox.text = "Render is available, but UnityEditor preview playback API was not found in this editor build.";
+                _previewHelpBox.text = T("status.preview.readyButApiMissing", "Render is available, but UnityEditor preview playback API was not found in this editor build.");
                 _previewHelpBox.style.display = DisplayStyle.Flex;
             }
             else
@@ -2646,6 +2725,19 @@ namespace TorusEdison.Editor.Windows
             RefreshInspectorPanel(project);
             _timelineSurface?.MarkDirtyRepaint();
             Repaint();
+        }
+
+        private bool EnsureDisplayLanguageCurrent()
+        {
+            GameAudioDisplayLanguage nextLanguage = GameAudioLocalization.ResolveLanguage(_commonConfig?.DisplayLanguage ?? GameAudioLanguageMode.Auto);
+            if (nextLanguage == _displayLanguage)
+            {
+                return false;
+            }
+
+            _displayLanguage = nextLanguage;
+            CreateGUI();
+            return true;
         }
 
         private void OnRootKeyDown(KeyDownEvent evt)
@@ -2693,26 +2785,63 @@ namespace TorusEdison.Editor.Windows
             }
         }
 
-        private static string BuildPreviewBufferText(GameAudioPreviewState previewState)
+        private string BuildPreviewBufferText(GameAudioPreviewState previewState)
         {
             if (!previewState.IsPreviewReady || previewState.RenderResult == null)
             {
-                return "(not rendered)";
+                return T("status.notRendered", "(not rendered)");
             }
 
-            string channelLabel = previewState.ChannelCount == 1 ? "Mono" : "Stereo";
-            return $"{previewState.SampleRate} Hz / {channelLabel} / project {previewState.ProjectDurationSeconds:0.00}s / output {previewState.OutputDurationSeconds:0.00}s / peak {previewState.PeakAmplitude:0.000}";
+            string channelLabel = previewState.ChannelCount == 1
+                ? T("audio.mono", "Mono")
+                : T("audio.stereo", "Stereo");
+            return TF(
+                "status.previewBuffer",
+                "{0} Hz / {1} / project {2:0.00}s / output {3:0.00}s / peak {4:0.000}",
+                previewState.SampleRate,
+                channelLabel,
+                previewState.ProjectDurationSeconds,
+                previewState.OutputDurationSeconds,
+                previewState.PeakAmplitude);
         }
 
-        private static string BuildPreviewCursorText(GameAudioPreviewCursorState cursorState)
+        private string BuildPreviewCursorText(GameAudioPreviewCursorState cursorState)
         {
-            string cursorText = $"Bar {cursorState.CurrentBar:00} / Beat {cursorState.BeatInBar:0.00} ({cursorState.MusicalSeconds:0.00}s)";
+            string cursorText = TF(
+                "status.previewCursor",
+                "Bar {0:00} / Beat {1:0.00} ({2:0.00}s)",
+                cursorState.CurrentBar,
+                cursorState.BeatInBar,
+                cursorState.MusicalSeconds);
             if (!cursorState.IsInTail)
             {
                 return cursorText;
             }
 
-            return $"{cursorText} / tail +{cursorState.TailSeconds:0.00}s";
+            return TF("status.previewCursorTail", "{0} / tail +{1:0.00}s", cursorText, cursorState.TailSeconds);
+        }
+
+        private string LocalizePreviewStatus(string statusText)
+        {
+            return statusText switch
+            {
+                "Preview not rendered." => T("status.preview.notRendered", "Preview not rendered."),
+                "Preview render failed." => T("status.preview.renderFailed", "Preview render failed."),
+                "Loop preview playing." => T("status.preview.loopPlaying", "Loop preview playing."),
+                "Preview playing." => T("status.preview.playing", "Preview playing."),
+                "Loop preview paused." => T("status.preview.loopPaused", "Loop preview paused."),
+                "Preview paused." => T("status.preview.paused", "Preview paused."),
+                "Loop preview ready." => T("status.preview.loopReady", "Loop preview ready."),
+                "Preview ready." => T("status.preview.ready", "Preview ready."),
+                "Preview stopped." => T("status.preview.stopped", "Preview stopped."),
+                "Preview rewound." => T("status.preview.rewound", "Preview rewound."),
+                "Preview complete." => T("status.preview.complete", "Preview complete."),
+                "Preview ready. Unity editor playback API is unavailable." => T("status.preview.apiUnavailable", "Preview ready. Unity editor playback API is unavailable."),
+                "Preview ready (silent buffer)." => T("status.preview.silent", "Preview ready (silent buffer)."),
+                "Preview start failed." => T("status.preview.startFailed", "Preview start failed."),
+                "Preview loop restart failed." => T("status.preview.loopRestartFailed", "Preview loop restart failed."),
+                _ => statusText
+            };
         }
 
         private void OnDisable()

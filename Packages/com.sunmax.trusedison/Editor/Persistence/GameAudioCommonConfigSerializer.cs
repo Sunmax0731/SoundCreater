@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using TorusEdison.Editor.Config;
 using TorusEdison.Editor.Domain;
+using TorusEdison.Editor.Localization;
 using TorusEdison.Editor.Utilities;
 using UnityEngine;
 
@@ -68,7 +69,8 @@ namespace TorusEdison.Editor.Persistence
                 defaultGridDivision = string.IsNullOrWhiteSpace(config.DefaultGridDivision)
                     ? "1/16"
                     : config.DefaultGridDivision,
-                undoHistoryLimit = GameAudioValidationUtility.ClampInt(config.UndoHistoryLimit, 1, 1000)
+                undoHistoryLimit = GameAudioValidationUtility.ClampInt(config.UndoHistoryLimit, 1, 1000),
+                displayLanguage = config.DisplayLanguage.ToString()
             };
 
             return JsonUtility.ToJson(dto, true) + "\n";
@@ -112,7 +114,10 @@ namespace TorusEdison.Editor.Persistence
                 DefaultGridDivision = string.IsNullOrWhiteSpace(dto.defaultGridDivision)
                     ? "1/16"
                     : dto.defaultGridDivision,
-                UndoHistoryLimit = GameAudioValidationUtility.ClampInt(dto.undoHistoryLimit <= 0 ? 100 : dto.undoHistoryLimit, 1, 1000)
+                UndoHistoryLimit = GameAudioValidationUtility.ClampInt(dto.undoHistoryLimit <= 0 ? 100 : dto.undoHistoryLimit, 1, 1000),
+                DisplayLanguage = Enum.TryParse(dto.displayLanguage, true, out GameAudioLanguageMode displayLanguage)
+                    ? displayLanguage
+                    : GameAudioLanguageMode.Auto
             };
         }
     }

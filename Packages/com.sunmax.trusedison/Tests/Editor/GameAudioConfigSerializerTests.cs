@@ -3,8 +3,10 @@ using NUnit.Framework;
 using TorusEdison.Editor.Application;
 using TorusEdison.Editor.Config;
 using TorusEdison.Editor.Domain;
+using TorusEdison.Editor.Localization;
 using TorusEdison.Editor.Persistence;
 using TorusEdison.Editor.Utilities;
+using UnityEngine;
 
 namespace TorusEdison.Editor.Tests
 {
@@ -22,7 +24,8 @@ namespace TorusEdison.Editor.Tests
                 ShowStartupGuide = false,
                 RememberLastProject = false,
                 DefaultGridDivision = "1/8",
-                UndoHistoryLimit = 240
+                UndoHistoryLimit = 240,
+                DisplayLanguage = GameAudioLanguageMode.Chinese
             };
 
             string json = serializer.Serialize(config);
@@ -35,6 +38,7 @@ namespace TorusEdison.Editor.Tests
             Assert.That(result.RememberLastProject, Is.False);
             Assert.That(result.DefaultGridDivision, Is.EqualTo("1/8"));
             Assert.That(result.UndoHistoryLimit, Is.EqualTo(240));
+            Assert.That(result.DisplayLanguage, Is.EqualTo(GameAudioLanguageMode.Chinese));
         }
 
         [Test]
@@ -125,6 +129,7 @@ namespace TorusEdison.Editor.Tests
                 Assert.That(result.DefaultSampleRate, Is.EqualTo(48000));
                 Assert.That(result.DefaultChannelMode, Is.EqualTo(GameAudioChannelMode.Stereo));
                 Assert.That(result.UndoHistoryLimit, Is.EqualTo(100));
+                Assert.That(result.DisplayLanguage, Is.EqualTo(GameAudioLanguageMode.Auto));
             }
             finally
             {
@@ -179,6 +184,39 @@ namespace TorusEdison.Editor.Tests
 
             Assert.That(project.SampleRate, Is.EqualTo(44100));
             Assert.That(project.ChannelMode, Is.EqualTo(GameAudioChannelMode.Mono));
+        }
+
+        [Test]
+        public void Localization_ResolveLanguage_UsesOverrideBeforeUnityLanguage()
+        {
+            Assert.That(GameAudioLocalization.ResolveLanguage(GameAudioLanguageMode.Japanese), Is.EqualTo(GameAudioDisplayLanguage.Japanese));
+            Assert.That(GameAudioLocalization.ResolveLanguage(GameAudioLanguageMode.English), Is.EqualTo(GameAudioDisplayLanguage.English));
+            Assert.That(GameAudioLocalization.ResolveLanguage(GameAudioLanguageMode.Chinese), Is.EqualTo(GameAudioDisplayLanguage.Chinese));
+        }
+
+        [Test]
+        public void Localization_MapSystemLanguage_FallsBackToEnglish()
+        {
+            Assert.That(GameAudioLocalization.MapSystemLanguage(SystemLanguage.Japanese), Is.EqualTo(GameAudioDisplayLanguage.Japanese));
+            Assert.That(GameAudioLocalization.MapSystemLanguage(SystemLanguage.ChineseTraditional), Is.EqualTo(GameAudioDisplayLanguage.Chinese));
+            Assert.That(GameAudioLocalization.MapSystemLanguage(SystemLanguage.Korean), Is.EqualTo(GameAudioDisplayLanguage.English));
+        }
+
+        [Test]
+        public void Localization_ReturnsLocalizedLabelsForSupportedUiEnums()
+        {
+            Assert.That(
+                GameAudioLocalization.GetLanguageModeLabel(GameAudioDisplayLanguage.Japanese, GameAudioLanguageMode.Auto),
+                Is.EqualTo("自動"));
+            Assert.That(
+                GameAudioLocalization.GetChannelModeLabel(GameAudioDisplayLanguage.Chinese, GameAudioChannelMode.Stereo),
+                Is.EqualTo("立体声"));
+            Assert.That(
+                GameAudioLocalization.GetWaveformLabel(GameAudioDisplayLanguage.Japanese, GameAudioWaveformType.Pulse),
+                Is.EqualTo("パルス波"));
+            Assert.That(
+                GameAudioLocalization.GetNoiseTypeLabel(GameAudioDisplayLanguage.Chinese, GameAudioNoiseType.White),
+                Is.EqualTo("白噪声"));
         }
     }
 }
