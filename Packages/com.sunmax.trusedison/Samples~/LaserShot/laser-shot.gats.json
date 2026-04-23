@@ -1,0 +1,77 @@
+{
+  "formatVersion": "1.0.0",
+  "toolVersion": "0.2.0",
+  "project": {
+    "id": "proj-laser-shot",
+    "name": "LaserShot",
+    "bpm": 136,
+    "timeSignature": {
+      "numerator": 4,
+      "denominator": 4
+    },
+    "totalBars": 1,
+    "sampleRate": 48000,
+    "channelMode": "Stereo",
+    "masterGainDb": -1.0,
+    "loopPlayback": false,
+    "tracks": [
+      {
+        "id": "track-laser-main",
+        "name": "Laser",
+        "mute": false,
+        "solo": false,
+        "volumeDb": -0.5,
+        "pan": 0.0,
+        "defaultVoice": {
+          "waveform": "Saw",
+          "pulseWidth": 0.5,
+          "noiseEnabled": true,
+          "noiseType": "White",
+          "noiseMix": 0.18,
+          "adsr": {
+            "attackMs": 0,
+            "decayMs": 80,
+            "sustain": 0.18,
+            "releaseMs": 70
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": 5.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": false,
+              "timeMs": 100,
+              "feedback": 0.15,
+              "mix": 0.08
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "laser-01",
+            "startBeat": 0.0,
+            "durationBeat": 0.125,
+            "midiNote": 98,
+            "velocity": 0.95
+          },
+          {
+            "id": "laser-02",
+            "startBeat": 0.125,
+            "durationBeat": 0.125,
+            "midiNote": 91,
+            "velocity": 0.82
+          },
+          {
+            "id": "laser-03",
+            "startBeat": 0.25,
+            "durationBeat": 0.1875,
+            "midiNote": 84,
+            "velocity": 0.68
+          }
+        ]
+      }
+    ]
+  }
+}

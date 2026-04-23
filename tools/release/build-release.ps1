@@ -37,6 +37,7 @@ $samplesRoot = Join-Path $stageRoot "Samples"
 $unityPackagePath = Join-Path $stageRoot "$toolName-$version.unitypackage"
 $zipPath = Join-Path $outputRoot "$toolName-$version-release.zip"
 $manifestPath = Join-Path $stageRoot "release-manifest.txt"
+$packageSamplesRoot = Join-Path $packageRoot "Samples~"
 
 if (Test-Path -LiteralPath $stageRoot) {
     Remove-Item -LiteralPath $stageRoot -Recurse -Force
@@ -83,8 +84,24 @@ Copy-Item -LiteralPath (Join-Path $packageRoot "Documentation~\ReleaseNotes.md")
 Copy-Item -LiteralPath (Join-Path $packageRoot "Documentation~\ValidationChecklist.md") -Destination (Join-Path $stageRoot "ValidationChecklist.md")
 Copy-Item -LiteralPath (Join-Path $packageRoot "CHANGELOG.md") -Destination (Join-Path $stageRoot "CHANGELOG.md")
 Copy-Item -LiteralPath (Join-Path $packageRoot "LICENSE.md") -Destination (Join-Path $stageRoot "LICENSE.md")
-Copy-Item -LiteralPath (Join-Path $packageRoot "Samples~\BasicSE\basic-se.gats.json") -Destination (Join-Path $samplesRoot "BasicSE.gats.json")
-Copy-Item -LiteralPath (Join-Path $packageRoot "Samples~\SimpleLoop\simple-loop.gats.json") -Destination (Join-Path $samplesRoot "SimpleLoop.gats.json")
+
+$sampleFiles = Get-ChildItem -Path $packageSamplesRoot -Recurse -Filter *.gats.json | Sort-Object FullName
+if ($sampleFiles.Count -eq 0) {
+    throw "No bundled sample projects were found under $packageSamplesRoot"
+}
+
+$sampleManifestEntries = @()
+foreach ($sampleFile in $sampleFiles) {
+    $relativePath = $sampleFile.FullName.Substring($packageSamplesRoot.Length).TrimStart('\', '/')
+    $sampleDestination = Join-Path $samplesRoot $relativePath
+    $sampleDestinationDirectory = Split-Path -Parent $sampleDestination
+    if (-not (Test-Path -LiteralPath $sampleDestinationDirectory)) {
+        New-Item -ItemType Directory -Path $sampleDestinationDirectory -Force | Out-Null
+    }
+
+    Copy-Item -LiteralPath $sampleFile.FullName -Destination $sampleDestination
+    $sampleManifestEntries += "- Samples/$($relativePath -replace '\\', '/')"
+}
 
 $manifestLines = @(
     "Tool: $toolName",
@@ -99,10 +116,10 @@ $manifestLines = @(
     "- ReleaseNotes.md",
     "- ValidationChecklist.md",
     "- CHANGELOG.md",
-    "- LICENSE.md",
-    "- Samples/BasicSE.gats.json",
-    "- Samples/SimpleLoop.gats.json"
+    "- LICENSE.md"
 )
+
+$manifestLines += $sampleManifestEntries
 
 if (-not $SkipUnityPackage) {
     $manifestLines += "- $(Split-Path -Leaf $unityPackagePath)"

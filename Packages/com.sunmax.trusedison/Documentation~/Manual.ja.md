@@ -51,7 +51,8 @@
 - 読み込み
 - 保存
 - ローカルサンプルの作成
-- `Basic SE` と `Simple Loop` の読み込み
+- `Basic SE` と `Simple Loop` のクイック読み込み
+- `Create Samples` による 10 本の同梱サンプル展開
 
 ### Edit
 
@@ -183,8 +184,16 @@ Export 画面には、Unity に取り込んだ `AudioClip` アセットを 8-bit
 
 同梱サンプル:
 
-- `Samples~/BasicSE/basic-se.gats.json`
-- `Samples~/SimpleLoop/simple-loop.gats.json`
+- `BasicSE/basic-se.gats.json`
+- `SimpleLoop/simple-loop.gats.json`
+- `UIClick/ui-click.gats.json`
+- `UIConfirm/ui-confirm.gats.json`
+- `UICancel/ui-cancel.gats.json`
+- `CoinPickup/coin-pickup.gats.json`
+- `PowerUpRise/power-up-rise.gats.json`
+- `LaserShot/laser-shot.gats.json`
+- `ExplosionBurst/explosion-burst.gats.json`
+- `AlarmLoop/alarm-loop.gats.json`
 
 サンプル内容と確認手順:
 

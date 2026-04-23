@@ -10,6 +10,7 @@
 - タイムライン下部の `+ Add Track` ボタンでトラックを追加できるように改善
 - Edit 画面と Settings 画面から `Total Bars` を変更できるように改善
 - Unity に取り込んだ `AudioClip` の 8-bit WAV 変換と、変換用 `.gats.json` 自動生成を追加
+- 同梱 sample AudioProject を 10 本構成へ拡充
 - `Version & License` 画面を追加
 - 表示言語切替時に Settings 画面が空になる不具合を修正
 - `Ctrl+D`、`Delete`、`Ctrl+Z` などの編集ショートカットまわりを修正

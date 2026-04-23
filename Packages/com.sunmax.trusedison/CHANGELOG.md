@@ -7,6 +7,7 @@
 - added project-length controls from both the Edit page and the Settings page
 - added imported `AudioClip` to 8-bit PCM WAV conversion in the Export page
 - added automatic generation of a conversion `.gats.json` project alongside 8-bit WAV export
+- expanded the bundled sample set to ten AudioProjects across UI, gameplay, and loop categories
 - added the `Version & License` window
 - fixed Settings inspector refresh after live language changes
 - fixed timeline keyboard shortcut handling for duplicate, delete, undo, and redo

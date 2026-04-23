@@ -24,8 +24,7 @@ The release zip is expected to contain:
 - `ValidationChecklist.md`
 - `CHANGELOG.md`
 - `LICENSE.md`
-- `Samples/BasicSE.gats.json`
-- `Samples/SimpleLoop.gats.json`
+- `Samples/` containing every bundled `.gats.json` sample from `Packages/com.sunmax.trusedison/Samples~/`
 - `TorusEdison-<version>.unitypackage`
 
 ## Publishing Text

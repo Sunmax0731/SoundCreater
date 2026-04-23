@@ -1,0 +1,70 @@
+{
+  "formatVersion": "1.0.0",
+  "toolVersion": "0.2.0",
+  "project": {
+    "id": "proj-ui-click",
+    "name": "UIClick",
+    "bpm": 132,
+    "timeSignature": {
+      "numerator": 4,
+      "denominator": 4
+    },
+    "totalBars": 1,
+    "sampleRate": 48000,
+    "channelMode": "Stereo",
+    "masterGainDb": -1.0,
+    "loopPlayback": false,
+    "tracks": [
+      {
+        "id": "track-ui-click",
+        "name": "Click",
+        "mute": false,
+        "solo": false,
+        "volumeDb": -1.5,
+        "pan": 0.0,
+        "defaultVoice": {
+          "waveform": "Pulse",
+          "pulseWidth": 0.18,
+          "noiseEnabled": false,
+          "noiseType": "White",
+          "noiseMix": 0.0,
+          "adsr": {
+            "attackMs": 0,
+            "decayMs": 35,
+            "sustain": 0.05,
+            "releaseMs": 30
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": 0.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": false,
+              "timeMs": 90,
+              "feedback": 0.12,
+              "mix": 0.08
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "ui-click-01",
+            "startBeat": 0.0,
+            "durationBeat": 0.0625,
+            "midiNote": 96,
+            "velocity": 1.0
+          },
+          {
+            "id": "ui-click-02",
+            "startBeat": 0.0625,
+            "durationBeat": 0.0625,
+            "midiNote": 88,
+            "velocity": 0.6
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -3313,8 +3313,24 @@ namespace TorusEdison.Editor.Windows
             string targetDirectory = GetUserProjectFolderPath();
             Directory.CreateDirectory(targetDirectory);
 
-            CopySampleIfMissing("BasicSE/basic-se.gats.json", Path.Combine(targetDirectory, "BasicSE.gats.json"));
-            CopySampleIfMissing("SimpleLoop/simple-loop.gats.json", Path.Combine(targetDirectory, "SimpleLoop.gats.json"));
+            var bundledSamples = new (string Source, string Target)[]
+            {
+                ("BasicSE/basic-se.gats.json", "BasicSE.gats.json"),
+                ("SimpleLoop/simple-loop.gats.json", "SimpleLoop.gats.json"),
+                ("UIClick/ui-click.gats.json", "UIClick.gats.json"),
+                ("UIConfirm/ui-confirm.gats.json", "UIConfirm.gats.json"),
+                ("UICancel/ui-cancel.gats.json", "UICancel.gats.json"),
+                ("CoinPickup/coin-pickup.gats.json", "CoinPickup.gats.json"),
+                ("PowerUpRise/power-up-rise.gats.json", "PowerUpRise.gats.json"),
+                ("LaserShot/laser-shot.gats.json", "LaserShot.gats.json"),
+                ("ExplosionBurst/explosion-burst.gats.json", "ExplosionBurst.gats.json"),
+                ("AlarmLoop/alarm-loop.gats.json", "AlarmLoop.gats.json")
+            };
+
+            foreach ((string source, string target) in bundledSamples)
+            {
+                CopySampleIfMissing(source, Path.Combine(targetDirectory, target));
+            }
         }
 
         private static void CopySampleIfMissing(string sampleRelativePath, string targetPath)

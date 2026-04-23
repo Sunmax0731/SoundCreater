@@ -1,0 +1,113 @@
+{
+  "formatVersion": "1.0.0",
+  "toolVersion": "0.2.0",
+  "project": {
+    "id": "proj-explosion-burst",
+    "name": "ExplosionBurst",
+    "bpm": 110,
+    "timeSignature": {
+      "numerator": 4,
+      "denominator": 4
+    },
+    "totalBars": 2,
+    "sampleRate": 48000,
+    "channelMode": "Stereo",
+    "masterGainDb": -1.5,
+    "loopPlayback": false,
+    "tracks": [
+      {
+        "id": "track-explosion-body",
+        "name": "Body",
+        "mute": false,
+        "solo": false,
+        "volumeDb": 0.0,
+        "pan": 0.0,
+        "defaultVoice": {
+          "waveform": "Triangle",
+          "pulseWidth": 0.5,
+          "noiseEnabled": false,
+          "noiseType": "White",
+          "noiseMix": 0.0,
+          "adsr": {
+            "attackMs": 0,
+            "decayMs": 220,
+            "sustain": 0.18,
+            "releaseMs": 320
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": -12.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": false,
+              "timeMs": 160,
+              "feedback": 0.15,
+              "mix": 0.1
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "explosion-body-01",
+            "startBeat": 0.0,
+            "durationBeat": 0.5,
+            "midiNote": 40,
+            "velocity": 1.0
+          },
+          {
+            "id": "explosion-body-02",
+            "startBeat": 0.1875,
+            "durationBeat": 0.5,
+            "midiNote": 33,
+            "velocity": 0.78
+          }
+        ]
+      },
+      {
+        "id": "track-explosion-noise",
+        "name": "Noise",
+        "mute": false,
+        "solo": false,
+        "volumeDb": -2.5,
+        "pan": 0.0,
+        "defaultVoice": {
+          "waveform": "Square",
+          "pulseWidth": 0.5,
+          "noiseEnabled": true,
+          "noiseType": "White",
+          "noiseMix": 0.7,
+          "adsr": {
+            "attackMs": 0,
+            "decayMs": 180,
+            "sustain": 0.12,
+            "releaseMs": 240
+          },
+          "effect": {
+            "volumeDb": 0.0,
+            "pan": 0.0,
+            "pitchSemitone": -5.0,
+            "fadeInMs": 0,
+            "fadeOutMs": 0,
+            "delay": {
+              "enabled": true,
+              "timeMs": 140,
+              "feedback": 0.16,
+              "mix": 0.12
+            }
+          }
+        },
+        "notes": [
+          {
+            "id": "explosion-noise-01",
+            "startBeat": 0.0,
+            "durationBeat": 0.375,
+            "midiNote": 48,
+            "velocity": 0.95
+          }
+        ]
+      }
+    ]
+  }
+}

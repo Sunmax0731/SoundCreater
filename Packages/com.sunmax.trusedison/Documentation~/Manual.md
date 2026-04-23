@@ -50,7 +50,8 @@ Use this page for:
 - creating a new project
 - opening and saving `.gats.json` files
 - creating local sample copies
-- loading bundled `Basic SE` and `Simple Loop` samples
+- quick-loading bundled `Basic SE` and `Simple Loop` samples
+- copying the full ten-project sample set with `Create Samples`
 
 ### Edit
 
@@ -176,8 +177,16 @@ Project settings override common defaults for sample rate, channel mode, export 
 
 Bundled samples:
 
-- `Samples~/BasicSE/basic-se.gats.json`
-- `Samples~/SimpleLoop/simple-loop.gats.json`
+- `BasicSE/basic-se.gats.json`
+- `SimpleLoop/simple-loop.gats.json`
+- `UIClick/ui-click.gats.json`
+- `UIConfirm/ui-confirm.gats.json`
+- `UICancel/ui-cancel.gats.json`
+- `CoinPickup/coin-pickup.gats.json`
+- `PowerUpRise/power-up-rise.gats.json`
+- `LaserShot/laser-shot.gats.json`
+- `ExplosionBurst/explosion-burst.gats.json`
+- `AlarmLoop/alarm-loop.gats.json`
 
 Sample notes and validation steps:
 
