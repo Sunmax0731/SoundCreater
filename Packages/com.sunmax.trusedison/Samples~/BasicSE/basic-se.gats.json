@@ -55,6 +55,13 @@
             "durationBeat": 0.25,
             "midiNote": 72,
             "velocity": 0.95
+          },
+          {
+            "id": "note-impact-02",
+            "startBeat": 0.25,
+            "durationBeat": 0.125,
+            "midiNote": 67,
+            "velocity": 0.55
           }
         ]
       }

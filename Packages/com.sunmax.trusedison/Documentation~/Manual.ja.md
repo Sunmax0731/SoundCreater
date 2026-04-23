@@ -81,7 +81,12 @@
 - `Samples~/BasicSE/basic-se.gats.json`
 - `Samples~/SimpleLoop/simple-loop.gats.json`
 
-これらは動作確認や再生確認のためのサンプルです。
+これらは再生確認、書き出し確認、配布前チェックのためのサンプルです。
+
+サンプルの内容と確認手順:
+
+- [Samples~/README.md](../Samples~/README.md)
+- [ValidationChecklist.md](ValidationChecklist.md)
 
 ## 現在の注意点
 
