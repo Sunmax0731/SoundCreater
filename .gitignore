@@ -23,6 +23,7 @@
 Thumbs.db
 Desktop.ini
 *.tmp
+*.temp
 
 # Generated release artifacts
 *.unitypackage
@@ -34,3 +35,11 @@ Assets/__TorusEdisonPreviewCache__.meta
 
 # Local user projects
 myAudioProjects/
+
+# User-generated Torus Edison artifacts
+Exports/
+TorusEdisonLogs/
+*.log
+*.gats.json
+*.wav
+!Packages/com.sunmax.trusedison/Samples~/**/*.gats.json

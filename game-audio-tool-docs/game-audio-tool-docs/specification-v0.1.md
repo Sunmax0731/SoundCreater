@@ -83,7 +83,7 @@
 ### 5.2 パッケージ構成(推奨)
 
 ```text
-Packages/com.example.gameaudiotool/
+Packages/com.sunmax.trusedison/
   package.json
   Runtime/
     (MVPでは最小限。共通モデルのみ許容)

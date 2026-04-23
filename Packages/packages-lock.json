@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.sunmax.trusedison": {
+      "version": "file:com.sunmax.trusedison",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.11",
       "depth": 0,

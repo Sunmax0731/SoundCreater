@@ -1,0 +1,21 @@
+using TorusEdison.Editor.Domain;
+
+namespace TorusEdison.Editor.Config
+{
+    public sealed class GameAudioCommonConfig
+    {
+        public int DefaultSampleRate { get; set; } = 48000;
+
+        public GameAudioChannelMode DefaultChannelMode { get; set; } = GameAudioChannelMode.Stereo;
+
+        public string DefaultExportDirectory { get; set; } = "Exports/Audio";
+
+        public bool ShowStartupGuide { get; set; } = true;
+
+        public bool RememberLastProject { get; set; } = true;
+
+        public string DefaultGridDivision { get; set; } = "1/16";
+
+        public int UndoHistoryLimit { get; set; } = 100;
+    }
+}

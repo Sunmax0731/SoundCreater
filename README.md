@@ -19,7 +19,7 @@ The tool name is a wordplay on Thomas Edison, reframed as a sound-invention tool
 
 Current foundation in this repository:
 
-- Unity package skeleton under `Packages/com.example.gameaudiotool`
+- Unity package skeleton under `Packages/com.sunmax.trusedison`
 - domain models for project, track, note, voice, ADSR, effect, and config
 - `.gats.json` save/load foundation with validation
 - common/project config serializers
@@ -41,7 +41,7 @@ Open the repository root as a Unity project, wait for package import to complete
 
 ## Repository Layout
 
-- `Packages/com.example.gameaudiotool`
+- `Packages/com.sunmax.trusedison`
   Main Unity package under development.
 - `Assets`, `Packages/manifest.json`, `ProjectSettings`
   Unity host project files used for local validation of the embedded package.
