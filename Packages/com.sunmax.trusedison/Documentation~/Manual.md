@@ -1,5 +1,7 @@
 # Torus Edison Manual
 
+Japanese version: [Manual.ja.md](Manual.ja.md)
+
 ## Overview
 
 `Torus Edison` is a Unity Editor extension for authoring reusable game-audio project data.
