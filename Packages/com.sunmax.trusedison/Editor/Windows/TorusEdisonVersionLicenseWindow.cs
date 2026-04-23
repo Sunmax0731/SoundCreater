@@ -12,6 +12,7 @@ namespace TorusEdison.Editor.Windows
     internal sealed class TorusEdisonVersionLicenseWindow : EditorWindow
     {
         private const float HeroHeight = 220.0f;
+        private const string HeroImageFileName = "TorusEdisonHeroImage.png";
 
         private readonly GameAudioCommonConfigSerializer _commonConfigSerializer = new GameAudioCommonConfigSerializer();
         private GameAudioDisplayLanguage _displayLanguage = GameAudioDisplayLanguage.English;
@@ -188,9 +189,25 @@ namespace TorusEdison.Editor.Windows
             return Path.Combine(GetPackageRootPath(), fileName);
         }
 
+        private static string GetHeroImageAssetPath()
+        {
+            return $"Packages/{GameAudioToolInfo.PackageIdentifier}/Editor/Resources/{HeroImageFileName}";
+        }
+
+        private static Texture2D LoadHeroImage()
+        {
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(GetHeroImageAssetPath());
+        }
+
         private static void DrawHeroBanner()
         {
             Rect rect = GUILayoutUtility.GetRect(0.0f, HeroHeight, GUILayout.ExpandWidth(true));
+            Texture2D heroImage = LoadHeroImage();
+            if (heroImage != null)
+            {
+                DrawHeroImage(rect, heroImage);
+                return;
+            }
 
             for (int index = 0; index < 18; index++)
             {
@@ -232,6 +249,29 @@ namespace TorusEdison.Editor.Windows
             Rect subtitleRect = new Rect(rect.x + 224.0f, rect.y + 120.0f, rect.width - 280.0f, 26.0f);
             GUI.Label(titleRect, GameAudioToolInfo.DisplayName, titleStyle);
             GUI.Label(subtitleRect, "Version & License", subtitleStyle);
+        }
+
+        private static void DrawHeroImage(Rect rect, Texture2D heroImage)
+        {
+            GUI.DrawTexture(rect, heroImage, ScaleMode.ScaleAndCrop);
+
+            Rect overlayRect = new Rect(rect.x, rect.yMax - 44.0f, rect.width, 44.0f);
+            EditorGUI.DrawRect(overlayRect, new Color(0.01f, 0.05f, 0.12f, 0.72f));
+
+            GUIStyle overlayLabel = new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 18,
+                alignment = TextAnchor.MiddleRight,
+                normal =
+                {
+                    textColor = Color.white
+                }
+            };
+
+            GUI.Label(
+                new Rect(rect.x + 24.0f, rect.yMax - 38.0f, rect.width - 48.0f, 28.0f),
+                "Version & License",
+                overlayLabel);
         }
 
         private static void DrawWaveformSide(Rect rect, bool left)
