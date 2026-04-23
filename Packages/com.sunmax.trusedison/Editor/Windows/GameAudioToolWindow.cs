@@ -3768,6 +3768,7 @@ namespace TorusEdison.Editor.Windows
                 BeatsPerBar = beatsPerBar;
                 TotalBars = Math.Max(1, project?.TotalBars ?? 1);
                 TotalBeats = TotalBars * beatsPerBar;
+                TrackCount = trackCount;
                 HeaderWidth = TimelineHeaderWidth;
                 RulerHeight = TimelineRulerHeight;
                 RowHeight = TimelineRowHeight;
@@ -3784,6 +3785,8 @@ namespace TorusEdison.Editor.Windows
             public int TotalBars { get; }
 
             public int TotalBeats { get; }
+
+            public int TrackCount { get; }
 
             public float HeaderWidth { get; }
 
@@ -3839,6 +3842,11 @@ namespace TorusEdison.Editor.Windows
             public int GetTrackIndex(float contentY)
             {
                 if (contentY < RulerHeight)
+                {
+                    return -1;
+                }
+
+                if (contentY >= RulerHeight + (TrackCount * RowHeight))
                 {
                     return -1;
                 }
