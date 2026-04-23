@@ -28,6 +28,13 @@ The release zip is expected to contain:
 - `Samples/SimpleLoop.gats.json`
 - `TorusEdison-<version>.unitypackage`
 
+## Publishing Text
+
+Use these files as the source text when publishing:
+
+- `GitHubReleaseBody.ja.md`
+- `BOOTHDescription.ja.md`
+
 ## Build Command
 
 Run from the repository root:
@@ -54,3 +61,5 @@ Before attaching the zip to GitHub Release:
 5. Confirm the unitypackage and zip were both created
 6. Open the zip and verify the expected files are present
 7. Keep the GitHub Release artifact and BOOTH artifact identical
+8. Use `GitHubReleaseBody.ja.md` for the GitHub Release body
+9. Use `BOOTHDescription.ja.md` for the BOOTH listing text
