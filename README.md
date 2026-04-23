@@ -20,6 +20,7 @@
 - 音声プロジェクトの新規作成、保存、読み込み
 - `.gats.json` 形式でのセッション管理
 - タイムライン上でのノート作成、移動、リサイズ、複製、削除
+- `Total Bars` は最大 `128` まで設定可能
 - note / track / project の Inspector 編集
 - `Render Preview / Play / Pause / Stop / Rewind / Loop` によるプレビュー再生
 - preview 波形表示

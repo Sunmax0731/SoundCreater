@@ -208,6 +208,32 @@ namespace TorusEdison.Editor.Tests
         }
 
         [Test]
+        public void Deserialize_ClampsTotalBarsAboveMaximum()
+        {
+            const string json = @"{
+  ""formatVersion"": ""1.0.0"",
+  ""toolVersion"": ""0.1.1"",
+  ""project"": {
+    ""id"": ""proj-001"",
+    ""name"": ""LongForm"",
+    ""bpm"": 120,
+    ""timeSignature"": { ""numerator"": 4, ""denominator"": 4 },
+    ""totalBars"": 256,
+    ""sampleRate"": 48000,
+    ""channelMode"": ""Stereo"",
+    ""masterGainDb"": 0.0,
+    ""loopPlayback"": false,
+    ""tracks"": []
+  }
+}";
+
+            var serializer = new GameAudioProjectSerializer();
+            GameAudioProjectLoadResult result = serializer.Deserialize(json);
+
+            Assert.That(result.Project.TotalBars, Is.EqualTo(GameAudioToolInfo.MaxTotalBars));
+        }
+
+        [Test]
         public void SaveToFile_NormalizesSessionFileExtension()
         {
             var serializer = new GameAudioProjectSerializer();
