@@ -26,7 +26,7 @@ namespace GameAudioTool.Editor.Audio
         public static bool SupportsNativeLooping => PlayPreviewClipMethod != null
             && PlayPreviewClipMethod.GetParameters().Any(parameter => parameter.ParameterType == typeof(bool));
 
-        public static void PlayPreviewClip(AudioClip clip, bool loopPlayback)
+        public static void PlayPreviewClip(AudioClip clip, bool loopPlayback, int startSample = 0)
         {
             if (clip == null)
             {
@@ -38,7 +38,7 @@ namespace GameAudioTool.Editor.Audio
                 throw new InvalidOperationException("UnityEditor preview audio API is unavailable in this editor build.");
             }
 
-            object[] arguments = BuildPlayArguments(PlayPreviewClipMethod, clip, loopPlayback);
+            object[] arguments = BuildPlayArguments(PlayPreviewClipMethod, clip, loopPlayback, Math.Max(0, startSample));
             PlayPreviewClipMethod.Invoke(null, arguments);
         }
 
@@ -160,11 +160,12 @@ namespace GameAudioTool.Editor.Audio
             return true;
         }
 
-        private static object[] BuildPlayArguments(MethodInfo method, AudioClip clip, bool loopPlayback)
+        private static object[] BuildPlayArguments(MethodInfo method, AudioClip clip, bool loopPlayback, int startSample)
         {
             ParameterInfo[] parameters = method.GetParameters();
             object[] arguments = new object[parameters.Length];
             arguments[0] = clip;
+            bool wroteStartSample = false;
 
             for (int index = 1; index < parameters.Length; index++)
             {
@@ -175,7 +176,8 @@ namespace GameAudioTool.Editor.Audio
                 }
                 else if (parameterType == typeof(int))
                 {
-                    arguments[index] = 0;
+                    arguments[index] = wroteStartSample ? 0 : startSample;
+                    wroteStartSample = true;
                 }
                 else
                 {

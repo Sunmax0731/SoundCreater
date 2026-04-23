@@ -27,3 +27,10 @@ Desktop.ini
 # Generated release artifacts
 *.unitypackage
 *.zip
+
+# Editor preview cache
+Assets/__TorusEdisonPreviewCache__/
+Assets/__TorusEdisonPreviewCache__.meta
+
+# Local user projects
+myAudioProjects/
