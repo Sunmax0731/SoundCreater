@@ -29,6 +29,7 @@ namespace TorusEdison.Editor.Windows
         private const float TimelinePixelsPerBeat = 24.0f;
         private const float TimelineViewportHeight = 340.0f;
         private const float TimelineResizeHandleWidth = 6.0f;
+        private const float TimelineFooterHeight = 34.0f;
         private const float InspectorValueWidth = 92.0f;
         private const float PreviewWaveformHeight = 108.0f;
 
@@ -2368,7 +2369,7 @@ namespace TorusEdison.Editor.Windows
         {
             GameAudioTimelineHelpWindow.Open(
                 _displayLanguage,
-                TF("status.timelineHint", "Grid {0} | Selected {1} note(s) | Drag empty lane to create | Drag note to move | Drag edge to resize | Ctrl+D duplicate | Delete remove | Ctrl+Z / Ctrl+Y undo redo", _currentGridDivision, _selectedNoteIds.Count));
+                TF("status.timelineHint", "Grid {0} | Selected {1} note(s) | Drag empty lane to create | Drag note to move | Drag edge to resize | + Add Track in the footer | Ctrl+D duplicate | Delete remove | Ctrl+Z / Ctrl+Y undo redo", _currentGridDivision, _selectedNoteIds.Count));
         }
 
         private void DuplicateSelectedNotes()
@@ -2408,6 +2409,37 @@ namespace TorusEdison.Editor.Windows
             catch (Exception exception)
             {
                 ShowEditorException(exception, "Edit", "Deleting notes failed");
+            }
+        }
+
+        private void AddTrackFromTimeline()
+        {
+            if (CurrentProject == null)
+            {
+                return;
+            }
+
+            try
+            {
+                int nextTrackIndex = (CurrentProject.Tracks?.Count ?? 0) + 1;
+                GameAudioTrack newTrack = GameAudioProjectFactory.CreateDefaultTrack(nextTrackIndex);
+                ApplyEditorCommand(
+                    GameAudioProjectCommandFactory.AddTrack(CurrentProject, newTrack),
+                    true,
+                    () =>
+                    {
+                        GameAudioTrack addedTrack = CurrentProject?.Tracks?.LastOrDefault();
+                        if (addedTrack != null)
+                        {
+                            _selectedTrackId = addedTrack.Id;
+                        }
+
+                        _selectedNoteIds.Clear();
+                    });
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception, "Edit", "Adding track failed");
             }
         }
 
@@ -2723,6 +2755,29 @@ namespace TorusEdison.Editor.Windows
                     TF("timeline.trackInfo", "Notes {0} / Pan {1:0.00}", track.Notes.Count, track.Pan),
                     EditorStyles.miniLabel);
             }
+
+            DrawTimelineAddTrackFooter(project, metrics);
+        }
+
+        private void DrawTimelineAddTrackFooter(GameAudioProject project, TimelineMetrics metrics)
+        {
+            Rect footerRect = metrics.GetFooterRect(project.Tracks.Count);
+            EditorGUI.DrawRect(footerRect, new Color(0.13f, 0.13f, 0.13f));
+
+            Rect buttonRect = new Rect(
+                footerRect.x + 8.0f,
+                footerRect.y + 6.0f,
+                footerRect.width - 16.0f,
+                footerRect.height - 12.0f);
+
+            bool canAddTrack = project.Tracks.Count < GameAudioToolInfo.MaxTrackCount;
+            EditorGUI.BeginDisabledGroup(!canAddTrack);
+            if (GUI.Button(buttonRect, T("timeline.addTrack", "+ Add Track")))
+            {
+                AddTrackFromTimeline();
+            }
+
+            EditorGUI.EndDisabledGroup();
         }
 
         private void DrawTimelineNotes(IEnumerable<TimelineRenderedNote> renderedNotes)
@@ -3676,17 +3731,19 @@ namespace TorusEdison.Editor.Windows
             public TimelineMetrics(GameAudioProject project)
             {
                 int beatsPerBar = Math.Max(1, project?.TimeSignature?.Numerator ?? 4);
+                int trackCount = Math.Max(1, project?.Tracks?.Count ?? 1);
                 BeatsPerBar = beatsPerBar;
                 TotalBars = Math.Max(1, project?.TotalBars ?? 1);
                 TotalBeats = TotalBars * beatsPerBar;
                 HeaderWidth = TimelineHeaderWidth;
                 RulerHeight = TimelineRulerHeight;
                 RowHeight = TimelineRowHeight;
+                FooterHeight = TimelineFooterHeight;
                 NoteHeight = TimelineNoteHeight;
                 PixelsPerBeat = TimelinePixelsPerBeat;
                 TimelineWidth = Math.Max(640.0f, TotalBeats * PixelsPerBeat);
                 ContentWidth = HeaderWidth + TimelineWidth + 24.0f;
-                ContentHeight = RulerHeight + Math.Max(1, project?.Tracks?.Count ?? 1) * RowHeight + 8.0f;
+                ContentHeight = RulerHeight + (trackCount * RowHeight) + FooterHeight + 8.0f;
             }
 
             public int BeatsPerBar { get; }
@@ -3700,6 +3757,8 @@ namespace TorusEdison.Editor.Windows
             public float RulerHeight { get; }
 
             public float RowHeight { get; }
+
+            public float FooterHeight { get; }
 
             public float NoteHeight { get; }
 
@@ -3724,6 +3783,11 @@ namespace TorusEdison.Editor.Windows
             public Rect GetHeaderRect(int trackIndex)
             {
                 return new Rect(0.0f, GetTrackY(trackIndex), HeaderWidth, RowHeight);
+            }
+
+            public Rect GetFooterRect(int trackCount)
+            {
+                return new Rect(0.0f, RulerHeight + (trackCount * RowHeight), HeaderWidth, FooterHeight);
             }
 
             public Rect GetNoteRect(int trackIndex, float startBeat, float durationBeat)
