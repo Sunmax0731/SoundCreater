@@ -13,6 +13,7 @@ using TorusEdison.Editor.Localization;
 using TorusEdison.Editor.Persistence;
 using TorusEdison.Editor.Utilities;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -35,6 +36,7 @@ namespace TorusEdison.Editor.Windows
         private readonly GameAudioPreviewPlaybackService _previewPlaybackService = new GameAudioPreviewPlaybackService();
         private readonly GameAudioProjectSerializer _projectSerializer = new GameAudioProjectSerializer();
         private readonly GameAudioProjectConfigSerializer _projectConfigSerializer = new GameAudioProjectConfigSerializer();
+        private readonly GameAudioAudioClipConversionService _audioClipConversionService = new GameAudioAudioClipConversionService();
         private readonly GameAudioWavExportService _wavExportService = new GameAudioWavExportService();
         private readonly HashSet<string> _selectedNoteIds = new HashSet<string>(StringComparer.Ordinal);
         private readonly Dictionary<WorkspacePage, Button> _workspaceTabButtons = new Dictionary<WorkspacePage, Button>();
@@ -48,6 +50,7 @@ namespace TorusEdison.Editor.Windows
         private bool _isDirty;
         private List<string> _loadWarnings = new List<string>();
         private string _lastExportedPath = string.Empty;
+        private string _lastConverted8BitPath = string.Empty;
         private IVisualElementScheduledItem _previewTicker;
         private TimelineDragState _timelineDragState;
         private Vector2 _timelineScrollPosition;
@@ -55,6 +58,10 @@ namespace TorusEdison.Editor.Windows
         private string _currentGridDivision = "1/16";
         private WorkspacePage _currentWorkspacePage = WorkspacePage.File;
         private GameAudioDisplayLanguage _displayLanguage = GameAudioDisplayLanguage.English;
+        private AudioClip _conversionSourceClip;
+        private string _conversionOutputName = string.Empty;
+        private int _conversionTargetSampleRate = 11025;
+        private GameAudioConversionChannelMode _conversionChannelMode = GameAudioConversionChannelMode.Mono;
 
         private Label _nameValue;
         private Label _bpmValue;
@@ -73,6 +80,11 @@ namespace TorusEdison.Editor.Windows
         private Label _exportResolvedPathValue;
         private Label _exportFileNameValue;
         private Label _exportLastResultValue;
+        private ObjectField _conversionSourceClipField;
+        private TextField _conversionOutputNameField;
+        private PopupField<int> _conversionSampleRateField;
+        private PopupField<GameAudioConversionChannelMode> _conversionChannelModeField;
+        private Label _conversionLastResultValue;
         private IntegerField _toolbarBpmField;
         private PopupField<string> _toolbarGridField;
         private Toggle _toolbarLoopToggle;
@@ -479,6 +491,60 @@ namespace TorusEdison.Editor.Windows
             _autoRefreshAfterExportToggle = new Toggle();
             _autoRefreshAfterExportToggle.RegisterValueChangedCallback(OnAutoRefreshAfterExportChanged);
             panel.Add(CreateInspectorRow(T("export.autoRefresh", "Auto Refresh Assets"), _autoRefreshAfterExportToggle));
+
+            panel.Add(CreateSectionTitle(T("export.convert8Bit.title", "8-bit WAV Conversion")));
+            panel.Add(CreateInspectorHelpBox(
+                T("export.convert8Bit.help", "Select an imported AudioClip asset and convert it to 8-bit PCM WAV. Bring your own audio into Unity first and only convert audio you are allowed to use. This tool does not acquire audio from YouTube or other external services."),
+                HelpBoxMessageType.Info));
+
+            _conversionSourceClipField = new ObjectField
+            {
+                objectType = typeof(AudioClip),
+                allowSceneObjects = false
+            };
+            _conversionSourceClipField.RegisterValueChangedCallback(OnConversionSourceClipChanged);
+            panel.Add(CreateInspectorRow(T("export.convert8Bit.sourceClip", "Source AudioClip"), _conversionSourceClipField));
+
+            _conversionOutputNameField = new TextField
+            {
+                isDelayed = true
+            };
+            _conversionOutputNameField.RegisterValueChangedCallback(OnConversionOutputNameChanged);
+            panel.Add(CreateInspectorRow(T("export.convert8Bit.outputName", "Output Name"), _conversionOutputNameField));
+
+            List<int> sampleRateOptions = GetSupportedConversionSampleRates().ToList();
+            int selectedSampleRateIndex = Math.Max(0, sampleRateOptions.IndexOf(sampleRateOptions.Contains(_conversionTargetSampleRate)
+                ? _conversionTargetSampleRate
+                : sampleRateOptions[0]));
+            _conversionSampleRateField = new PopupField<int>(
+                sampleRateOptions,
+                selectedSampleRateIndex,
+                FormatSampleRateOption,
+                FormatSampleRateOption);
+            _conversionSampleRateField.RegisterValueChangedCallback(OnConversionSampleRateChanged);
+            panel.Add(CreateInspectorRow(T("export.convert8Bit.sampleRate", "Target Sample Rate"), _conversionSampleRateField));
+
+            List<GameAudioConversionChannelMode> channelModeOptions = GetSupportedConversionChannelModes().ToList();
+            int selectedChannelModeIndex = Math.Max(0, channelModeOptions.IndexOf(channelModeOptions.Contains(_conversionChannelMode)
+                ? _conversionChannelMode
+                : channelModeOptions[0]));
+            _conversionChannelModeField = new PopupField<GameAudioConversionChannelMode>(
+                channelModeOptions,
+                selectedChannelModeIndex,
+                FormatConversionChannelMode,
+                FormatConversionChannelMode);
+            _conversionChannelModeField.RegisterValueChangedCallback(OnConversionChannelModeChanged);
+            panel.Add(CreateInspectorRow(T("export.convert8Bit.channelMode", "Channel Mode"), _conversionChannelModeField));
+
+            var conversionActionRow = new VisualElement();
+            conversionActionRow.style.flexDirection = FlexDirection.Row;
+            conversionActionRow.style.alignItems = Align.Center;
+            conversionActionRow.style.flexWrap = Wrap.Wrap;
+            conversionActionRow.style.marginBottom = 8.0f;
+            conversionActionRow.Add(CreateToolbarButton(T("export.convert8Bit.export", "Convert To 8-bit WAV"), Export8BitWav));
+            panel.Add(conversionActionRow);
+
+            _conversionLastResultValue = AddKeyValue(panel, T("export.convert8Bit.lastExport", "Last 8-bit Export"));
 
             return panel;
         }
@@ -1434,6 +1500,21 @@ namespace TorusEdison.Editor.Windows
             return (GameAudioChannelMode[])Enum.GetValues(typeof(GameAudioChannelMode));
         }
 
+        private static IEnumerable<int> GetSupportedConversionSampleRates()
+        {
+            yield return 8000;
+            yield return 11025;
+            yield return 22050;
+            yield return 32000;
+            yield return 44100;
+            yield return 48000;
+        }
+
+        private static IEnumerable<GameAudioConversionChannelMode> GetSupportedConversionChannelModes()
+        {
+            return (GameAudioConversionChannelMode[])Enum.GetValues(typeof(GameAudioConversionChannelMode));
+        }
+
         private static Label CreateInspectorValueLabel(string text)
         {
             var label = new Label(text ?? string.Empty);
@@ -1511,12 +1592,37 @@ namespace TorusEdison.Editor.Windows
             return string.Format(CultureInfo.InvariantCulture, "{0} Hz", sampleRate);
         }
 
+        private string FormatConversionChannelMode(GameAudioConversionChannelMode channelMode)
+        {
+            return channelMode switch
+            {
+                GameAudioConversionChannelMode.Mono => T("export.convert8Bit.channelMode.mono", "Mono"),
+                GameAudioConversionChannelMode.Stereo => T("export.convert8Bit.channelMode.stereo", "Stereo"),
+                _ => T("export.convert8Bit.channelMode.preserve", "Preserve Source")
+            };
+        }
+
         private static int ParseSampleRateOption(string option)
         {
             string digits = new string((option ?? string.Empty).Where(char.IsDigit).ToArray());
             return int.TryParse(digits, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed)
                 ? parsed
                 : GameAudioToolInfo.DefaultSampleRate;
+        }
+
+        private string GetResolvedConversionOutputName()
+        {
+            if (!string.IsNullOrWhiteSpace(_conversionOutputName))
+            {
+                return _conversionOutputName;
+            }
+
+            if (_conversionSourceClip != null && !string.IsNullOrWhiteSpace(_conversionSourceClip.name))
+            {
+                return $"{_conversionSourceClip.name}_8bit";
+            }
+
+            return "Converted8Bit";
         }
 
         private static bool IsFinite(float value)
@@ -1971,6 +2077,35 @@ namespace TorusEdison.Editor.Windows
             }
         }
 
+        private void OnConversionSourceClipChanged(ChangeEvent<UnityEngine.Object> evt)
+        {
+            _conversionSourceClip = evt.newValue as AudioClip;
+            if (_conversionSourceClip != null && string.IsNullOrWhiteSpace(_conversionOutputName))
+            {
+                _conversionOutputName = $"{_conversionSourceClip.name}_8bit";
+            }
+
+            RefreshView();
+        }
+
+        private void OnConversionOutputNameChanged(ChangeEvent<string> evt)
+        {
+            _conversionOutputName = evt.newValue?.Trim() ?? string.Empty;
+            RefreshView();
+        }
+
+        private void OnConversionSampleRateChanged(ChangeEvent<int> evt)
+        {
+            _conversionTargetSampleRate = evt.newValue;
+            RefreshView();
+        }
+
+        private void OnConversionChannelModeChanged(ChangeEvent<GameAudioConversionChannelMode> evt)
+        {
+            _conversionChannelMode = evt.newValue;
+            RefreshView();
+        }
+
         private void ExportWav()
         {
             GameAudioProject project = CurrentProject;
@@ -2001,6 +2136,47 @@ namespace TorusEdison.Editor.Windows
             catch (Exception exception)
             {
                 ShowEditorException(exception, "Export", "WAV export failed");
+            }
+        }
+
+        private void Export8BitWav()
+        {
+            if (_conversionSourceClip == null)
+            {
+                ShowEditorException(new InvalidOperationException(T("export.convert8Bit.selectSourceFirst", "Select a source AudioClip first.")), "Conversion", "8-bit WAV export failed");
+                return;
+            }
+
+            try
+            {
+                string exportDirectory = GetResolvedExportDirectory();
+                string outputName = GetResolvedConversionOutputName();
+                string exportPath = _audioClipConversionService.ExportAsPcm8(
+                    _conversionSourceClip,
+                    exportDirectory,
+                    outputName,
+                    _conversionTargetSampleRate,
+                    _conversionChannelMode);
+                _lastConverted8BitPath = exportPath;
+
+                bool shouldRefresh = (_projectConfig?.AutoRefreshAfterExport ?? true)
+                    && GameAudioExportUtility.ShouldRefreshAssetDatabase(exportPath, GetProjectRootPath());
+                if (shouldRefresh)
+                {
+                    AssetDatabase.Refresh();
+                }
+
+                GameAudioDiagnosticLogger.Info(
+                    "Conversion",
+                    $"Exported 8-bit WAV to {exportPath}. AutoRefresh={shouldRefresh}. Source={_conversionSourceClip.name}; SampleRate={_conversionTargetSampleRate}; ChannelMode={_conversionChannelMode}.");
+                ShowNotification(new GUIContent(shouldRefresh
+                    ? T("status.convert8BitExportedAndRefreshed", "8-bit WAV exported and assets refreshed.")
+                    : T("status.convert8BitExported", "8-bit WAV exported.")));
+                RefreshView();
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception, "Conversion", "8-bit WAV export failed");
             }
         }
 
@@ -3126,6 +3302,13 @@ namespace TorusEdison.Editor.Windows
             _exportResolvedPathValue.text = GetResolvedExportDirectory();
             _exportFileNameValue.text = GameAudioExportUtility.NormalizeWaveFileName(project.Name);
             _exportLastResultValue.text = string.IsNullOrWhiteSpace(_lastExportedPath) ? T("status.notExported", "(not exported)") : _lastExportedPath;
+            _conversionSourceClipField?.SetValueWithoutNotify(_conversionSourceClip);
+            _conversionOutputNameField?.SetValueWithoutNotify(_conversionOutputName);
+            _conversionSampleRateField?.SetValueWithoutNotify(_conversionTargetSampleRate);
+            _conversionChannelModeField?.SetValueWithoutNotify(_conversionChannelMode);
+            _conversionLastResultValue.text = string.IsNullOrWhiteSpace(_lastConverted8BitPath)
+                ? T("status.notExported", "(not exported)")
+                : _lastConverted8BitPath;
 
             if (_undoButton != null)
             {

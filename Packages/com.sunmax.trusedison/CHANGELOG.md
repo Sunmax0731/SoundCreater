@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added imported `AudioClip` to 8-bit PCM WAV conversion in the Export page
+- added 8-bit WAV encoder coverage and audio-clip conversion tests
+
 ## 0.1.1
 
 - added UI localization with auto-follow and manual override for Japanese, English, and Chinese

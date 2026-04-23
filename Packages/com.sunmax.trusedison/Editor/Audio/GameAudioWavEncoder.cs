@@ -5,10 +5,28 @@ namespace TorusEdison.Editor.Audio
 {
     internal static class GameAudioWavEncoder
     {
-        private const short BitsPerSample = 16;
-        private const short BytesPerSample = BitsPerSample / 8;
+        private const short Pcm16BitsPerSample = 16;
+        private const short Pcm16BytesPerSample = Pcm16BitsPerSample / 8;
+        private const short Pcm8BitsPerSample = 8;
+        private const short Pcm8BytesPerSample = Pcm8BitsPerSample / 8;
 
         public static byte[] EncodePcm16(float[] samples, int sampleRate, int channelCount)
+        {
+            return Encode(samples, sampleRate, channelCount, Pcm16BitsPerSample, Pcm16BytesPerSample, WritePcm16Sample);
+        }
+
+        public static byte[] EncodePcm8(float[] samples, int sampleRate, int channelCount)
+        {
+            return Encode(samples, sampleRate, channelCount, Pcm8BitsPerSample, Pcm8BytesPerSample, WritePcm8Sample);
+        }
+
+        private static byte[] Encode(
+            float[] samples,
+            int sampleRate,
+            int channelCount,
+            short bitsPerSample,
+            short bytesPerSample,
+            Action<BinaryWriter, float> writeSample)
         {
             if (samples == null)
             {
@@ -25,9 +43,14 @@ namespace TorusEdison.Editor.Audio
                 throw new ArgumentOutOfRangeException(nameof(channelCount));
             }
 
-            int dataLength = samples.Length * BytesPerSample;
-            int byteRate = sampleRate * channelCount * BytesPerSample;
-            short blockAlign = (short)(channelCount * BytesPerSample);
+            if (writeSample == null)
+            {
+                throw new ArgumentNullException(nameof(writeSample));
+            }
+
+            int dataLength = samples.Length * bytesPerSample;
+            int byteRate = sampleRate * channelCount * bytesPerSample;
+            short blockAlign = (short)(channelCount * bytesPerSample);
 
             using (var stream = new MemoryStream(44 + dataLength))
             using (var writer = new BinaryWriter(stream))
@@ -42,20 +65,32 @@ namespace TorusEdison.Editor.Audio
                 writer.Write(sampleRate);
                 writer.Write(byteRate);
                 writer.Write(blockAlign);
-                writer.Write(BitsPerSample);
+                writer.Write(bitsPerSample);
                 writer.Write(new[] { 'd', 'a', 't', 'a' });
                 writer.Write(dataLength);
 
                 for (int index = 0; index < samples.Length; index++)
                 {
-                    float clamped = Math.Clamp(samples[index], -1.0f, 1.0f);
-                    short value = (short)Math.Round(clamped * short.MaxValue);
-                    writer.Write(value);
+                    writeSample(writer, samples[index]);
                 }
 
                 writer.Flush();
                 return stream.ToArray();
             }
+        }
+
+        private static void WritePcm16Sample(BinaryWriter writer, float sample)
+        {
+            float clamped = Math.Clamp(sample, -1.0f, 1.0f);
+            short value = (short)Math.Round(clamped * short.MaxValue);
+            writer.Write(value);
+        }
+
+        private static void WritePcm8Sample(BinaryWriter writer, float sample)
+        {
+            float clamped = Math.Clamp(sample, -1.0f, 1.0f);
+            byte value = (byte)Math.Clamp((int)Math.Round((clamped + 1.0f) * 127.5f), 0, byte.MaxValue);
+            writer.Write(value);
         }
     }
 }
