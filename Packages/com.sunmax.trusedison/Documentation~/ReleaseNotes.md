@@ -13,6 +13,7 @@
 - timeline toolbar に grid division の直接選択 UI を追加し、`1/4`, `1/8`, `1/16`, `1/32`, `1/64` を選べるように改善
 - 選択中の grid division を note snap、grid drawing、duplicate offset、common config の `defaultGridDivision` と同期
 - Selection Inspector から `.gats-preset.json` の voice preset import / export を実行できるように改善
+- toolbar から built-in project template を選んで新規 project を作成できるように改善
 - README、日英マニュアル、ValidationChecklist、release 文面、BOOTH 商品紹介文を 0.3.0 の機能状態に合わせて更新
 
 検証:

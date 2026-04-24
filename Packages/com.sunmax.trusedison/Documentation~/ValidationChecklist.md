@@ -103,11 +103,15 @@ These checks still need a live Unity Editor session.
 2. Open `Tools/Torus Edison/Open Editor`.
 3. Load `Basic SE`.
 4. Load `Simple Loop`.
+5. Select `Coin Pickup` or `Simple Loop` in the toolbar `Template` selector and click `New From Template`.
+6. Click plain `New` and confirm it still creates an empty project.
 
 Expected:
 
 - both samples load without error dialogs
 - Foundation Status does not show schema-breaking errors
+- template projects apply their BPM, Bars, track, voice, notes, loop/export settings
+- plain `New` keeps the existing empty-project behavior
 
 ### 2. Preview Playback
 

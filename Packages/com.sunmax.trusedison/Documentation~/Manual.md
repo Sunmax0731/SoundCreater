@@ -48,6 +48,7 @@ Use this page for:
 
 - checking the current project path and status
 - creating a new project
+- creating a new project from a built-in template
 - opening and saving `.gats.json` files
 - creating local sample copies
 - quick-loading bundled `Basic SE` and `Simple Loop` samples
@@ -117,12 +118,27 @@ Use this page for project-level and tool-level settings.
 ## Save And Load
 
 - `New` creates a fresh project shell.
+- `New From Template` creates a new project from the selected built-in template while preserving the existing `New` behavior.
 - `Open` reads `.gats.json` project files and rejects broken schema or unsupported format versions.
 - `Save` writes the current project to disk.
 - `Save As` normalizes the selected path to the `.gats.json` session extension.
 
 The canonical session format is `.gats.json`.
 When remember-last-project is enabled, Torus Edison restores the last saved or opened `.gats.json` file the next time the editor window starts. If the remembered file no longer exists, the stored path is cleared and a new project is created instead.
+
+## Project Templates
+
+The toolbar includes a `Template` selector and `New From Template` action. Built-in templates provide starter values for project name, BPM, bars, loop mode, track name, default voice, starter notes, and export settings.
+
+Current built-in templates:
+
+- `UI / UI Click`
+- `Pickup / Coin Pickup`
+- `Impact / Explosion`
+- `Action / Laser Shot`
+- `Loop / Simple Loop`
+
+The plain `New` button still creates an empty project. Template definitions are code-defined built-ins in this release. The reserved custom-template location is `%LocalAppData%/GameAudioTool/project-templates`, using `.gats-template.json` files with `kind: "torusEdison.projectTemplate"` and `templateFormatVersion: "1.0.0"` for future expansion.
 
 ## Timeline Editing
 

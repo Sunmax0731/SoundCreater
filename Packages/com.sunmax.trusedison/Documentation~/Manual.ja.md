@@ -48,6 +48,7 @@
 
 - 現在のプロジェクト状態と保存先の確認
 - 新規作成
+- built-in template からの新規 project 作成
 - 読み込み
 - 保存
 - ローカルサンプルの作成
@@ -119,6 +120,8 @@
 
 - `New`
   新しいプロジェクトを作成します。
+- `New From Template`
+  選択中の built-in template から新しいプロジェクトを作成します。既存の `New` は空のプロジェクト作成として維持します。
 - `Open`
   `.gats.json` プロジェクトファイルを読み込みます。形式が不正な場合は読み込みを拒否します。
 - `Save`
@@ -128,6 +131,20 @@
 
 標準のセッション形式は `.gats.json` です。
 前回プロジェクト記憶が有効な場合、次回エディタウィンドウ起動時に最後に保存または読み込みした `.gats.json` を復元します。記憶中のファイルが存在しない場合はパスをクリアし、新規プロジェクトを作成します。
+
+## Project Templates
+
+toolbar には `Template` selector と `New From Template` があります。built-in template は project name、BPM、bars、loop mode、track name、default voice、starter notes、export settings の初期値を持ちます。
+
+現在の built-in template:
+
+- `UI / UI Click`
+- `Pickup / Coin Pickup`
+- `Impact / Explosion`
+- `Action / Laser Shot`
+- `Loop / Simple Loop`
+
+通常の `New` は従来通り空の project を作成します。この release では template 定義は code-defined built-in として提供します。将来の custom template 用に `%LocalAppData%/GameAudioTool/project-templates` と `.gats-template.json`、`kind: "torusEdison.projectTemplate"`、`templateFormatVersion: "1.0.0"` を予約しています。
 
 ## タイムライン編集
 

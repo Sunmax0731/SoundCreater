@@ -1058,3 +1058,11 @@ MVP実装時点で以下の拡張余地を残す。
 - Import accepts `presetFormatVersion` major `1`; other major versions are rejected. `toolVersion` mismatches create compatibility warnings but do not block import by themselves.
 - Imported preset display-name conflicts do not create stored duplicates because imports are applied directly rather than added to the built-in preset list.
 - User preset files should live under `%LocalAppData%/GameAudioTool/voice-presets`; project or team preset folders can be added later without conflicting with `.gats.json` project files.
+
+## Appendix: Project Template Policy
+
+- Built-in project templates are selected from the toolbar and instantiated with `New From Template`.
+- The existing plain `New` action remains an empty project path.
+- Built-in templates may define project name, BPM, total bars, loop mode, track name, default voice, starter notes, and export settings.
+- Current built-ins cover UI Click, Coin Pickup, Explosion, Laser Shot, and Simple Loop.
+- Future custom templates should live under `%LocalAppData%/GameAudioTool/project-templates` as `.gats-template.json` files with `kind: "torusEdison.projectTemplate"` and `templateFormatVersion: "1.0.0"`.

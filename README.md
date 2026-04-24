@@ -19,6 +19,7 @@ GitHub 上のリポジトリ名は `SoundCreater` ですが、BOOTH や配布物
 ## 主な機能
 
 - `New / Open / Save / Save As` によるプロジェクト管理
+- built-in project template からの新規作成
 - `.gats.json` 形式での保存と読み込み
 - 起動ガイドと前回プロジェクト復元
 - Edit 画面でのプレビュー生成、再生、波形確認

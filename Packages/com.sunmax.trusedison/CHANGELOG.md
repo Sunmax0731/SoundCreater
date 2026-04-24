@@ -7,6 +7,7 @@
 - added stereo voice spread controls with left/right detune and right-channel delay for stereo projects
 - added direct grid division selection in the timeline toolbar, synchronized with snap, grid drawing, duplicate offset, and `defaultGridDivision`
 - added `.gats-preset.json` voice preset import and export actions from the Selection Inspector
+- added built-in project templates for common one-shot and loop starting points
 - refreshed README, manuals, release notes, release helper text, BOOTH-facing copy, and validation checklist for the current release scope
 
 ## 0.2.0

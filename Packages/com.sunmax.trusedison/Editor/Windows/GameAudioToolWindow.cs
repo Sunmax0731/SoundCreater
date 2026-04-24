@@ -75,6 +75,7 @@ namespace TorusEdison.Editor.Windows
         private int _conversionTargetSampleRate = 11025;
         private GameAudioConversionChannelMode _conversionChannelMode = GameAudioConversionChannelMode.Mono;
         private string _selectedVoicePresetId = string.Empty;
+        private string _selectedProjectTemplateId = "ui-click";
 
         private Label _nameValue;
         private Label _bpmValue;
@@ -109,6 +110,7 @@ namespace TorusEdison.Editor.Windows
         private IntegerField _timelineBarsField;
         private IntegerField _toolbarBpmField;
         private PopupField<string> _toolbarGridField;
+        private PopupField<string> _projectTemplateField;
         private Toggle _toolbarLoopToggle;
         private Toggle _loopToggle;
         private HelpBox _previewHelpBox;
@@ -196,6 +198,22 @@ namespace TorusEdison.Editor.Windows
             container.style.marginBottom = 12;
 
             container.Add(CreateToolbarButton(T("toolbar.new", "New"), CreateNewProject));
+            List<string> templateIds = GameAudioProjectTemplateLibrary.BuiltInTemplates.Select(template => template.Id).ToList();
+            if (templateIds.Count > 0)
+            {
+                string selectedTemplateId = ResolveSelectedProjectTemplateId();
+                int selectedTemplateIndex = Math.Max(0, templateIds.IndexOf(selectedTemplateId));
+                _projectTemplateField = new PopupField<string>(
+                    templateIds,
+                    selectedTemplateIndex,
+                    GameAudioProjectTemplateLibrary.FormatLabel,
+                    GameAudioProjectTemplateLibrary.FormatLabel);
+                _projectTemplateField.style.minWidth = 168.0f;
+                _projectTemplateField.RegisterValueChangedCallback(evt => _selectedProjectTemplateId = evt.newValue);
+                container.Add(CreateToolbarValueGroup(T("toolbar.template", "Template"), _projectTemplateField));
+                container.Add(CreateToolbarButton(T("toolbar.newFromTemplate", "New From Template"), CreateNewProjectFromTemplate));
+            }
+
             container.Add(CreateToolbarButton(T("toolbar.open", "Open"), OpenProject));
             container.Add(CreateToolbarButton(T("toolbar.save", "Save"), SaveProject));
             container.Add(CreateToolbarButton(T("toolbar.saveAs", "Save As"), SaveProjectAs));
@@ -1805,6 +1823,31 @@ namespace TorusEdison.Editor.Windows
             RefreshView();
         }
 
+        private void CreateNewProjectFromTemplate()
+        {
+            if (!ConfirmDiscardIfDirty())
+            {
+                return;
+            }
+
+            string templateId = ResolveSelectedProjectTemplateId();
+            BindProject(CreateConfiguredProject(templateId), false, string.Empty, Array.Empty<string>());
+            RememberProjectPath(string.Empty);
+            SetWorkspacePage(WorkspacePage.Edit);
+            RefreshView();
+        }
+
+        private string ResolveSelectedProjectTemplateId()
+        {
+            if (GameAudioProjectTemplateLibrary.TryGetTemplate(_selectedProjectTemplateId, out _))
+            {
+                return _selectedProjectTemplateId;
+            }
+
+            _selectedProjectTemplateId = GameAudioProjectTemplateLibrary.BuiltInTemplates.FirstOrDefault()?.Id ?? string.Empty;
+            return _selectedProjectTemplateId;
+        }
+
         private IReadOnlyList<SelectedNoteContext> GetSelectedNoteContexts(GameAudioProject project)
         {
             var selections = new List<SelectedNoteContext>();
@@ -2261,13 +2304,19 @@ namespace TorusEdison.Editor.Windows
             return false;
         }
 
-        private GameAudioProject CreateConfiguredProject()
+        private GameAudioProject CreateConfiguredProject(string templateId = null)
         {
             _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
             _projectConfig ??= _projectConfigSerializer.LoadOrDefault(GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
             int sampleRate = GameAudioConfigResolver.ResolveSampleRate(_commonConfig, _projectConfig);
             GameAudioChannelMode channelMode = GameAudioConfigResolver.ResolveChannelMode(_commonConfig, _projectConfig);
             _currentGridDivision = GameAudioTimelineGridUtility.NormalizeDivision(_commonConfig.DefaultGridDivision);
+            if (!string.IsNullOrWhiteSpace(templateId)
+                && GameAudioProjectTemplateLibrary.TryGetTemplate(templateId, out GameAudioProjectTemplate template))
+            {
+                return template.CreateProject(sampleRate, channelMode);
+            }
+
             return GameAudioProjectFactory.CreateDefaultProject(sampleRate, channelMode);
         }
 
@@ -4318,6 +4367,7 @@ namespace TorusEdison.Editor.Windows
 
             GameAudioProject project = CurrentProject;
             titleContent = new GUIContent(_isDirty ? $"{GameAudioToolInfo.DisplayName}*" : GameAudioToolInfo.DisplayName);
+            _projectTemplateField?.SetValueWithoutNotify(ResolveSelectedProjectTemplateId());
 
             if (project == null)
             {
