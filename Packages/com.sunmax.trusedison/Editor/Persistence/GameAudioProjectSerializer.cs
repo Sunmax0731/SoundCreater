@@ -190,7 +190,7 @@ namespace TorusEdison.Editor.Persistence
                 solo = track.Solo,
                 volumeDb = GameAudioValidationUtility.ClampFloat(track.VolumeDb, -48.0f, 6.0f),
                 pan = GameAudioValidationUtility.ClampFloat(track.Pan, -1.0f, 1.0f),
-                defaultVoice = ToDto(defaultVoice),
+                defaultVoice = ToVoiceDto(defaultVoice),
                 notes = (track.Notes ?? new List<GameAudioNote>())
                     .OrderBy(note => note.StartBeat)
                     .ThenBy(note => note.Id, StringComparer.Ordinal)
@@ -208,11 +208,11 @@ namespace TorusEdison.Editor.Persistence
                 durationBeat = Math.Max(GameAudioToolInfo.MinNoteDurationBeat, note.DurationBeat),
                 midiNote = GameAudioValidationUtility.ClampInt(note.MidiNote, 0, 127),
                 velocity = GameAudioValidationUtility.ClampFloat(note.Velocity, 0.0f, 1.0f),
-                voiceOverride = note.VoiceOverride == null ? null : ToDto(note.VoiceOverride)
+                voiceOverride = note.VoiceOverride == null ? null : ToVoiceDto(note.VoiceOverride)
             };
         }
 
-        private static GameAudioVoiceDto ToDto(GameAudioVoiceSettings voice)
+        internal static GameAudioVoiceDto ToVoiceDto(GameAudioVoiceSettings voice)
         {
             GameAudioEnvelopeSettings adsr = voice.Adsr ?? GameAudioProjectFactory.CreateDefaultEnvelope();
             GameAudioEffectSettings effect = voice.Effect ?? GameAudioProjectFactory.CreateDefaultEffect();
@@ -349,7 +349,7 @@ namespace TorusEdison.Editor.Persistence
                 : ReadClamped(dto.pan, -1.0f, 1.0f, 0.0f, warnings, $"track[{trackIndex}].pan");
             track.DefaultVoice = !HasVoicePayload(dto?.defaultVoice)
                 ? WithWarning(GameAudioProjectFactory.CreateDefaultVoice(), warnings, $"track[{trackIndex}].defaultVoice missing; default voice was applied.")
-                : FromDto(dto.defaultVoice, warnings, $"track[{trackIndex}].defaultVoice");
+                : FromVoiceDto(dto.defaultVoice, warnings, $"track[{trackIndex}].defaultVoice");
 
             GameAudioNoteDto[] noteDtos = dto?.notes ?? Array.Empty<GameAudioNoteDto>();
             track.Notes = noteDtos
@@ -378,13 +378,13 @@ namespace TorusEdison.Editor.Persistence
                 Velocity = dto == null
                     ? 0.8f
                     : ReadClamped(dto.velocity, 0.0f, 1.0f, 0.8f, warnings, $"{path}.velocity"),
-                VoiceOverride = HasVoicePayload(dto?.voiceOverride) ? FromDto(dto.voiceOverride, warnings, $"{path}.voiceOverride") : null
+                VoiceOverride = HasVoicePayload(dto?.voiceOverride) ? FromVoiceDto(dto.voiceOverride, warnings, $"{path}.voiceOverride") : null
             };
 
             return note;
         }
 
-        private static GameAudioVoiceSettings FromDto(GameAudioVoiceDto dto, List<string> warnings, string path)
+        internal static GameAudioVoiceSettings FromVoiceDto(GameAudioVoiceDto dto, List<string> warnings, string path)
         {
             GameAudioVoiceSettings voice = GameAudioProjectFactory.CreateDefaultVoice();
 

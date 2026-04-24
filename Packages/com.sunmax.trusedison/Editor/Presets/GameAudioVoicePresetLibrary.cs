@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TorusEdison.Editor.Application;
 using TorusEdison.Editor.Domain;
+using TorusEdison.Editor.Utilities;
 
 namespace TorusEdison.Editor.Presets
 {
@@ -136,6 +137,19 @@ namespace TorusEdison.Editor.Presets
 
         public static IReadOnlyList<GameAudioVoicePreset> BuiltInPresets => BuiltInPresetsInternal;
 
+        public static GameAudioVoicePreset CreateUserPreset(string displayName, string description, GameAudioVoiceSettings voice)
+        {
+            string normalizedName = string.IsNullOrWhiteSpace(displayName)
+                ? "Voice Preset"
+                : displayName.Trim();
+            return new GameAudioVoicePreset(
+                CreatePresetId(normalizedName),
+                "User",
+                normalizedName,
+                string.IsNullOrWhiteSpace(description) ? "Exported from Torus Edison." : description.Trim(),
+                CloneVoice(voice));
+        }
+
         public static bool TryGetPreset(string id, out GameAudioVoicePreset preset)
         {
             preset = BuiltInPresetsInternal.FirstOrDefault(candidate => string.Equals(candidate.Id, id, StringComparison.Ordinal));
@@ -205,6 +219,14 @@ namespace TorusEdison.Editor.Presets
             return TryGetPreset(id, out GameAudioVoicePreset preset)
                 ? $"{preset.Category} / {preset.DisplayName}"
                 : id ?? string.Empty;
+        }
+
+        public static string CreatePresetId(string displayName)
+        {
+            string sanitized = GameAudioValidationUtility.SanitizeExportFileName(displayName).Trim();
+            return string.IsNullOrWhiteSpace(sanitized)
+                ? "voice-preset"
+                : sanitized.Replace(' ', '-').ToLowerInvariant();
         }
 
         private static GameAudioVoicePreset CreatePreset(

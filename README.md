@@ -27,6 +27,7 @@ GitHub 上のリポジトリ名は `SoundCreater` ですが、BOOTH や配布物
 - タイムライン下部の `+ Add Track` ボタンによるトラック追加
 - Edit 画面と Settings 画面からの `Total Bars` 変更
 - note / track / project 単位の Inspector 編集
+- voice preset の import / export と built-in preset 適用
 - Stereo project 向けの `Stereo Detune` / `Stereo Delay` による左右チャンネル差分
 - 16-bit PCM WAV 書き出し
 - `Project Bars` / `Seconds` / `Auto Trim` の書き出し長モード

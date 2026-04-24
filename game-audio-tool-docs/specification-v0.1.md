@@ -1051,6 +1051,10 @@ MVP実装時点で以下の拡張余地を残す。
 
 - Built-in voice presets are available from the Selection Inspector for selected notes and selected track default voices.
 - Applying a preset to selected notes creates voice overrides when they do not already exist.
+- `Import Preset` loads a `.gats-preset.json` file and applies it directly to the current note override or track default voice.
+- `Export Current Voice` writes the currently edited voice to a `.gats-preset.json` file.
 - Preset application is a single project command, so Undo / Redo restores the previous note override or track default voice state.
 - Shared preset files use extension `.gats-preset.json`, `kind: "torusEdison.voicePreset"`, and `presetFormatVersion: "1.0.0"`.
+- Import accepts `presetFormatVersion` major `1`; other major versions are rejected. `toolVersion` mismatches create compatibility warnings but do not block import by themselves.
+- Imported preset display-name conflicts do not create stored duplicates because imports are applied directly rather than added to the built-in preset list.
 - User preset files should live under `%LocalAppData%/GameAudioTool/voice-presets`; project or team preset folders can be added later without conflicting with `.gats.json` project files.

@@ -198,6 +198,56 @@ Export 画面には、Unity に取り込んだ `AudioClip` アセットを 8-bit
 
 この機能は、すでに Unity に取り込んだ音声を変換するためのものです。YouTube など外部サービスから音源を取得する機能は含みません。
 
+## Voice Presets
+
+Edit 画面の Selection Inspector では、built-in voice preset と preset file を扱えます。
+
+- トラックヘッダーを選択すると、preset を track default voice に適用できます。
+- 1 つ以上のノートを選択すると、preset を note voice override として適用できます。
+- 選択ノートに voice override がない場合でも、preset import / apply 時に override を作成します。
+- `Import Preset` は `.gats-preset.json` を読み込み、現在の note override または track default voice へ直接適用します。
+- `Export Current Voice` は現在編集中の voice を共有用 `.gats-preset.json` として保存します。
+- import した preset は built-in 一覧へ追加せず、その場で適用します。display name の重複は rename せず、現在の voice を上書きする扱いです。
+- export 先に既存 file がある場合は上書き確認を行います。
+- preset の適用は Undo / Redo の対象です。
+
+preset file は次の schema を使います。
+
+```json
+{
+  "kind": "torusEdison.voicePreset",
+  "presetFormatVersion": "1.0.0",
+  "toolVersion": "0.3.0",
+  "preset": {
+    "id": "team.ui-click",
+    "category": "UI",
+    "displayName": "Team UI Click",
+    "description": "Short reusable menu click.",
+    "voice": {
+      "waveform": "Square",
+      "pulseWidth": 0.35,
+      "noiseEnabled": false,
+      "noiseType": "White",
+      "noiseMix": 0.0,
+      "adsr": { "attackMs": 0, "decayMs": 35, "sustain": 0.15, "releaseMs": 45 },
+      "effect": {
+        "volumeDb": -4.0,
+        "pan": 0.0,
+        "pitchSemitone": 12.0,
+        "stereoDetuneSemitone": 0.0,
+        "stereoDelayMs": 0,
+        "fadeInMs": 0,
+        "fadeOutMs": 25,
+        "delay": { "enabled": false, "timeMs": 180, "feedback": 0.25, "mix": 0.2 }
+      }
+    }
+  }
+}
+```
+
+共有用 preset file には `.gats-preset.json` 拡張子を使います。user preset の既定場所は `%LocalAppData%/GameAudioTool/voice-presets` です。
+`presetFormatVersion` は `1.x.x` を読み込み対象とし、異なる major version は拒否します。`toolVersion` は互換性 warning の対象ですが、単独では import を止めません。
+
 ## バージョン / ライセンス画面
 
 `Tools/Torus Edison/Version & License` から、現在のバージョン、利用規約への導線、配布元情報を確認できます。

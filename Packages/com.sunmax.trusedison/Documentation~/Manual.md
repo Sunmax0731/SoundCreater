@@ -202,6 +202,10 @@ The Edit page includes built-in voice presets in the Selection Inspector.
 - if selected notes do not already use voice overrides, applying a preset creates the overrides for those notes
 - preset application is one Undo / Redo command
 - built-in presets include UI click, confirm, cancel, coin pickup, laser shot, and noise hit
+- `Import Preset` loads a `.gats-preset.json` file and applies it to the current note override or track default voice
+- `Export Current Voice` writes the currently edited voice as a shareable `.gats-preset.json` file
+- imported presets are applied directly and are not added to the built-in preset list, so display-name conflicts do not require rename handling
+- exporting to an existing file asks for overwrite confirmation
 
 Preset schema for shared files:
 
@@ -209,6 +213,7 @@ Preset schema for shared files:
 {
   "kind": "torusEdison.voicePreset",
   "presetFormatVersion": "1.0.0",
+  "toolVersion": "0.3.0",
   "preset": {
     "id": "team.ui-click",
     "category": "UI",
@@ -225,6 +230,8 @@ Preset schema for shared files:
         "volumeDb": -4.0,
         "pan": 0.0,
         "pitchSemitone": 12.0,
+        "stereoDetuneSemitone": 0.0,
+        "stereoDelayMs": 0,
         "fadeInMs": 0,
         "fadeOutMs": 25,
         "delay": { "enabled": false, "timeMs": 180, "feedback": 0.25, "mix": 0.2 }
@@ -235,6 +242,7 @@ Preset schema for shared files:
 ```
 
 Use the `.gats-preset.json` extension for shared voice preset files. The user preset location is `%LocalAppData%/GameAudioTool/voice-presets`.
+`presetFormatVersion` accepts the supported major line `1.x.x`; other major versions are rejected. `toolVersion` is checked for compatibility warnings but does not block import by itself.
 
 ## Version And License Window
 

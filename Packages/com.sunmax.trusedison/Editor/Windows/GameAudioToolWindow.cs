@@ -39,6 +39,7 @@ namespace TorusEdison.Editor.Windows
         private readonly GameAudioPreviewPlaybackService _previewPlaybackService = new GameAudioPreviewPlaybackService();
         private readonly GameAudioProjectSerializer _projectSerializer = new GameAudioProjectSerializer();
         private readonly GameAudioProjectConfigSerializer _projectConfigSerializer = new GameAudioProjectConfigSerializer();
+        private readonly GameAudioVoicePresetFileSerializer _voicePresetFileSerializer = new GameAudioVoicePresetFileSerializer();
         private readonly GameAudioProjectDirtyState _dirtyState = new GameAudioProjectDirtyState();
         private readonly GameAudioAudioClipConversionService _audioClipConversionService = new GameAudioAudioClipConversionService();
         private readonly GameAudioWavExportService _wavExportService = new GameAudioWavExportService();
@@ -1206,7 +1207,7 @@ namespace TorusEdison.Editor.Windows
 
             if (!allHaveOverride)
             {
-                AddVoicePresetControls(parent, applySelectedNoteVoiceChange);
+                AddVoicePresetControls(parent, null, applySelectedNoteVoiceChange);
                 string message = anyHaveOverride
                     ? T("inspector.note.overridePartial", "Some selected notes still use the track default voice. Enable voice override to apply explicit note-level voice settings to the full selection.")
                     : T("inspector.note.overrideNone", "Selected notes currently use each track's default voice. Enable voice override to edit per-note voice settings.");
@@ -1426,6 +1427,7 @@ namespace TorusEdison.Editor.Windows
 
         private void AddVoicePresetControls(
             VisualElement parent,
+            GameAudioVoiceSettings currentVoice,
             Action<string, Action<GameAudioVoiceSettings>, Action<GameAudioVoiceSettings>> applyVoiceChange)
         {
             IReadOnlyList<GameAudioVoicePreset> presets = GameAudioVoicePresetLibrary.BuiltInPresets;
@@ -1457,6 +1459,128 @@ namespace TorusEdison.Editor.Windows
                     null);
             });
             parent.Add(CreateInspectorRow(T("voice.presetAction", "Preset Action"), applyButton));
+
+            var fileActions = new VisualElement();
+            fileActions.style.flexDirection = FlexDirection.Row;
+            fileActions.style.flexWrap = Wrap.Wrap;
+            Button importButton = CreateCompactActionButton(T("voice.importPreset", "Import Preset"), () => ImportVoicePreset(applyVoiceChange));
+            fileActions.Add(importButton);
+            if (currentVoice != null)
+            {
+                Button exportButton = CreateCompactActionButton(T("voice.exportPreset", "Export Current Voice"), () => ExportVoicePreset(currentVoice));
+                fileActions.Add(exportButton);
+            }
+
+            parent.Add(CreateInspectorRow(T("voice.presetFileAction", "Preset File"), fileActions));
+        }
+
+        private void ImportVoicePreset(Action<string, Action<GameAudioVoiceSettings>, Action<GameAudioVoiceSettings>> applyVoiceChange)
+        {
+            string selectedPath = EditorUtility.OpenFilePanel(
+                T("dialog.importPreset", "Import Voice Preset"),
+                ResolveUserPresetDirectory(),
+                "json");
+            if (string.IsNullOrWhiteSpace(selectedPath))
+            {
+                return;
+            }
+
+            try
+            {
+                GameAudioVoicePresetLoadResult loadResult = _voicePresetFileSerializer.LoadFromFile(selectedPath);
+                GameAudioVoicePreset preset = loadResult.Preset;
+                applyVoiceChange(
+                    $"Import Voice Preset: {preset.DisplayName}",
+                    current => GameAudioVoicePresetLibrary.CopyTo(preset.Voice, current),
+                    null);
+
+                if (loadResult.Warnings.Count > 0)
+                {
+                    GameAudioDiagnosticLogger.Warning("Preset", $"Imported preset with {loadResult.Warnings.Count} warning(s): {string.Join("; ", loadResult.Warnings)}");
+                }
+
+                ShowNotification(new GUIContent(TF("notification.presetImported", "Imported preset: {0}", preset.DisplayName)));
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception, "Preset", $"Importing voice preset failed: {selectedPath}");
+            }
+        }
+
+        private void ExportVoicePreset(GameAudioVoiceSettings currentVoice)
+        {
+            if (currentVoice == null)
+            {
+                return;
+            }
+
+            string displayName = BuildVoicePresetDisplayName();
+            string defaultFileName = $"{GameAudioVoicePresetLibrary.CreatePresetId(displayName)}{GameAudioVoicePresetLibrary.PresetFileExtension}";
+            string selectedPath = EditorUtility.SaveFilePanel(
+                T("dialog.exportPreset", "Export Voice Preset"),
+                ResolveUserPresetDirectory(),
+                defaultFileName,
+                "json");
+            if (string.IsNullOrWhiteSpace(selectedPath))
+            {
+                return;
+            }
+
+            try
+            {
+                string resolvedPath = GameAudioVoicePresetFileSerializer.NormalizePresetFilePath(selectedPath);
+                if (File.Exists(resolvedPath)
+                    && !EditorUtility.DisplayDialog(
+                        GameAudioToolInfo.DisplayName,
+                        TF("dialog.overwritePreset", "Overwrite existing preset file?\n{0}", resolvedPath),
+                        T("dialog.ok", "OK"),
+                        T("dialog.cancel", "Cancel")))
+                {
+                    return;
+                }
+
+                GameAudioVoicePreset preset = GameAudioVoicePresetLibrary.CreateUserPreset(displayName, "Exported from Torus Edison.", currentVoice);
+                _voicePresetFileSerializer.SaveToFile(resolvedPath, preset);
+                ShowNotification(new GUIContent(TF("notification.presetExported", "Exported preset: {0}", preset.DisplayName)));
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception, "Preset", $"Exporting voice preset failed: {selectedPath}");
+            }
+        }
+
+        private string BuildVoicePresetDisplayName()
+        {
+            GameAudioProject project = CurrentProject;
+            string projectName = string.IsNullOrWhiteSpace(project?.Name) ? "Voice Preset" : project.Name.Trim();
+            if (_selectedNoteIds.Count > 0)
+            {
+                return $"{projectName} Note Voice";
+            }
+
+            GameAudioTrack track = FindTrackById(project, _selectedTrackId);
+            return track == null || string.IsNullOrWhiteSpace(track.Name)
+                ? $"{projectName} Voice"
+                : $"{track.Name.Trim()} Voice";
+        }
+
+        private static string ResolveUserPresetDirectory()
+        {
+            string expanded = Environment.ExpandEnvironmentVariables(GameAudioVoicePresetLibrary.UserPresetDirectory);
+            if (string.IsNullOrWhiteSpace(expanded) || expanded.Contains("%"))
+            {
+                return UnityEngine.Application.dataPath;
+            }
+
+            try
+            {
+                Directory.CreateDirectory(expanded);
+                return expanded;
+            }
+            catch (Exception)
+            {
+                return UnityEngine.Application.dataPath;
+            }
         }
 
         private string ResolveSelectedVoicePresetId()
@@ -1485,7 +1609,7 @@ namespace TorusEdison.Editor.Windows
             voiceFoldout.style.marginBottom = 6.0f;
             parent.Add(voiceFoldout);
 
-            AddVoicePresetControls(voiceFoldout, applyVoiceChange);
+            AddVoicePresetControls(voiceFoldout, voice, applyVoiceChange);
 
             AddInspectorPopupField(
                 voiceFoldout,

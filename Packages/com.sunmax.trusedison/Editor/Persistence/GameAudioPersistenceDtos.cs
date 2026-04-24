@@ -12,6 +12,25 @@ namespace TorusEdison.Editor.Persistence
     }
 
     [Serializable]
+    internal sealed class GameAudioVoicePresetFileDto
+    {
+        public string kind;
+        public string presetFormatVersion;
+        public string toolVersion;
+        public GameAudioVoicePresetDto preset;
+    }
+
+    [Serializable]
+    internal sealed class GameAudioVoicePresetDto
+    {
+        public string id;
+        public string category;
+        public string displayName;
+        public string description;
+        public GameAudioVoiceDto voice;
+    }
+
+    [Serializable]
     internal sealed class GameAudioProjectDto
     {
         public string id;

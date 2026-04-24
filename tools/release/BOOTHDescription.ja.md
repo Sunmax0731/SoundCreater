@@ -21,6 +21,7 @@
 - タイムライン下部からのトラック追加
 - Edit 画面でのプレビュー生成、再生、波形確認
 - note / track / project の Inspector 編集
+- voice preset の import / export と built-in preset 適用
 - Stereo project 向けの `Stereo Detune` / `Stereo Delay`
 - 16-bit WAV 書き出し
 - `Project Bars` / `Seconds` / `Auto Trim` の書き出し長モード

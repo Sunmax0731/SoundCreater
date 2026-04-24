@@ -193,6 +193,9 @@ Expected:
 6. Switch the project to Mono, render again, and confirm stereo spread controls no longer create left/right output differences
 7. Apply a built-in voice preset to a selected note and confirm Undo / Redo restores the previous voice state
 8. Apply a built-in voice preset to a selected track default voice and confirm Undo / Redo restores the previous default voice
+9. Export the current track default voice with `Export Current Voice`
+10. Import the exported `.gats-preset.json` with `Import Preset` and confirm it applies to the selected track or note voice
+11. Try importing a broken or unsupported preset file and confirm the error message identifies the preset file problem
 
 Expected:
 
@@ -201,6 +204,9 @@ Expected:
 - invalid values are clamped safely
 - `Stereo Detune` and `Stereo Delay` affect stereo output but are ignored for mono rendering
 - voice preset application behaves as one undoable command
+- preset export writes a `.gats-preset.json` file
+- preset import applies as an undoable voice change and does not add duplicate entries to the built-in preset list
+- broken or unsupported preset files are rejected with a clear error dialog
 
 ### 6. WAV Export
 
