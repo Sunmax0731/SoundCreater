@@ -162,6 +162,34 @@ namespace TorusEdison.Editor.Tests
         }
 
         [Test]
+        public void Render_StereoSpreadProducesDifferentLeftAndRightSamples()
+        {
+            GameAudioProject project = CreateStereoSpreadProject(GameAudioChannelMode.Stereo);
+
+            GameAudioRenderResult result = new GameAudioProjectRenderer().Render(project);
+
+            Assert.That(result.ChannelCount, Is.EqualTo(2));
+            Assert.That(HasDifferentLeftAndRightSamples(result), Is.True);
+        }
+
+        [Test]
+        public void Render_MonoOutputIgnoresStereoSpreadTailExtension()
+        {
+            GameAudioProject project = CreateStereoSpreadProject(GameAudioChannelMode.Mono);
+            project.ExportSettings = new GameAudioExportSettings
+            {
+                DurationMode = GameAudioExportDurationMode.Seconds,
+                DurationSeconds = 0.25f,
+                IncludeTail = true
+            };
+
+            GameAudioRenderResult result = new GameAudioProjectRenderer().Render(project);
+
+            Assert.That(result.ChannelCount, Is.EqualTo(1));
+            Assert.That(result.FrameCount, Is.EqualTo(result.TargetFrameCount));
+        }
+
+        [Test]
         public void Render_ClampsUnsafeValuesAndSupportsMonoOutput()
         {
             GameAudioProject project = GameAudioProjectFactory.CreateDefaultProject();
@@ -251,6 +279,35 @@ namespace TorusEdison.Editor.Tests
             return project;
         }
 
+        private static GameAudioProject CreateStereoSpreadProject(GameAudioChannelMode channelMode)
+        {
+            GameAudioProject project = GameAudioProjectFactory.CreateDefaultProject();
+            project.Name = "StereoSpread";
+            project.Bpm = 120;
+            project.TotalBars = 1;
+            project.SampleRate = 48000;
+            project.ChannelMode = channelMode;
+            project.Tracks[0].DefaultVoice.Waveform = GameAudioWaveformType.Sine;
+            project.Tracks[0].DefaultVoice.Adsr.AttackMs = 0;
+            project.Tracks[0].DefaultVoice.Adsr.DecayMs = 0;
+            project.Tracks[0].DefaultVoice.Adsr.Sustain = 1.0f;
+            project.Tracks[0].DefaultVoice.Adsr.ReleaseMs = 0;
+            project.Tracks[0].DefaultVoice.Effect.StereoDetuneSemitone = 4.0f;
+            project.Tracks[0].DefaultVoice.Effect.StereoDelayMs = 40;
+            project.Tracks[0].DefaultVoice.Effect.Delay.Enabled = false;
+            project.Tracks[0].Notes.Clear();
+            project.Tracks[0].Notes.Add(new GameAudioNote
+            {
+                Id = "spread-note",
+                StartBeat = 0.0f,
+                DurationBeat = 0.5f,
+                MidiNote = 69,
+                Velocity = 1.0f
+            });
+
+            return project;
+        }
+
         private static GameAudioProject CreateSingleWaveformProject(GameAudioWaveformType waveform)
         {
             GameAudioProject project = GameAudioProjectFactory.CreateDefaultProject();
@@ -276,6 +333,25 @@ namespace TorusEdison.Editor.Tests
             for (int index = start; index < result.Samples.Length; index++)
             {
                 if (Math.Abs(result.Samples[index]) > 0.0001f)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool HasDifferentLeftAndRightSamples(GameAudioRenderResult result)
+        {
+            if (result.ChannelCount != 2)
+            {
+                return false;
+            }
+
+            for (int frameIndex = 0; frameIndex < result.FrameCount; frameIndex++)
+            {
+                int offset = frameIndex * 2;
+                if (Math.Abs(result.Samples[offset] - result.Samples[offset + 1]) > 0.0001f)
                 {
                     return true;
                 }

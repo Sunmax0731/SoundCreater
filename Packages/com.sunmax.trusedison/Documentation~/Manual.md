@@ -135,6 +135,7 @@ Current editing support includes:
 - track creation from the timeline footer
 - selected-track deletion from the Selection Inspector, or with `Delete` / `Backspace` when no notes are selected
 - project length edits from the Edit page `Bars` field, `-` / `+` buttons, Settings `Total Bars` slider, or timeline right-edge drag
+- stereo voice effects: `Stereo Detune` splits pitch between left/right, and `Stereo Delay` delays the right channel
 - undo and redo for major edit operations
 
 At least one track remains in every project. The delete action is disabled for the final track. When the selected track contains notes, Torus Edison asks for confirmation before deleting the track and its notes. Track deletion is an undoable edit.
@@ -149,6 +150,7 @@ Current implementation includes:
 
 - waveform and white-noise rendering
 - ADSR and delay support
+- stereo detune and right-channel stereo delay when the project channel mode is `Stereo`
 - track and project mixdown
 - preview waveform display
 - `Render Preview`, `Play`, `Pause`, `Stop`, `Rewind`, and `Loop`
@@ -168,6 +170,13 @@ Current WAV export behavior:
 - reports export quality after each export: output peak, source peak, target length, output length, project length, tail length, normalize status, and the delta from the previous export in the session
 - warns when the rendered buffer is silent, very quiet, or at clipping risk
 - can optionally normalize the exported WAV with a configurable headroom value; this is an export-only option and does not modify the project or Undo history
+
+Stereo behavior:
+
+- `Track Pan` and voice `Pan` remain gain/pan controls.
+- Voice `Stereo Detune` creates different pitch content in left and right channels.
+- Voice `Stereo Delay` delays the right channel relative to the left channel.
+- When project Channel Mode is `Mono`, stereo detune and stereo delay are ignored and the voice renders as a single mono signal.
 
 ## 8-bit WAV Conversion
 

@@ -1590,6 +1590,22 @@ namespace TorusEdison.Editor.Windows
                     actualVoice => NotifyClamp("Voice Pitch", requested, actualVoice.Effect.PitchSemitone));
             }, value => string.Format(CultureInfo.InvariantCulture, "{0:+0.0;-0.0;0.0} st", value));
 
+            AddInspectorFloatSliderField(effectFoldout, T("voice.stereoDetune", "Stereo Detune (semitone)"), voice.Effect.StereoDetuneSemitone, 0.0f, 12.0f, requested =>
+            {
+                applyVoiceChange(
+                    "Set Stereo Detune",
+                    current => current.Effect.StereoDetuneSemitone = requested,
+                    actualVoice => NotifyClamp("Stereo Detune", requested, actualVoice.Effect.StereoDetuneSemitone));
+            }, value => string.Format(CultureInfo.InvariantCulture, "{0:0.0} st", value));
+
+            AddInspectorIntegerSliderField(effectFoldout, T("voice.stereoDelay", "Stereo Delay (ms)"), voice.Effect.StereoDelayMs, 0, 1000, requested =>
+            {
+                applyVoiceChange(
+                    "Set Stereo Delay",
+                    current => current.Effect.StereoDelayMs = requested,
+                    actualVoice => NotifyClamp("Stereo Delay", requested, actualVoice.Effect.StereoDelayMs));
+            }, FormatMillisecondsDisplay);
+
             AddInspectorIntegerSliderField(effectFoldout, T("voice.fadeIn", "Fade In (ms)"), voice.Effect.FadeInMs, 0, 3000, requested =>
             {
                 applyVoiceChange(

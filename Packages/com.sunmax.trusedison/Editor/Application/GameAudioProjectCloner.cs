@@ -150,6 +150,8 @@ namespace TorusEdison.Editor.Application
                     VolumeDb = effect.VolumeDb,
                     Pan = effect.Pan,
                     PitchSemitone = effect.PitchSemitone,
+                    StereoDetuneSemitone = effect.StereoDetuneSemitone,
+                    StereoDelayMs = effect.StereoDelayMs,
                     FadeInMs = effect.FadeInMs,
                     FadeOutMs = effect.FadeOutMs,
                     Delay = CloneDelay(effect.Delay)

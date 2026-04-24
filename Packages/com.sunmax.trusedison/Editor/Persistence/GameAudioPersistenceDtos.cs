@@ -97,6 +97,8 @@ namespace TorusEdison.Editor.Persistence
         public float volumeDb;
         public float pan;
         public float pitchSemitone;
+        public float stereoDetuneSemitone;
+        public int stereoDelayMs;
         public int fadeInMs;
         public int fadeOutMs;
         public GameAudioDelayDto delay;

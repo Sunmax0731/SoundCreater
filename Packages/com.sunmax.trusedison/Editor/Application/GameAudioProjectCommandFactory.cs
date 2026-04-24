@@ -368,6 +368,8 @@ namespace TorusEdison.Editor.Application
             normalized.VolumeDb = GameAudioValidationUtility.ClampFloat(normalized.VolumeDb, -48.0f, 6.0f);
             normalized.Pan = GameAudioValidationUtility.ClampFloat(normalized.Pan, -1.0f, 1.0f);
             normalized.PitchSemitone = GameAudioValidationUtility.ClampFloat(normalized.PitchSemitone, -24.0f, 24.0f);
+            normalized.StereoDetuneSemitone = GameAudioValidationUtility.ClampFloat(normalized.StereoDetuneSemitone, 0.0f, 12.0f);
+            normalized.StereoDelayMs = GameAudioValidationUtility.ClampInt(normalized.StereoDelayMs, 0, 1000);
             normalized.FadeInMs = GameAudioValidationUtility.ClampInt(normalized.FadeInMs, 0, 3000);
             normalized.FadeOutMs = GameAudioValidationUtility.ClampInt(normalized.FadeOutMs, 0, 3000);
             normalized.Delay = NormalizeDelay(normalized.Delay);

@@ -102,7 +102,10 @@ namespace TorusEdison.Editor.Audio
                 : 0;
 
             int delayRepeatCount = CalculateDelayRepeatCount(delay);
-            int renderedFrameCount = totalFrameCount + (delayFrameCount * delayRepeatCount);
+            int stereoDelayFrameCount = channelCount == 2
+                ? MillisecondsToFrames(GameAudioValidationUtility.ClampInt(effect.StereoDelayMs, 0, 1000), sampleRate)
+                : 0;
+            int renderedFrameCount = totalFrameCount + stereoDelayFrameCount + (delayFrameCount * delayRepeatCount);
             float[] noteBuffer = new float[renderedFrameCount * channelCount];
 
             int attackFrameCount = MillisecondsToFrames(GameAudioValidationUtility.ClampInt(adsr.AttackMs, 0, 5000), sampleRate);
@@ -115,9 +118,14 @@ namespace TorusEdison.Editor.Audio
                 * GameAudioValidationUtility.ClampFloat(note.Velocity, 0.0f, 1.0f);
 
             float notePan = GameAudioValidationUtility.ClampFloat(effect.Pan, -1.0f, 1.0f);
-            double frequency = MidiNoteToFrequency(
-                GameAudioValidationUtility.ClampInt(note.MidiNote, 0, 127)
-                + GameAudioValidationUtility.ClampFloat(effect.PitchSemitone, -24.0f, 24.0f));
+            int midiNote = GameAudioValidationUtility.ClampInt(note.MidiNote, 0, 127);
+            float pitchSemitone = GameAudioValidationUtility.ClampFloat(effect.PitchSemitone, -24.0f, 24.0f);
+            float stereoDetuneSemitone = channelCount == 2
+                ? GameAudioValidationUtility.ClampFloat(effect.StereoDetuneSemitone, 0.0f, 12.0f)
+                : 0.0f;
+            double frequency = MidiNoteToFrequency(midiNote + pitchSemitone);
+            double leftFrequency = MidiNoteToFrequency(midiNote + pitchSemitone - (stereoDetuneSemitone * 0.5f));
+            double rightFrequency = MidiNoteToFrequency(midiNote + pitchSemitone + (stereoDetuneSemitone * 0.5f));
 
             float pulseWidth = GameAudioValidationUtility.ClampFloat(voice.PulseWidth, 0.10f, 0.90f);
             float noiseMix = voice.NoiseEnabled
@@ -142,14 +150,33 @@ namespace TorusEdison.Editor.Audio
 
                 double phase = frequency * (frameIndex / (double)sampleRate);
                 float waveformSample = SampleWaveform(voice.Waveform, phase, pulseWidth);
+                float rightWaveformSample = waveformSample;
+                if (channelCount == 2 && stereoDetuneSemitone > 0.0f)
+                {
+                    waveformSample = SampleWaveform(voice.Waveform, leftFrequency * (frameIndex / (double)sampleRate), pulseWidth);
+                    rightWaveformSample = SampleWaveform(voice.Waveform, rightFrequency * (frameIndex / (double)sampleRate), pulseWidth);
+                }
+
                 if (noiseMix > 0.0f)
                 {
                     float whiteNoise = (float)((random.NextDouble() * 2.0d) - 1.0d);
+                    float rightWhiteNoise = channelCount == 2 && (stereoDetuneSemitone > 0.0f || stereoDelayFrameCount > 0)
+                        ? (float)((random.NextDouble() * 2.0d) - 1.0d)
+                        : whiteNoise;
                     waveformSample = (waveformSample * (1.0f - noiseMix)) + (whiteNoise * noiseMix);
+                    rightWaveformSample = (rightWaveformSample * (1.0f - noiseMix)) + (rightWhiteNoise * noiseMix);
                 }
 
                 float sample = waveformSample * envelope * fade * noteGain;
-                WriteSample(noteBuffer, frameIndex, channelCount, sample, notePan);
+                if (channelCount == 2)
+                {
+                    float rightSample = rightWaveformSample * envelope * fade * noteGain;
+                    WriteStereoSample(noteBuffer, frameIndex, stereoDelayFrameCount, sample, rightSample, notePan);
+                }
+                else
+                {
+                    WriteSample(noteBuffer, frameIndex, channelCount, sample, notePan);
+                }
             }
 
             if (delay.Enabled && delayFrameCount > 0 && delayRepeatCount > 0)
@@ -277,7 +304,12 @@ namespace TorusEdison.Editor.Audio
                     }
 
                     int bodyFrameCount = Math.Max(1, SecondsToFrames(Math.Max(GameAudioToolInfo.MinNoteDurationBeat, note.DurationBeat) * secondsPerBeat, sampleRate));
-                    maxFrameCount = Math.Max(maxFrameCount, startFrame + bodyFrameCount);
+                    GameAudioVoiceSettings voice = ResolveVoice(track, note);
+                    GameAudioEffectSettings effect = voice.Effect ?? GameAudioProjectFactory.CreateDefaultEffect();
+                    int stereoDelayFrameCount = project.ChannelMode == GameAudioChannelMode.Stereo
+                        ? MillisecondsToFrames(GameAudioValidationUtility.ClampInt(effect.StereoDelayMs, 0, 1000), sampleRate)
+                        : 0;
+                    maxFrameCount = Math.Max(maxFrameCount, startFrame + bodyFrameCount + stereoDelayFrameCount);
                 }
             }
 
@@ -328,8 +360,11 @@ namespace TorusEdison.Editor.Audio
                     int delayFrameCount = delay.Enabled
                         ? Math.Max(1, MillisecondsToFrames(GameAudioValidationUtility.ClampInt(delay.TimeMs, 20, 1000), sampleRate))
                         : 0;
+                    int stereoDelayFrameCount = project.ChannelMode == GameAudioChannelMode.Stereo
+                        ? MillisecondsToFrames(GameAudioValidationUtility.ClampInt(effect.StereoDelayMs, 0, 1000), sampleRate)
+                        : 0;
 
-                    int noteFrameCount = bodyFrameCount + releaseFrameCount + (delayFrameCount * CalculateDelayRepeatCount(delay));
+                    int noteFrameCount = bodyFrameCount + releaseFrameCount + stereoDelayFrameCount + (delayFrameCount * CalculateDelayRepeatCount(delay));
                     maxFrameCount = Math.Max(maxFrameCount, startFrame + noteFrameCount);
                 }
             }
@@ -487,6 +522,23 @@ namespace TorusEdison.Editor.Audio
             GetNotePanGains(notePan, out float leftGain, out float rightGain);
             noteBuffer[offset] += sample * leftGain;
             noteBuffer[offset + 1] += sample * rightGain;
+        }
+
+        private static void WriteStereoSample(float[] noteBuffer, int frameIndex, int rightDelayFrameCount, float leftSample, float rightSample, float notePan)
+        {
+            GetNotePanGains(notePan, out float leftGain, out float rightGain);
+            int leftOffset = frameIndex * 2;
+            if (leftOffset >= 0 && leftOffset < noteBuffer.Length)
+            {
+                noteBuffer[leftOffset] += leftSample * leftGain;
+            }
+
+            int rightFrameIndex = frameIndex + rightDelayFrameCount;
+            int rightOffset = (rightFrameIndex * 2) + 1;
+            if (rightOffset >= 0 && rightOffset < noteBuffer.Length)
+            {
+                noteBuffer[rightOffset] += rightSample * rightGain;
+            }
         }
 
         private static void ApplyDelay(float[] noteBuffer, int totalFrameCount, int channelCount, int delayFrameCount, float feedback, float mix)

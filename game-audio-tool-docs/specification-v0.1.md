@@ -415,6 +415,9 @@ MVPでは以下の順で処理する。
 - 範囲: `-1.0` (L) から `+1.0` (R)
 - 既定値: `0.0`
 - モノラル出力時はPanを無視する
+- Stereo の左右差は voice effect の任意フィールドで扱う。
+  `stereoDetuneSemitone` は左右の pitch 差、`stereoDelayMs` は右チャンネルの遅延を表す。
+  Mono 出力時はどちらも無視する。
 
 ### 12.4 Fade In / Fade Out
 
@@ -608,6 +611,8 @@ JSONのルートには必ず以下を含める。
       "volumeDb": 0.0,
       "pan": 0.0,
       "pitchSemitone": 0.0,
+      "stereoDetuneSemitone": 0.0,
+      "stereoDelayMs": 0,
       "fadeInMs": 0,
       "fadeOutMs": 0,
       "delay": { "enabled": false, "timeMs": 180, "feedback": 0.25, "mix": 0.2 }
@@ -637,6 +642,8 @@ JSONのルートには必ず以下を含める。
       "volumeDb": 0.0,
       "pan": 0.0,
       "pitchSemitone": 0.0,
+      "stereoDetuneSemitone": 0.0,
+      "stereoDelayMs": 0,
       "fadeInMs": 0,
       "fadeOutMs": 0,
       "delay": { "enabled": false, "timeMs": 180, "feedback": 0.25, "mix": 0.2 }

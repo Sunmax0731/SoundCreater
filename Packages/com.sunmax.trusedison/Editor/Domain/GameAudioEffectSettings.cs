@@ -8,6 +8,10 @@ namespace TorusEdison.Editor.Domain
 
         public float PitchSemitone { get; set; }
 
+        public float StereoDetuneSemitone { get; set; }
+
+        public int StereoDelayMs { get; set; }
+
         public int FadeInMs { get; set; }
 
         public int FadeOutMs { get; set; }

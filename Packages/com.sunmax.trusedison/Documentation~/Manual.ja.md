@@ -140,6 +140,7 @@
 - タイムライン下部ボタンからのトラック追加
 - Selection Inspector、またはノート未選択時の `Delete` / `Backspace` による選択トラック削除
 - Edit 画面の `Bars` 入力欄、`-` / `+` ボタン、Settings の `Total Bars` スライダー、またはタイムライン右端ドラッグによるプロジェクト長変更
+- stereo voice effect: `Stereo Detune` は左右の pitch を分け、`Stereo Delay` は右チャンネルを遅らせます。
 - 主要編集操作に対する Undo / Redo
 
 プロジェクトには少なくとも 1 トラックを残します。最後の 1 トラックは削除できません。選択トラックにノートが含まれる場合は、トラックとノートを削除する前に確認ダイアログが表示されます。トラック削除は Undo / Redo の対象です。
@@ -156,6 +157,7 @@ Bars を短くしても既存ノートは削除または移動されません。
 - White Noise
 - ADSR
 - Delay
+- Project Channel Mode が `Stereo` のときの stereo detune と右チャンネル stereo delay
 - トラック / プロジェクトの mixdown
 - プレビュー波形表示
 - `Render Preview / Play / Pause / Stop / Rewind / Loop`
@@ -173,6 +175,13 @@ Bars を短くしても既存ノートは削除または移動されません。
 - プロジェクト長と書き出し長を分離します。`Project Bars` はタイムライン長、`Seconds` は指定秒数、`Auto Trim` は最後のノート本体末尾で書き出します。
 - release / delay tail は、目標長を超えて含めるか、目標長で切るかを選べます。
 - Export Quality は、peak、source peak、目標長、実際の出力長、project length、tail length、normalize 状態、前回書き出しとの差分を表示します。
+
+Stereo の扱い:
+
+- `Track Pan` と voice `Pan` は従来通り左右の音量差を作る pan 設定です。
+- voice `Stereo Detune` は左右チャンネルで異なる pitch の音声内容を作ります。
+- voice `Stereo Delay` は左に対して右チャンネルを遅らせます。
+- Project Channel Mode が `Mono` の場合、stereo detune と stereo delay は無視され、単一の mono 信号としてレンダリングされます。
 
 ## 8-bit WAV 変換
 

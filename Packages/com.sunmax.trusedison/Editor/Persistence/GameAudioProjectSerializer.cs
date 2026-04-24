@@ -237,6 +237,8 @@ namespace TorusEdison.Editor.Persistence
                     volumeDb = GameAudioValidationUtility.ClampFloat(effect.VolumeDb, -48.0f, 6.0f),
                     pan = GameAudioValidationUtility.ClampFloat(effect.Pan, -1.0f, 1.0f),
                     pitchSemitone = GameAudioValidationUtility.ClampFloat(effect.PitchSemitone, -24.0f, 24.0f),
+                    stereoDetuneSemitone = GameAudioValidationUtility.ClampFloat(effect.StereoDetuneSemitone, 0.0f, 12.0f),
+                    stereoDelayMs = GameAudioValidationUtility.ClampInt(effect.StereoDelayMs, 0, 1000),
                     fadeInMs = GameAudioValidationUtility.ClampInt(effect.FadeInMs, 0, 3000),
                     fadeOutMs = GameAudioValidationUtility.ClampInt(effect.FadeOutMs, 0, 3000),
                     delay = new GameAudioDelayDto
@@ -419,6 +421,8 @@ namespace TorusEdison.Editor.Persistence
                 VolumeDb = dto == null ? 0.0f : ReadClamped(dto.volumeDb, -48.0f, 6.0f, 0.0f, warnings, $"{path}.volumeDb"),
                 Pan = dto == null ? 0.0f : ReadClamped(dto.pan, -1.0f, 1.0f, 0.0f, warnings, $"{path}.pan"),
                 PitchSemitone = dto == null ? 0.0f : ReadClamped(dto.pitchSemitone, -24.0f, 24.0f, 0.0f, warnings, $"{path}.pitchSemitone"),
+                StereoDetuneSemitone = dto == null ? 0.0f : ReadClamped(dto.stereoDetuneSemitone, 0.0f, 12.0f, 0.0f, warnings, $"{path}.stereoDetuneSemitone"),
+                StereoDelayMs = dto == null ? 0 : ReadClamped(dto.stereoDelayMs, 0, 1000, 0, warnings, $"{path}.stereoDelayMs"),
                 FadeInMs = dto == null ? 0 : ReadClamped(dto.fadeInMs, 0, 3000, 0, warnings, $"{path}.fadeInMs"),
                 FadeOutMs = dto == null ? 0 : ReadClamped(dto.fadeOutMs, 0, 3000, 0, warnings, $"{path}.fadeOutMs"),
                 Delay = FromDto(delayDto, warnings, $"{path}.delay")
@@ -672,6 +676,8 @@ namespace TorusEdison.Editor.Persistence
                 && (!Mathf.Approximately(dto.volumeDb, 0.0f)
                     || !Mathf.Approximately(dto.pan, 0.0f)
                     || !Mathf.Approximately(dto.pitchSemitone, 0.0f)
+                    || !Mathf.Approximately(dto.stereoDetuneSemitone, 0.0f)
+                    || dto.stereoDelayMs != 0
                     || dto.fadeInMs != 0
                     || dto.fadeOutMs != 0
                     || HasDelayPayload(dto.delay));

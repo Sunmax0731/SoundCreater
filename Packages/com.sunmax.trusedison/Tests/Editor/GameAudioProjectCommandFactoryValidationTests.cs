@@ -48,6 +48,8 @@ namespace TorusEdison.Editor.Tests
                             VolumeDb = 99.0f,
                             Pan = -5.0f,
                             PitchSemitone = 99.0f,
+                            StereoDetuneSemitone = 99.0f,
+                            StereoDelayMs = 9000,
                             FadeInMs = -1,
                             FadeOutMs = 99999,
                             Delay = new GameAudioDelaySettings
@@ -75,6 +77,8 @@ namespace TorusEdison.Editor.Tests
             Assert.That(note.VoiceOverride.Effect.VolumeDb, Is.EqualTo(6.0f));
             Assert.That(note.VoiceOverride.Effect.Pan, Is.EqualTo(-1.0f));
             Assert.That(note.VoiceOverride.Effect.PitchSemitone, Is.EqualTo(24.0f));
+            Assert.That(note.VoiceOverride.Effect.StereoDetuneSemitone, Is.EqualTo(12.0f));
+            Assert.That(note.VoiceOverride.Effect.StereoDelayMs, Is.EqualTo(1000));
             Assert.That(note.VoiceOverride.Effect.FadeInMs, Is.EqualTo(0));
             Assert.That(note.VoiceOverride.Effect.FadeOutMs, Is.EqualTo(3000));
             Assert.That(note.VoiceOverride.Effect.Delay.TimeMs, Is.EqualTo(20));

@@ -148,6 +148,8 @@ namespace TorusEdison.Editor.Persistence
             OptionalNumber(node, path, "volumeDb");
             OptionalNumber(node, path, "pan");
             OptionalNumber(node, path, "pitchSemitone");
+            OptionalNumber(node, path, "stereoDetuneSemitone");
+            OptionalNumber(node, path, "stereoDelayMs");
             OptionalNumber(node, path, "fadeInMs");
             OptionalNumber(node, path, "fadeOutMs");
             if (TryGetOptionalObject(node, path, "delay", out GameAudioJsonNode delay))

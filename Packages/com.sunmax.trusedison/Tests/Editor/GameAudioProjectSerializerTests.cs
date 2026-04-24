@@ -91,6 +91,21 @@ namespace TorusEdison.Editor.Tests
         }
 
         [Test]
+        public void SerializeAndDeserialize_RoundTripsStereoEffectSettings()
+        {
+            var serializer = new GameAudioProjectSerializer();
+            GameAudioProject project = GameAudioProjectFactory.CreateDefaultProject();
+            project.Tracks[0].DefaultVoice.Effect.StereoDetuneSemitone = 3.5f;
+            project.Tracks[0].DefaultVoice.Effect.StereoDelayMs = 45;
+
+            string json = serializer.Serialize(project);
+            GameAudioProjectLoadResult result = serializer.Deserialize(json);
+
+            Assert.That(result.Project.Tracks[0].DefaultVoice.Effect.StereoDetuneSemitone, Is.EqualTo(3.5f));
+            Assert.That(result.Project.Tracks[0].DefaultVoice.Effect.StereoDelayMs, Is.EqualTo(45));
+        }
+
+        [Test]
         public void Deserialize_RejectsUnsupportedFormatVersion()
         {
             const string json = @"{
@@ -236,10 +251,12 @@ namespace TorusEdison.Editor.Tests
           ""noiseType"": ""Invalid"",
           ""noiseMix"": 2.0,
           ""adsr"": { ""attackMs"": -1, ""decayMs"": 9000, ""sustain"": 2.0, ""releaseMs"": -5 },
-          ""effect"": {
+            ""effect"": {
             ""volumeDb"": 9.0,
             ""pan"": -3.0,
             ""pitchSemitone"": 40.0,
+            ""stereoDetuneSemitone"": 99.0,
+            ""stereoDelayMs"": 9000,
             ""fadeInMs"": 4000,
             ""fadeOutMs"": -3,
             ""delay"": { ""enabled"": true, ""timeMs"": 2, ""feedback"": 5.0, ""mix"": -1.0 }
@@ -265,6 +282,8 @@ namespace TorusEdison.Editor.Tests
             Assert.That(result.Project.MasterGainDb, Is.EqualTo(6.0f));
             Assert.That(result.Project.Tracks[0].VolumeDb, Is.EqualTo(-48.0f));
             Assert.That(result.Project.Tracks[0].Pan, Is.EqualTo(1.0f));
+            Assert.That(result.Project.Tracks[0].DefaultVoice.Effect.StereoDetuneSemitone, Is.EqualTo(12.0f));
+            Assert.That(result.Project.Tracks[0].DefaultVoice.Effect.StereoDelayMs, Is.EqualTo(1000));
             Assert.That(result.Project.Tracks[0].Notes[0].Id, Is.EqualTo("note-a"));
             Assert.That(result.Project.Tracks[0].Notes[1].DurationBeat, Is.EqualTo(0.0625f));
             Assert.That(result.Warnings.Count, Is.GreaterThan(0));

@@ -168,6 +168,8 @@ namespace TorusEdison.Editor.Presets
                     VolumeDb = voice.Effect?.VolumeDb ?? 0.0f,
                     Pan = voice.Effect?.Pan ?? 0.0f,
                     PitchSemitone = voice.Effect?.PitchSemitone ?? 0.0f,
+                    StereoDetuneSemitone = voice.Effect?.StereoDetuneSemitone ?? 0.0f,
+                    StereoDelayMs = voice.Effect?.StereoDelayMs ?? 0,
                     FadeInMs = voice.Effect?.FadeInMs ?? 0,
                     FadeOutMs = voice.Effect?.FadeOutMs ?? 0,
                     Delay = new GameAudioDelaySettings
@@ -251,6 +253,8 @@ namespace TorusEdison.Editor.Presets
                         VolumeDb = volumeDb,
                         Pan = pan,
                         PitchSemitone = pitchSemitone,
+                        StereoDetuneSemitone = 0.0f,
+                        StereoDelayMs = 0,
                         FadeInMs = 0,
                         FadeOutMs = fadeOutMs,
                         Delay = new GameAudioDelaySettings

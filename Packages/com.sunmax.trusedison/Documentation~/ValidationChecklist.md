@@ -32,6 +32,7 @@ Current automated coverage in this package includes:
 - diagnostic logger tests under `Tests/Editor/GameAudioDiagnosticLoggerTests.cs`
 - acceptance-scenario tests under `Tests/Editor/GameAudioAcceptanceScenarioTests.cs`
 - export length coverage for explicit seconds, auto trim, and tail include/cut behavior
+- stereo spread coverage for left/right channel differences and mono output behavior
 
 JSON compatibility coverage must include:
 
@@ -185,14 +186,17 @@ Expected:
 2. Select a track and change volume or pan
 3. Change project BPM or Total Bars
 4. Re-render preview and confirm the change is reflected
-5. Apply a built-in voice preset to a selected note and confirm Undo / Redo restores the previous voice state
-6. Apply a built-in voice preset to a selected track default voice and confirm Undo / Redo restores the previous default voice
+5. In a stereo project, set voice `Stereo Detune` and `Stereo Delay`, render preview, and confirm the left/right channels differ
+6. Switch the project to Mono, render again, and confirm stereo spread controls no longer create left/right output differences
+7. Apply a built-in voice preset to a selected note and confirm Undo / Redo restores the previous voice state
+8. Apply a built-in voice preset to a selected track default voice and confirm Undo / Redo restores the previous default voice
 
 Expected:
 
 - inspector values update the active selection
 - changes affect playback after render
 - invalid values are clamped safely
+- `Stereo Detune` and `Stereo Delay` affect stereo output but are ignored for mono rendering
 - voice preset application behaves as one undoable command
 
 ### 6. WAV Export
@@ -219,6 +223,8 @@ Expected:
 - `Project Bars` remains the default for existing projects
 - short sound effects can export shorter than the project Bars value
 - release and delay tails are either included or cut according to the toggle
+- stereo left/right differences heard in preview are preserved in exported stereo WAV files
+- mono exports render a single mono signal without stereo spread offset
 - quality warnings make silent, low peak, and clipping-risk exports visible before distribution
 - normalize remains an export option and does not alter the project or Undo history
 

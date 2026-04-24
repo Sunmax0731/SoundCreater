@@ -80,6 +80,8 @@ namespace TorusEdison.Editor.Application
                 VolumeDb = 0.0f,
                 Pan = 0.0f,
                 PitchSemitone = 0.0f,
+                StereoDetuneSemitone = 0.0f,
+                StereoDelayMs = 0,
                 FadeInMs = 0,
                 FadeOutMs = 0,
                 Delay = CreateDefaultDelay()
