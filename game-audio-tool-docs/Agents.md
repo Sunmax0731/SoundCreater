@@ -1,6 +1,7 @@
 # Agents.md
 ## Additional Session Learnings
 
+- WAV export quality UI should show source/output peak, project/output/tail length, warning state, normalize gain, and previous-export delta. Normalize is an export-only option and must not touch project state or Undo history.
 - Project JSON schema validation should require only structural fields that cannot be migrated safely (`formatVersion`, `project`, `project.name`). Same-major `1.x` optional fields should be type-checked when present, then allowed to fall through to serializer defaults and warnings when missing.
 
 - `Torus Edison` では localization と diagnostic logging が基盤機能になった。新しい表示文言は `GameAudioLocalization`、新しい診断ログは `GameAudioDiagnosticLogger` を通す。

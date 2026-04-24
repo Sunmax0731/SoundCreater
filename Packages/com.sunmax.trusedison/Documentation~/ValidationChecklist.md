@@ -190,6 +190,10 @@ Expected:
 3. Export `Simple Loop`
 4. Confirm both files are written
 5. If exporting under `Assets/`, confirm the file appears in the Project window
+6. Confirm Export Quality shows peak, project duration, output duration, and tail duration
+7. Confirm a no-note or muted project shows a silent-buffer warning
+8. Confirm an over-gained project shows clipping risk when Normalize Export is off
+9. Enable Normalize Export with headroom and confirm the quality line reports normalize gain and a lower output peak
 
 Expected:
 
@@ -197,6 +201,8 @@ Expected:
 - exported files are valid `.wav`
 - exported files are non-empty
 - `Assets/` export refresh behavior is correct
+- quality warnings make silent, low peak, and clipping-risk exports visible before distribution
+- normalize remains an export option and does not alter the project or Undo history
 
 ### 7. Localization And Diagnostics
 

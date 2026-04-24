@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Text;
 using NUnit.Framework;
@@ -228,6 +229,107 @@ namespace TorusEdison.Editor.Tests
                     Directory.Delete(root, true);
                 }
             }
+        }
+
+        [Test]
+        public void ExportWithResult_ReportsQualityForSilentProject()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "TorusEdisonTests", Path.GetRandomFileName());
+
+            try
+            {
+                GameAudioProject project = GameAudioProjectFactory.CreateDefaultProject();
+                var service = new GameAudioWavExportService();
+
+                GameAudioWavExportResult result = service.ExportWithResult(project, root, "Silent");
+
+                Assert.That(File.Exists(result.WaveFilePath), Is.True);
+                Assert.That(result.QualityReport.IsSilent, Is.True);
+                Assert.That(result.QualityReport.OutputDurationSeconds, Is.GreaterThan(0.0d));
+                Assert.That(result.QualityReport.TailDurationSeconds, Is.EqualTo(0.0d).Within(0.001d));
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                {
+                    Directory.Delete(root, true);
+                }
+            }
+        }
+
+        [Test]
+        public void ExportWithResult_FlagsClippingRiskWhenNormalizeIsOff()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "TorusEdisonTests", Path.GetRandomFileName());
+
+            try
+            {
+                GameAudioProject project = CreateLoudExportProject();
+                var service = new GameAudioWavExportService();
+
+                GameAudioWavExportResult result = service.ExportWithResult(project, root, "Loud");
+
+                Assert.That(result.QualityReport.SourceExceededFullScale, Is.True);
+                Assert.That(result.QualityReport.HasClippingRisk, Is.True);
+                Assert.That(result.QualityReport.NormalizeApplied, Is.False);
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                {
+                    Directory.Delete(root, true);
+                }
+            }
+        }
+
+        [Test]
+        public void ExportWithResult_NormalizesPeakToHeadroom()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "TorusEdisonTests", Path.GetRandomFileName());
+
+            try
+            {
+                GameAudioProject project = CreateLoudExportProject();
+                var service = new GameAudioWavExportService();
+
+                GameAudioWavExportResult result = service.ExportWithResult(
+                    project,
+                    root,
+                    "Normalized",
+                    new GameAudioWavExportOptions
+                    {
+                        Normalize = true,
+                        HeadroomDb = -6.0f
+                    });
+
+                float expectedPeak = (float)Math.Pow(10.0d, -6.0d / 20.0d);
+                Assert.That(result.QualityReport.NormalizeApplied, Is.True);
+                Assert.That(result.QualityReport.HasClippingRisk, Is.False);
+                Assert.That(result.QualityReport.OutputPeakAmplitude, Is.EqualTo(expectedPeak).Within(0.001f));
+                Assert.That(result.QualityReport.NormalizeGainDb, Is.LessThan(0.0f));
+            }
+            finally
+            {
+                if (Directory.Exists(root))
+                {
+                    Directory.Delete(root, true);
+                }
+            }
+        }
+
+        private static GameAudioProject CreateLoudExportProject()
+        {
+            GameAudioProject project = GameAudioProjectFactory.CreateDefaultProject();
+            project.MasterGainDb = 6.0f;
+            project.Tracks[0].Notes.Add(new GameAudioNote
+            {
+                Id = "note-loud",
+                StartBeat = 0.0f,
+                DurationBeat = 1.0f,
+                MidiNote = 72,
+                Velocity = 1.0f
+            });
+            return project;
         }
     }
 }

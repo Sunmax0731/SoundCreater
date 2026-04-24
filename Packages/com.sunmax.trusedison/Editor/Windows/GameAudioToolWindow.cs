@@ -52,6 +52,10 @@ namespace TorusEdison.Editor.Windows
         private bool _isDirty;
         private List<string> _loadWarnings = new List<string>();
         private string _lastExportedPath = string.Empty;
+        private GameAudioExportQualityReport _lastExportQualityReport;
+        private string _lastExportComparisonText = string.Empty;
+        private bool _normalizeExport;
+        private float _exportNormalizeHeadroomDb = -1.0f;
         private string _lastConverted8BitPath = string.Empty;
         private string _lastConverted8BitProjectPath = string.Empty;
         private IVisualElementScheduledItem _previewTicker;
@@ -85,6 +89,10 @@ namespace TorusEdison.Editor.Windows
         private Label _exportResolvedPathValue;
         private Label _exportFileNameValue;
         private Label _exportLastResultValue;
+        private Label _exportQualityValue;
+        private HelpBox _exportQualityHelpBox;
+        private Toggle _normalizeExportToggle;
+        private FloatField _exportNormalizeHeadroomField;
         private ObjectField _conversionSourceClipField;
         private TextField _conversionOutputNameField;
         private PopupField<int> _conversionSampleRateField;
@@ -481,6 +489,26 @@ namespace TorusEdison.Editor.Windows
             _exportResolvedPathValue = AddKeyValue(panel, T("export.resolvedFolder", "Resolved Folder"));
             _exportFileNameValue = AddKeyValue(panel, T("export.exportFile", "Export File"));
             _exportLastResultValue = AddKeyValue(panel, T("export.lastExport", "Last Export"));
+            _exportQualityValue = AddKeyValue(panel, T("export.quality", "Export Quality"));
+            _exportQualityHelpBox = new HelpBox(string.Empty, HelpBoxMessageType.Warning)
+            {
+                style =
+                {
+                    display = DisplayStyle.None
+                }
+            };
+            panel.Add(_exportQualityHelpBox);
+
+            _normalizeExportToggle = new Toggle();
+            _normalizeExportToggle.RegisterValueChangedCallback(OnNormalizeExportChanged);
+            panel.Add(CreateInspectorRow(T("export.normalize", "Normalize Export"), _normalizeExportToggle));
+
+            _exportNormalizeHeadroomField = new FloatField
+            {
+                isDelayed = true
+            };
+            _exportNormalizeHeadroomField.RegisterValueChangedCallback(OnExportNormalizeHeadroomChanged);
+            panel.Add(CreateInspectorRow(T("export.normalizeHeadroom", "Normalize Headroom dB"), _exportNormalizeHeadroomField));
 
             _commonExportDirectoryField = new TextField
             {
@@ -2478,6 +2506,25 @@ namespace TorusEdison.Editor.Windows
             }
         }
 
+        private void OnNormalizeExportChanged(ChangeEvent<bool> evt)
+        {
+            _normalizeExport = evt.newValue;
+            RefreshView();
+        }
+
+        private void OnExportNormalizeHeadroomChanged(ChangeEvent<float> evt)
+        {
+            if (!IsFinite(evt.newValue))
+            {
+                ShowInvalidNumberMessage(T("export.normalizeHeadroom", "Normalize Headroom dB"));
+                RefreshView();
+                return;
+            }
+
+            _exportNormalizeHeadroomDb = GameAudioValidationUtility.ClampFloat(evt.newValue, -12.0f, 0.0f);
+            RefreshView();
+        }
+
         private void OnConversionSourceClipChanged(ChangeEvent<UnityEngine.Object> evt)
         {
             _conversionSourceClip = evt.newValue as AudioClip;
@@ -2532,8 +2579,20 @@ namespace TorusEdison.Editor.Windows
             try
             {
                 string exportDirectory = GetResolvedExportDirectory();
-                string exportPath = _wavExportService.Export(project, exportDirectory, project.Name);
+                GameAudioExportQualityReport previousQualityReport = _lastExportQualityReport;
+                GameAudioWavExportResult exportResult = _wavExportService.ExportWithResult(
+                    project,
+                    exportDirectory,
+                    project.Name,
+                    new GameAudioWavExportOptions
+                    {
+                        Normalize = _normalizeExport,
+                        HeadroomDb = _exportNormalizeHeadroomDb
+                    });
+                string exportPath = exportResult.WaveFilePath;
                 _lastExportedPath = exportPath;
+                _lastExportQualityReport = exportResult.QualityReport;
+                _lastExportComparisonText = BuildExportComparisonText(previousQualityReport, exportResult.QualityReport);
 
                 bool shouldRefresh = (_projectConfig?.AutoRefreshAfterExport ?? true)
                     && GameAudioExportUtility.ShouldRefreshAssetDatabase(exportPath, GetProjectRootPath());
@@ -2542,7 +2601,9 @@ namespace TorusEdison.Editor.Windows
                     AssetDatabase.Refresh();
                 }
 
-                GameAudioDiagnosticLogger.Info("Export", $"Exported WAV to {exportPath}. AutoRefresh={shouldRefresh}.");
+                GameAudioDiagnosticLogger.Info(
+                    "Export",
+                    $"Exported WAV to {exportPath}. AutoRefresh={shouldRefresh}. Peak={exportResult.QualityReport.OutputPeakAmplitude:0.000}; Duration={exportResult.QualityReport.OutputDurationSeconds:0.00}s; Tail={exportResult.QualityReport.TailDurationSeconds:0.00}s; Normalize={exportResult.QualityReport.NormalizeApplied}.");
                 ShowNotification(new GUIContent(shouldRefresh
                     ? T("status.wavExportedAndRefreshed", "WAV exported and assets refreshed.")
                     : T("status.wavExported", "WAV exported.")));
@@ -3801,6 +3862,18 @@ namespace TorusEdison.Editor.Windows
             _exportResolvedPathValue.text = GetResolvedExportDirectory();
             _exportFileNameValue.text = GameAudioExportUtility.NormalizeWaveFileName(project.Name);
             _exportLastResultValue.text = string.IsNullOrWhiteSpace(_lastExportedPath) ? T("status.notExported", "(not exported)") : _lastExportedPath;
+            _exportQualityValue.text = BuildExportQualityText(_lastExportQualityReport);
+            _normalizeExportToggle?.SetValueWithoutNotify(_normalizeExport);
+            _exportNormalizeHeadroomField?.SetValueWithoutNotify(_exportNormalizeHeadroomDb);
+            string exportQualityWarningText = BuildExportQualityWarningText(_lastExportQualityReport);
+            if (_exportQualityHelpBox != null)
+            {
+                _exportQualityHelpBox.text = exportQualityWarningText;
+                _exportQualityHelpBox.style.display = string.IsNullOrWhiteSpace(exportQualityWarningText)
+                    ? DisplayStyle.None
+                    : DisplayStyle.Flex;
+            }
+
             _conversionSourceClipField?.SetValueWithoutNotify(_conversionSourceClip);
             _conversionOutputNameField?.SetValueWithoutNotify(_conversionOutputName);
             _conversionSampleRateField?.SetValueWithoutNotify(_conversionTargetSampleRate);
@@ -4098,6 +4171,81 @@ namespace TorusEdison.Editor.Windows
             }
 
             return TF("status.previewCursorTail", "{0} / tail +{1:0.00}s", cursorText, cursorState.TailSeconds);
+        }
+
+        private string BuildExportQualityText(GameAudioExportQualityReport report)
+        {
+            if (report == null)
+            {
+                return T("status.notExported", "(not exported)");
+            }
+
+            string channelLabel = report.ChannelCount == 1
+                ? T("audio.mono", "Mono")
+                : T("audio.stereo", "Stereo");
+            string normalizeText = report.NormalizeEnabled
+                ? report.NormalizeApplied
+                    ? TF("export.quality.normalizeApplied", "normalize {0:+0.00;-0.00;0.00} dB", report.NormalizeGainDb)
+                    : T("export.quality.normalizeSkipped", "normalize skipped")
+                : T("export.quality.normalizeOff", "normalize off");
+            string comparisonText = string.IsNullOrWhiteSpace(_lastExportComparisonText)
+                ? string.Empty
+                : $" / {_lastExportComparisonText}";
+            return TF(
+                "export.quality.summary",
+                "{0} Hz / {1} / peak {2:0.000} (source {3:0.000}) / project {4:0.00}s / output {5:0.00}s / tail +{6:0.00}s / {7}{8}",
+                report.SampleRate,
+                channelLabel,
+                report.OutputPeakAmplitude,
+                report.SourcePeakAmplitude,
+                report.ProjectDurationSeconds,
+                report.OutputDurationSeconds,
+                report.TailDurationSeconds,
+                normalizeText,
+                comparisonText);
+        }
+
+        private string BuildExportQualityWarningText(GameAudioExportQualityReport report)
+        {
+            if (report == null)
+            {
+                return string.Empty;
+            }
+
+            var messages = new List<string>();
+            if (report.IsSilent)
+            {
+                messages.Add(T("export.quality.warningSilent", "Silent buffer: exported samples are effectively silent."));
+            }
+            else if (report.IsVeryLowPeak)
+            {
+                messages.Add(T("export.quality.warningLowPeak", "Very low peak: exported audio may be too quiet for distribution."));
+            }
+
+            if (report.HasClippingRisk)
+            {
+                messages.Add(T("export.quality.warningClip", "Clipping risk: output peak is at or above full scale."));
+            }
+            else if (report.SourceExceededFullScale && report.NormalizeApplied)
+            {
+                messages.Add(T("export.quality.warningNormalizedClip", "Source peak exceeded full scale; normalization reduced the exported output."));
+            }
+
+            return string.Join("\n", messages);
+        }
+
+        private string BuildExportComparisonText(GameAudioExportQualityReport previous, GameAudioExportQualityReport current)
+        {
+            if (previous == null || current == null)
+            {
+                return T("export.quality.firstExport", "first export this session");
+            }
+
+            return TF(
+                "export.quality.compare",
+                "delta peak {0:+0.000;-0.000;0.000}, delta duration {1:+0.00;-0.00;0.00}s",
+                current.OutputPeakAmplitude - previous.OutputPeakAmplitude,
+                current.OutputDurationSeconds - previous.OutputDurationSeconds);
         }
 
         private string LocalizePreviewStatus(string statusText)

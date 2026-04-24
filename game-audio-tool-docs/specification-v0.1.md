@@ -1031,3 +1031,11 @@ MVP実装時点で以下の拡張余地を残す。
 - Known fields are type-checked when present. A known field with the wrong JSON type is rejected because the loader cannot distinguish user intent safely.
 - Missing optional known fields are migrated by domain defaults. This includes `toolVersion`, project audio defaults such as `masterGainDb` / `loopPlayback`, `defaultVoice`, optional `voiceOverride` subfields, and effect `delay`.
 - Fallbacks that can change audible or editor behavior should produce load warnings and be covered by compatibility tests.
+
+## Appendix: Export Quality Policy
+
+- WAV export reports source peak, output peak, sample rate, channel count, project duration, output duration, and tail duration after every export.
+- Silent, very low peak, and clipping-risk output must be visible as warnings in the Export page.
+- Normalize is disabled by default and is treated as an export-only option. It must not change project data or Undo / Redo state.
+- Normalize applies gain toward the selected headroom after render and before WAV encoding.
+- Export comparison is session-local and compares the current export quality values with the previous export result.

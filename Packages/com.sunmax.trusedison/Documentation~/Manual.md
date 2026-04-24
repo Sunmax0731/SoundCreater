@@ -156,6 +156,9 @@ Current WAV export behavior:
 - sanitizes file names
 - creates export folders if needed
 - refreshes `AssetDatabase` when exporting under `Assets/`
+- reports export quality after each export: output peak, source peak, project length, output length, tail length, normalize status, and the delta from the previous export in the session
+- warns when the rendered buffer is silent, very quiet, or at clipping risk
+- can optionally normalize the exported WAV with a configurable headroom value; this is an export-only option and does not modify the project or Undo history
 
 ## 8-bit WAV Conversion
 

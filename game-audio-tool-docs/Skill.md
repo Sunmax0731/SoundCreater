@@ -1,6 +1,7 @@
 # Skill.md
 ## Session Learnings
 
+- Export quality work should keep `GameAudioProjectRenderer` focused on rendering and add export-only quality / normalize behavior in `GameAudioWavExportService` or adjacent export types. Normalize must not be serialized into `.gats.json` or participate in Undo.
 - For `.gats.json` compatibility, keep `formatVersion`, `project`, and `project.name` as hard schema requirements. Optional same-major fields should be type-checked when present and migrated through serializer defaults/warnings when missing.
 
 - 新しい表示文言は `GameAudioLocalization` 経由で管理し、`GameAudioToolWindow` に日英中の文言を直書きしない。
