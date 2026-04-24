@@ -17,10 +17,14 @@
 - 音声プロジェクトの新規作成 / 保存 / 読み込み
 - `.gats.json` 形式でのセッション管理
 - タイムライン上でのノート作成、移動、長さ変更、複製、削除
+- grid division の直接選択と `Grid` ボタンによる段階切り替え
 - タイムライン下部からのトラック追加
 - Edit 画面でのプレビュー生成、再生、波形確認
 - note / track / project の Inspector 編集
+- Stereo project 向けの `Stereo Detune` / `Stereo Delay`
 - 16-bit WAV 書き出し
+- `Project Bars` / `Seconds` / `Auto Trim` の書き出し長モード
+- release / delay tail の include/cut と Export Quality 表示
 - Unity に取り込んだ `AudioClip` の 8-bit WAV 変換
 - 変換した WAV と同じフォルダへの変換用 `.gats.json` 自動生成
 - 日本語 / 英語 / 中国語 UI

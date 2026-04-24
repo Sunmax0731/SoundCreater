@@ -548,7 +548,7 @@ JSONのルートには必ず以下を含める。
 ```json
 {
   "formatVersion": "1.0.0",
-  "toolVersion": "0.2.0",
+  "toolVersion": "0.3.0",
   "project": {}
 }
 ```
@@ -574,7 +574,7 @@ JSONのルートには必ず以下を含める。
 ```json
 {
   "formatVersion": "1.0.0",
-  "toolVersion": "0.2.0",
+  "toolVersion": "0.3.0",
   "project": {
     "id": "proj-001",
     "name": "Sample Loop",
@@ -944,7 +944,7 @@ MVP実装時点で以下の拡張余地を残す。
 ```json
 {
   "formatVersion": "1.0.0",
-  "toolVersion": "0.2.0",
+  "toolVersion": "0.3.0",
   "project": {
     "id": "proj-sample-001",
     "name": "SimpleLoop",

@@ -23,10 +23,14 @@ GitHub 上のリポジトリ名は `SoundCreater` ですが、BOOTH や配布物
 - 起動ガイドと前回プロジェクト復元
 - Edit 画面でのプレビュー生成、再生、波形確認
 - タイムライン上でのノート作成、移動、長さ変更、複製、削除
+- タイムラインの grid division 直接選択と `Grid` ボタンによる段階切り替え
 - タイムライン下部の `+ Add Track` ボタンによるトラック追加
 - Edit 画面と Settings 画面からの `Total Bars` 変更
 - note / track / project 単位の Inspector 編集
+- Stereo project 向けの `Stereo Detune` / `Stereo Delay` による左右チャンネル差分
 - 16-bit PCM WAV 書き出し
+- `Project Bars` / `Seconds` / `Auto Trim` の書き出し長モード
+- release / delay tail の include/cut と Export Quality 表示
 - Unity に取り込んだ `AudioClip` の 8-bit WAV 変換
 - 変換した WAV と同じフォルダへの変換用 `.gats.json` 自動生成
 - `Tools/Torus Edison/Version & License` から開けるバージョン / ライセンス画面

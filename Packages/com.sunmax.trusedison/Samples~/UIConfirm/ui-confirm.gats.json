@@ -1,6 +1,6 @@
 {
   "formatVersion": "1.0.0",
-  "toolVersion": "0.2.0",
+  "toolVersion": "0.3.0",
   "project": {
     "id": "proj-ui-confirm",
     "name": "UIConfirm",

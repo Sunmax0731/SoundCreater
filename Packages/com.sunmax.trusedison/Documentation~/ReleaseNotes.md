@@ -1,5 +1,28 @@
 # Release Notes
 
+## 0.3.0
+
+`Torus Edison` の書き出し制御、Stereo 音作り、タイムライン編集を強化する release です。
+
+主な更新:
+
+- Export 画面に書き出し長モード `Project Bars` / `Seconds` / `Auto Trim` を追加
+- release / delay tail を目標長に含めるか、目標長で切るかを選べるように改善
+- 書き出し後に peak、目標長、出力長、project length、tail length、normalize 状態などの Export Quality を表示
+- voice effect に `Stereo Detune` と `Stereo Delay` を追加し、Stereo project で左右チャンネルに異なる音を配置できるように改善
+- timeline toolbar に grid division の直接選択 UI を追加し、`1/4`, `1/8`, `1/16`, `1/32`, `1/64` を選べるように改善
+- 選択中の grid division を note snap、grid drawing、duplicate offset、common config の `defaultGridDivision` と同期
+- README、日英マニュアル、ValidationChecklist、release 文面、BOOTH 商品紹介文を 0.3.0 の機能状態に合わせて更新
+
+検証:
+
+- Unity `6000.4.0f1` / Windows で EditMode tests を実行し、`Total=117 Passed=117 Failed=0 Skipped=0` を確認
+
+既知の制限:
+
+- Unity Editor 上での手動 ValidationChecklist 確認は release 前チェックとして継続して実施してください
+- MP3 書き出し、オンライン連携、人声生成は対象外です
+
 ## 0.2.0
 
 `Torus Edison` の主要な編集導線と配布文書を整理した release です。

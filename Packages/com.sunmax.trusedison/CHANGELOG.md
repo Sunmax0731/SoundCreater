@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- added export duration controls for project length, fixed seconds, and auto-trim workflows
+- added export tail include/cut behavior and export quality reporting for target length, output length, tail length, and normalization state
+- added stereo voice spread controls with left/right detune and right-channel delay for stereo projects
+- added direct grid division selection in the timeline toolbar, synchronized with snap, grid drawing, duplicate offset, and `defaultGridDivision`
+- refreshed README, manuals, release notes, release helper text, BOOTH-facing copy, and validation checklist for the current release scope
+
 ## 0.2.0
 
 - integrated preview controls and waveform confirmation into the Edit page
