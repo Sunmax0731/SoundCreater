@@ -1171,6 +1171,10 @@ namespace TorusEdison.Editor.Windows
         {
             parent.Add(CreateInspectorSummaryLabel(TF("inspector.track.summary", "Editing {0}. Notes: {1}.", track.Name, track.Notes.Count)));
 
+            Button deleteTrackButton = CreateCompactActionButton(T("inspector.track.delete", "Delete Track"), DeleteSelectedTrack);
+            deleteTrackButton.SetEnabled(CurrentProject?.Tracks?.Count > 1);
+            parent.Add(CreateInspectorRow(T("inspector.track.actions", "Track Actions"), deleteTrackButton));
+
             AddInspectorTextField(parent, T("inspector.track.name", "Track Name"), track.Name, requested =>
             {
                 if (string.Equals(track.Name, requested, StringComparison.Ordinal))
@@ -2889,7 +2893,7 @@ namespace TorusEdison.Editor.Windows
         {
             GameAudioTimelineHelpWindow.Open(
                 _displayLanguage,
-                TF("status.timelineHint", "Grid {0} | Selected {1} note(s) | Drag empty lane to create | Drag note to move | Drag edge to resize | + Add Track in the footer | Ctrl+D duplicate | Delete remove | Ctrl+Z / Ctrl+Y undo redo", _currentGridDivision, _selectedNoteIds.Count));
+                TF("status.timelineHint", "Grid {0} | Selected {1} note(s) | Drag empty lane to create | Drag note to move | Drag edge to resize | + Add Track in the footer | Ctrl+D duplicate | Delete removes selected notes or selected track | Ctrl+Z / Ctrl+Y undo redo", _currentGridDivision, _selectedNoteIds.Count));
         }
 
         private void DuplicateSelectedNotes()
@@ -2929,6 +2933,55 @@ namespace TorusEdison.Editor.Windows
             catch (Exception exception)
             {
                 ShowEditorException(exception, "Edit", "Deleting notes failed");
+            }
+        }
+
+        private void DeleteSelectedTrack()
+        {
+            if (CurrentProject?.Tracks == null || string.IsNullOrWhiteSpace(_selectedTrackId))
+            {
+                return;
+            }
+
+            GameAudioTrack track = FindTrackById(CurrentProject, _selectedTrackId);
+            if (track == null)
+            {
+                return;
+            }
+
+            if (CurrentProject.Tracks.Count <= 1)
+            {
+                ShowNotification(new GUIContent(T("status.trackDeleteNeedsOneTrack", "At least one track must remain.")));
+                return;
+            }
+
+            int noteCount = track.Notes?.Count ?? 0;
+            if (noteCount > 0
+                && !EditorUtility.DisplayDialog(
+                    T("dialog.deleteTrack.title", "Delete Track"),
+                    TF("dialog.deleteTrack.message", "Delete \"{0}\" and its {1} note(s)? This can be undone with Undo.", track.Name, noteCount),
+                    T("dialog.deleteTrack.confirm", "Delete Track"),
+                    T("dialog.cancel", "Cancel")))
+            {
+                return;
+            }
+
+            try
+            {
+                int trackIndex = CurrentProject.Tracks.FindIndex(candidate => string.Equals(candidate.Id, track.Id, StringComparison.Ordinal));
+                string nextTrackId = ResolveTrackSelectionAfterDeletion(CurrentProject, trackIndex);
+                ApplyEditorCommand(
+                    GameAudioProjectCommandFactory.RemoveTrack(CurrentProject, track.Id),
+                    true,
+                    () =>
+                    {
+                        _selectedTrackId = nextTrackId;
+                        _selectedNoteIds.Clear();
+                    });
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception, "Edit", "Deleting track failed");
             }
         }
 
@@ -3805,10 +3858,28 @@ namespace TorusEdison.Editor.Windows
                 StringComparer.Ordinal);
 
             _selectedNoteIds.RemoveWhere(noteId => !existingIds.Contains(noteId));
-            if (string.IsNullOrWhiteSpace(_selectedTrackId) && CurrentProject.Tracks.Count > 0)
+            bool selectedTrackExists = CurrentProject.Tracks.Any(track => string.Equals(track.Id, _selectedTrackId, StringComparison.Ordinal));
+            if (!selectedTrackExists && CurrentProject.Tracks.Count > 0)
             {
                 _selectedTrackId = CurrentProject.Tracks[0].Id;
             }
+            else if (CurrentProject.Tracks.Count == 0)
+            {
+                _selectedTrackId = string.Empty;
+            }
+        }
+
+        private static string ResolveTrackSelectionAfterDeletion(GameAudioProject project, int deletedTrackIndex)
+        {
+            if (project?.Tracks == null || project.Tracks.Count <= 1 || deletedTrackIndex < 0)
+            {
+                return string.Empty;
+            }
+
+            int nextIndex = deletedTrackIndex < project.Tracks.Count - 1
+                ? deletedTrackIndex + 1
+                : deletedTrackIndex - 1;
+            return project.Tracks[Mathf.Clamp(nextIndex, 0, project.Tracks.Count - 1)].Id;
         }
 
         private static void EnsureSampleProjects()
@@ -4114,6 +4185,12 @@ namespace TorusEdison.Editor.Windows
                     DeleteSelectedNotes();
                     ConsumeShortcutEvent(evt);
                 }
+                else if (!string.IsNullOrWhiteSpace(_selectedTrackId))
+                {
+                    DeleteSelectedTrack();
+                    ConsumeShortcutEvent(evt);
+                }
+
                 return;
             }
 

@@ -146,13 +146,17 @@ Keyboard shortcut check:
 3. Move the note
 4. Resize the note
 5. Add a track with `+ Add Track`
-6. Duplicate the note with `Ctrl+D`
-7. Delete one note
-8. Undo and redo the changes
+6. Select the new track header and delete the empty track from the Selection Inspector
+7. Add another track, create a note on it, then delete the selected track and confirm the warning dialog
+8. Duplicate the note with `Ctrl+D`
+9. Delete one note
+10. Undo and redo the changes
 
 Expected:
 
-- note creation, move, resize, duplicate, delete, and track add all work
+- note creation, move, resize, duplicate, delete, track add, and track delete all work
+- deleting the final remaining track is disabled or rejected
+- deleting a track with notes asks for confirmation before the project changes
 - selection state remains consistent
 - undo / redo returns the project to the expected state
 

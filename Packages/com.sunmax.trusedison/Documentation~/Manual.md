@@ -131,8 +131,11 @@ Current editing support includes:
 - multi-selection aware note changes
 - inspector-driven edits for pitch, velocity, and related values
 - track creation from the timeline footer
+- selected-track deletion from the Selection Inspector, or with `Delete` / `Backspace` when no notes are selected
 - project length edits from the Edit page `Bars` field
 - undo and redo for major edit operations
+
+At least one track remains in every project. The delete action is disabled for the final track. When the selected track contains notes, Torus Edison asks for confirmation before deleting the track and its notes. Track deletion is an undoable edit.
 
 ## Preview Playback
 

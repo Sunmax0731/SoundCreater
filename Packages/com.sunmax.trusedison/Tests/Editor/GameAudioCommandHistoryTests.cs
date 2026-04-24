@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using TorusEdison.Editor.Application;
 using TorusEdison.Editor.Domain;
@@ -192,6 +193,18 @@ namespace TorusEdison.Editor.Tests
             Assert.That(session.Undo(), Is.True);
             Assert.That(session.CurrentProject.Tracks.Count, Is.EqualTo(2));
             Assert.That(session.CurrentProject.Tracks[1].Id, Is.EqualTo(secondTrackId));
+        }
+
+        [Test]
+        public void Session_RemoveTrack_RejectsLastTrack()
+        {
+            var session = new GameAudioEditorSession(GameAudioProjectFactory.CreateDefaultProject());
+            string onlyTrackId = session.CurrentProject.Tracks[0].Id;
+
+            Assert.Throws<InvalidOperationException>(() =>
+                session.Execute(GameAudioProjectCommandFactory.RemoveTrack(session.CurrentProject, onlyTrackId)));
+            Assert.That(session.CurrentProject.Tracks.Count, Is.EqualTo(1));
+            Assert.That(session.CurrentProject.Tracks[0].Id, Is.EqualTo(onlyTrackId));
         }
 
         [Test]

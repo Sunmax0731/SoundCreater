@@ -199,8 +199,13 @@ namespace TorusEdison.Editor.Application
 
         public static IGameAudioCommand RemoveTrack(GameAudioProject sourceProject, string trackId)
         {
-            return CreateMutation(sourceProject, "Remove Track", project =>
+            return CreateMutation(sourceProject, "Delete Track", project =>
             {
+                if (project.Tracks == null || project.Tracks.Count <= 1)
+                {
+                    throw new InvalidOperationException("At least one track is required.");
+                }
+
                 int trackIndex = project.Tracks.FindIndex(track => string.Equals(track.Id, trackId, StringComparison.Ordinal));
                 if (trackIndex < 0)
                 {
