@@ -1,3 +1,4 @@
+using System;
 using TorusEdison.Editor.Domain;
 using TorusEdison.Editor.Localization;
 using TorusEdison.Editor.Utilities;
@@ -19,6 +20,12 @@ namespace TorusEdison.Editor.Config
         public string LastProjectPath { get; set; } = string.Empty;
 
         public string DefaultGridDivision { get; set; } = "1/16";
+
+        public string VoicePresetSearchQuery { get; set; } = string.Empty;
+
+        public string VoicePresetCategoryFilter { get; set; } = string.Empty;
+
+        public string[] RecentVoicePresetKeys { get; set; } = Array.Empty<string>();
 
         public int UndoHistoryLimit { get; set; } = 100;
 

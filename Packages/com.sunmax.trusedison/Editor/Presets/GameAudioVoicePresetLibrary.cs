@@ -33,7 +33,8 @@ namespace TorusEdison.Editor.Presets
                 pan: 0.0f,
                 pitchSemitone: 12.0f,
                 fadeOutMs: 25,
-                delayEnabled: false),
+                delayEnabled: false,
+                tags: new[] { "short", "button", "menu", "square" }),
             CreatePreset(
                 "ui-confirm",
                 "UI",
@@ -54,7 +55,8 @@ namespace TorusEdison.Editor.Presets
                 delayEnabled: true,
                 delayTimeMs: 110,
                 delayFeedback: 0.18f,
-                delayMix: 0.12f),
+                delayMix: 0.12f,
+                tags: new[] { "confirm", "positive", "triangle", "delay" }),
             CreatePreset(
                 "ui-cancel",
                 "UI",
@@ -72,7 +74,8 @@ namespace TorusEdison.Editor.Presets
                 pan: 0.0f,
                 pitchSemitone: -7.0f,
                 fadeOutMs: 30,
-                delayEnabled: false),
+                delayEnabled: false,
+                tags: new[] { "cancel", "warning", "saw", "noise" }),
             CreatePreset(
                 "coin-pickup",
                 "Pickup",
@@ -93,7 +96,8 @@ namespace TorusEdison.Editor.Presets
                 delayEnabled: true,
                 delayTimeMs: 90,
                 delayFeedback: 0.15f,
-                delayMix: 0.10f),
+                delayMix: 0.10f,
+                tags: new[] { "coin", "reward", "bright", "pulse", "delay" }),
             CreatePreset(
                 "laser-shot",
                 "Action",
@@ -114,7 +118,8 @@ namespace TorusEdison.Editor.Presets
                 delayEnabled: true,
                 delayTimeMs: 140,
                 delayFeedback: 0.22f,
-                delayMix: 0.18f),
+                delayMix: 0.18f,
+                tags: new[] { "shot", "laser", "saw", "delay" }),
             CreatePreset(
                 "noise-hit",
                 "Impact",
@@ -132,12 +137,13 @@ namespace TorusEdison.Editor.Presets
                 pan: 0.0f,
                 pitchSemitone: -2.0f,
                 fadeOutMs: 30,
-                delayEnabled: false)
+                delayEnabled: false,
+                tags: new[] { "hit", "impact", "burst", "noise" })
         };
 
         public static IReadOnlyList<GameAudioVoicePreset> BuiltInPresets => BuiltInPresetsInternal;
 
-        public static GameAudioVoicePreset CreateUserPreset(string displayName, string description, GameAudioVoiceSettings voice)
+        public static GameAudioVoicePreset CreateUserPreset(string displayName, string description, GameAudioVoiceSettings voice, string[] tags = null)
         {
             string normalizedName = string.IsNullOrWhiteSpace(displayName)
                 ? "Voice Preset"
@@ -147,7 +153,8 @@ namespace TorusEdison.Editor.Presets
                 "User",
                 normalizedName,
                 string.IsNullOrWhiteSpace(description) ? "Exported from Torus Edison." : description.Trim(),
-                CloneVoice(voice));
+                CloneVoice(voice),
+                NormalizeTags(tags));
         }
 
         public static bool TryGetPreset(string id, out GameAudioVoicePreset preset)
@@ -249,7 +256,8 @@ namespace TorusEdison.Editor.Presets
             bool delayEnabled,
             int delayTimeMs = 180,
             float delayFeedback = 0.25f,
-            float delayMix = 0.2f)
+            float delayMix = 0.2f,
+            string[] tags = null)
         {
             return new GameAudioVoicePreset(
                 id,
@@ -287,7 +295,23 @@ namespace TorusEdison.Editor.Presets
                             Mix = delayMix
                         }
                     }
-                });
+                },
+                NormalizeTags(tags));
+        }
+
+        public static string[] NormalizeTags(IEnumerable<string> tags)
+        {
+            if (tags == null)
+            {
+                return Array.Empty<string>();
+            }
+
+            return tags
+                .Where(tag => !string.IsNullOrWhiteSpace(tag))
+                .Select(tag => tag.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(tag => tag, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
         }
     }
 }

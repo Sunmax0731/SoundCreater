@@ -195,11 +195,14 @@ Expected:
 4. Re-render preview and confirm the change is reflected
 5. In a stereo project, set voice `Stereo Detune` and `Stereo Delay`, render preview, and confirm the left/right channels differ
 6. Switch the project to Mono, render again, and confirm stereo spread controls no longer create left/right output differences
-7. Apply a built-in voice preset to a selected note and confirm Undo / Redo restores the previous voice state
-8. Apply a built-in voice preset to a selected track default voice and confirm Undo / Redo restores the previous default voice
-9. Export the current track default voice with `Export Current Voice`
-10. Import the exported `.gats-preset.json` with `Import Preset` and confirm it applies to the selected track or note voice
-11. Try importing a broken or unsupported preset file and confirm the error message identifies the preset file problem
+7. Search the preset browser by preset name and metadata, then apply a filtered preset to a selected note
+8. Filter the preset browser by category or tag and confirm the search query combines with the selected filter
+9. Apply a preset and confirm it appears under `Recent Presets`, then select it from the recent preset buttons
+10. Apply a built-in voice preset to a selected track default voice and confirm Undo / Redo restores the previous default voice
+11. Export the current track default voice with `Export Current Voice`
+12. Confirm the exported `.gats-preset.json` appears as a user preset under `%LocalAppData%/GameAudioTool/voice-presets`
+13. Import the exported `.gats-preset.json` with `Import Preset` and confirm it applies to the selected track or note voice
+14. Place a broken or unsupported preset file in the user preset folder and confirm the browser shows a warning while built-in presets remain selectable
 
 Expected:
 
@@ -208,9 +211,11 @@ Expected:
 - invalid values are clamped safely
 - `Stereo Detune` and `Stereo Delay` affect stereo output but are ignored for mono rendering
 - voice preset application behaves as one undoable command
+- preset search, category/tag filter, and recent preset buttons are usable from the Inspector
+- preset browser state persists through common config reload
 - preset export writes a `.gats-preset.json` file
-- preset import applies as an undoable voice change and does not add duplicate entries to the built-in preset list
-- broken or unsupported preset files are rejected with a clear error dialog
+- preset import applies as an undoable voice change
+- broken or unsupported preset files are visible as warnings without blocking valid presets
 
 ### 6. WAV Export
 

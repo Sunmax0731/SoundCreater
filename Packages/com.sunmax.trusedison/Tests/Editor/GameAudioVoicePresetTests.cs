@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using TorusEdison.Editor.Application;
@@ -92,9 +93,55 @@ namespace TorusEdison.Editor.Tests
             StringAssert.Contains(GameAudioVoicePresetLibrary.PresetKind, json);
             Assert.That(result.Preset.DisplayName, Is.EqualTo("Wide Laser"));
             Assert.That(result.Preset.Category, Is.EqualTo("User"));
+            Assert.That(result.Preset.Tags, Is.Empty);
             Assert.That(result.Preset.Voice.Waveform, Is.EqualTo(voice.Waveform));
             Assert.That(result.Preset.Voice.Effect.StereoDetuneSemitone, Is.EqualTo(2.0f));
             Assert.That(result.Preset.Voice.Effect.StereoDelayMs, Is.EqualTo(35));
+        }
+
+        [Test]
+        public void PresetFileSerializer_RoundTripsTags()
+        {
+            var serializer = new GameAudioVoicePresetFileSerializer();
+            GameAudioVoiceSettings voice = GameAudioProjectFactory.CreateDefaultVoice();
+            GameAudioVoicePreset preset = GameAudioVoicePresetLibrary.CreateUserPreset(
+                "Tagged Laser",
+                "Shared tagged preset",
+                voice,
+                new[] { "laser", "shot", "laser" });
+
+            GameAudioVoicePresetLoadResult result = serializer.Deserialize(serializer.Serialize(preset));
+
+            Assert.That(result.Preset.Tags, Is.EqualTo(new[] { "laser", "shot" }));
+        }
+
+        [Test]
+        public void PresetBrowser_FiltersBySearchAndCategoryOrTag()
+        {
+            var entries = GameAudioVoicePresetBrowserUtility.CreateBuiltInEntries(GameAudioVoicePresetLibrary.BuiltInPresets);
+
+            IReadOnlyList<GameAudioVoicePresetBrowserEntry> searchResults = GameAudioVoicePresetBrowserUtility.FilterEntries(entries, "bright reward", string.Empty);
+            Assert.That(searchResults.Select(entry => entry.Preset.Id), Does.Contain("coin-pickup"));
+
+            IReadOnlyList<GameAudioVoicePresetBrowserEntry> tagResults = GameAudioVoicePresetBrowserUtility.FilterEntries(entries, string.Empty, "delay");
+            Assert.That(tagResults.Select(entry => entry.Preset.Id), Does.Contain("laser-shot"));
+            Assert.That(tagResults.Select(entry => entry.Preset.Id), Does.Not.Contain("noise-hit"));
+
+            IReadOnlyList<GameAudioVoicePresetBrowserEntry> combinedResults = GameAudioVoicePresetBrowserUtility.FilterEntries(entries, "noise", "Impact");
+            Assert.That(combinedResults.Select(entry => entry.Preset.Id), Is.EqualTo(new[] { "noise-hit" }));
+        }
+
+        [Test]
+        public void PresetBrowser_TracksRecentPresetKeys()
+        {
+            var entries = GameAudioVoicePresetBrowserUtility.CreateBuiltInEntries(GameAudioVoicePresetLibrary.BuiltInPresets);
+            string firstKey = GameAudioVoicePresetBrowserUtility.CreateBuiltInKey(GameAudioVoicePresetLibrary.BuiltInPresets.First(item => item.Id == "ui-click"));
+            string secondKey = GameAudioVoicePresetBrowserUtility.CreateBuiltInKey(GameAudioVoicePresetLibrary.BuiltInPresets.First(item => item.Id == "laser-shot"));
+
+            string[] recent = GameAudioVoicePresetBrowserUtility.AddRecentPresetKey(new[] { firstKey }, secondKey, entries);
+
+            Assert.That(recent, Is.EqualTo(new[] { secondKey, firstKey }));
+            Assert.That(GameAudioVoicePresetBrowserUtility.ResolveRecentEntries(entries, recent).Select(entry => entry.Key), Is.EqualTo(recent));
         }
 
         [Test]

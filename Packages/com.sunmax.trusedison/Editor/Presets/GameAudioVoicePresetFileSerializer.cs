@@ -45,6 +45,7 @@ namespace TorusEdison.Editor.Presets
                         ? GameAudioVoicePresetLibrary.CreatePresetId(preset.DisplayName)
                         : preset.Id,
                     category = string.IsNullOrWhiteSpace(preset.Category) ? "User" : preset.Category,
+                    tags = GameAudioVoicePresetLibrary.NormalizeTags(preset.Tags),
                     displayName = string.IsNullOrWhiteSpace(preset.DisplayName) ? "Voice Preset" : preset.DisplayName,
                     description = preset.Description ?? string.Empty,
                     voice = GameAudioProjectSerializer.ToVoiceDto(preset.Voice ?? GameAudioProjectFactory.CreateDefaultVoice())
@@ -128,11 +129,12 @@ namespace TorusEdison.Editor.Presets
                 ? GameAudioVoicePresetLibrary.CreatePresetId(displayName)
                 : presetDto.id.Trim();
             string category = string.IsNullOrWhiteSpace(presetDto.category) ? "Imported" : presetDto.category.Trim();
+            string[] tags = GameAudioVoicePresetLibrary.NormalizeTags(presetDto.tags);
             string description = presetDto.description ?? string.Empty;
             GameAudioVoiceSettings voice = GameAudioProjectSerializer.FromVoiceDto(presetDto.voice, warnings, "$.preset.voice");
 
             return new GameAudioVoicePresetLoadResult(
-                new GameAudioVoicePreset(id, category, displayName, description, voice),
+                new GameAudioVoicePreset(id, category, displayName, description, voice, tags),
                 warnings);
         }
 
@@ -216,6 +218,7 @@ namespace TorusEdison.Editor.Presets
             GameAudioJsonNode preset = RequireObjectProperty(root, "$", "preset");
             OptionalString(preset, "$.preset", "id");
             OptionalString(preset, "$.preset", "category");
+            OptionalStringArray(preset, "$.preset", "tags");
             OptionalString(preset, "$.preset", "displayName");
             OptionalString(preset, "$.preset", "description");
             ValidateVoice(RequireObjectProperty(preset, "$.preset", "voice"), "$.preset.voice");
@@ -295,6 +298,27 @@ namespace TorusEdison.Editor.Presets
         private static void OptionalString(GameAudioJsonNode node, string path, string propertyName)
         {
             OptionalKind(node, path, propertyName, GameAudioJsonKind.String);
+        }
+
+        private static void OptionalStringArray(GameAudioJsonNode node, string path, string propertyName)
+        {
+            if (!TryGetProperty(node, propertyName, out GameAudioJsonNode propertyValue) || propertyValue.Kind == GameAudioJsonKind.Null)
+            {
+                return;
+            }
+
+            if (propertyValue.Kind != GameAudioJsonKind.Array)
+            {
+                throw new GameAudioPersistenceException($"{path}.{propertyName} must be an array.");
+            }
+
+            for (int index = 0; index < propertyValue.Items.Count; index++)
+            {
+                if (propertyValue.Items[index].Kind != GameAudioJsonKind.String)
+                {
+                    throw new GameAudioPersistenceException($"{path}.{propertyName}[{index}] must be a string.");
+                }
+            }
         }
 
         private static void OptionalNumber(GameAudioJsonNode node, string path, string propertyName)

@@ -211,16 +211,21 @@ This feature converts audio that you already brought into Unity. It does not dow
 
 ## Voice Presets
 
-The Edit page includes built-in voice presets in the Selection Inspector.
+The Edit page includes a voice preset browser in the Selection Inspector.
 
 - select a track header to apply a preset to the track default voice
 - select one or more notes to apply a preset as note voice overrides
+- search presets by name, id, category, tags, description, waveform, noise, or delay metadata
+- filter presets by category or tag
+- select a recently used preset from the recent preset buttons
 - if selected notes do not already use voice overrides, applying a preset creates the overrides for those notes
 - preset application is one Undo / Redo command
 - built-in presets include UI click, confirm, cancel, coin pickup, laser shot, and noise hit
+- `.gats-preset.json` files under `%LocalAppData%/GameAudioTool/voice-presets` appear in the browser as user presets
+- broken or unsupported user preset files are shown as warnings without blocking built-in presets
 - `Import Preset` loads a `.gats-preset.json` file and applies it to the current note override or track default voice
 - `Export Current Voice` writes the currently edited voice as a shareable `.gats-preset.json` file
-- imported presets are applied directly and are not added to the built-in preset list, so display-name conflicts do not require rename handling
+- browser search, category/tag filter, and recent preset keys are saved in the common config
 - exporting to an existing file asks for overwrite confirmation
 
 Preset schema for shared files:
@@ -233,6 +238,7 @@ Preset schema for shared files:
   "preset": {
     "id": "team.ui-click",
     "category": "UI",
+    "tags": ["button", "menu", "short"],
     "displayName": "Team UI Click",
     "description": "Short reusable menu click.",
     "voice": {

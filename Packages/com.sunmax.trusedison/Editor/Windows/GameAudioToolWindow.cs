@@ -67,7 +67,7 @@ namespace TorusEdison.Editor.Windows
         private GameAudioDisplayLanguage _displayLanguage = GameAudioDisplayLanguage.English;
         private bool _pendingUiRebuild;
         private bool _startupGuideScheduled;
-        private string _selectedVoicePresetId = string.Empty;
+        private string _selectedVoicePresetKey = string.Empty;
         private string _selectedProjectTemplateId = "ui-click";
 
         private Label _nameValue;
@@ -1036,7 +1036,7 @@ namespace TorusEdison.Editor.Windows
                 : string.Join(",", _selectedNoteIds.OrderBy(noteId => noteId, StringComparer.Ordinal));
             string nextStateKey = string.Format(
                 CultureInfo.InvariantCulture,
-                "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}",
+                "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}|{13}|{14}|{15}",
                 RuntimeHelpers.GetHashCode(project),
                 _displayLanguage,
                 _selectedTrackId,
@@ -1048,7 +1048,11 @@ namespace TorusEdison.Editor.Windows
                 _commonConfig?.DiagnosticLogLevel ?? GameAudioDiagnosticLogLevel.Info,
                 _projectConfig?.PreferredSampleRate?.ToString(CultureInfo.InvariantCulture) ?? string.Empty,
                 _projectConfig?.PreferredChannelMode?.ToString() ?? string.Empty,
-                _projectConfig?.AutoRefreshAfterExport ?? true);
+                _projectConfig?.AutoRefreshAfterExport ?? true,
+                _commonConfig?.VoicePresetSearchQuery ?? string.Empty,
+                _commonConfig?.VoicePresetCategoryFilter ?? string.Empty,
+                string.Join(",", _commonConfig?.RecentVoicePresetKeys ?? Array.Empty<string>()),
+                _selectedVoicePresetKey);
 
             if (string.Equals(_inspectorStateKey, nextStateKey, StringComparison.Ordinal))
             {
@@ -1380,36 +1384,103 @@ namespace TorusEdison.Editor.Windows
             GameAudioVoiceSettings currentVoice,
             Action<string, Action<GameAudioVoiceSettings>, Action<GameAudioVoiceSettings>> applyVoiceChange)
         {
-            IReadOnlyList<GameAudioVoicePreset> presets = GameAudioVoicePresetLibrary.BuiltInPresets;
-            if (presets.Count == 0)
+            IReadOnlyList<GameAudioVoicePresetBrowserEntry> allEntries = LoadVoicePresetBrowserEntries(out IReadOnlyList<GameAudioVoicePresetBrowserError> loadErrors);
+            if (allEntries.Count == 0)
             {
+                parent.Add(CreateInspectorHelpBox(T("voice.preset.empty", "No voice presets are available."), HelpBoxMessageType.Info));
+                AddVoicePresetFileActions(parent, currentVoice, applyVoiceChange);
                 return;
             }
 
-            string selectedPresetId = ResolveSelectedVoicePresetId();
-            AddInspectorPopupField(
-                parent,
-                T("voice.preset", "Voice Preset"),
-                presets.Select(preset => preset.Id),
-                selectedPresetId,
-                GameAudioVoicePresetLibrary.FormatLabel,
-                requested => _selectedVoicePresetId = requested);
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            string searchQuery = _commonConfig.VoicePresetSearchQuery ?? string.Empty;
+            string categoryFilter = _commonConfig.VoicePresetCategoryFilter ?? string.Empty;
 
-            var applyButton = CreateCompactActionButton(T("voice.applyPreset", "Apply Preset"), () =>
+            parent.Add(CreateInspectorGroupTitle(T("voice.presetBrowser", "Preset Browser")));
+
+            var searchField = new TextField
             {
-                string presetId = ResolveSelectedVoicePresetId();
-                if (!GameAudioVoicePresetLibrary.TryGetPreset(presetId, out GameAudioVoicePreset preset))
+                isDelayed = true
+            };
+            searchField.SetValueWithoutNotify(searchQuery);
+            searchField.RegisterValueChangedCallback(evt => UpdateVoicePresetSearchQuery(evt.newValue));
+            parent.Add(CreateInspectorRow(T("voice.presetSearch", "Search"), searchField));
+
+            IReadOnlyList<string> filterValues = GameAudioVoicePresetBrowserUtility.GetCategoryAndTagFilters(allEntries);
+            List<string> categoryOptions = new[] { string.Empty }.Concat(filterValues).ToList();
+            string selectedCategory = categoryOptions.Contains(categoryFilter, StringComparer.OrdinalIgnoreCase)
+                ? categoryOptions.First(option => string.Equals(option, categoryFilter, StringComparison.OrdinalIgnoreCase))
+                : string.Empty;
+            var categoryField = new PopupField<string>(
+                categoryOptions,
+                Math.Max(0, categoryOptions.IndexOf(selectedCategory)),
+                FormatVoicePresetCategoryFilter,
+                FormatVoicePresetCategoryFilter);
+            categoryField.RegisterValueChangedCallback(evt => UpdateVoicePresetCategoryFilter(evt.newValue));
+            parent.Add(CreateInspectorRow(T("voice.presetCategory", "Category / Tag"), categoryField));
+
+            IReadOnlyList<GameAudioVoicePresetBrowserEntry> filteredEntries = GameAudioVoicePresetBrowserUtility.FilterEntries(
+                allEntries,
+                searchQuery,
+                selectedCategory);
+            if (filteredEntries.Count == 0)
+            {
+                parent.Add(CreateInspectorHelpBox(T("voice.presetNoResults", "No voice presets match the current search and filter."), HelpBoxMessageType.Info));
+            }
+            else
+            {
+                string selectedPresetKey = ResolveSelectedVoicePresetKey(filteredEntries);
+                var presetField = new PopupField<GameAudioVoicePresetBrowserEntry>(
+                    filteredEntries.ToList(),
+                    Math.Max(0, filteredEntries.ToList().FindIndex(entry => string.Equals(entry.Key, selectedPresetKey, StringComparison.Ordinal))),
+                    GameAudioVoicePresetBrowserUtility.FormatEntryLabel,
+                    GameAudioVoicePresetBrowserUtility.FormatEntryLabel);
+                presetField.RegisterValueChangedCallback(evt =>
                 {
-                    return;
+                    _selectedVoicePresetKey = evt.newValue?.Key ?? string.Empty;
+                    RefreshView();
+                });
+                parent.Add(CreateInspectorRow(T("voice.preset", "Voice Preset"), presetField));
+
+                var applyButton = CreateCompactActionButton(T("voice.applyPreset", "Apply Preset"), () =>
+                {
+                    if (!TryGetSelectedVoicePreset(filteredEntries, out GameAudioVoicePresetBrowserEntry selectedEntry))
+                    {
+                        return;
+                    }
+
+                    applyVoiceChange(
+                        $"Apply Voice Preset: {selectedEntry.Preset.DisplayName}",
+                        current => GameAudioVoicePresetLibrary.CopyTo(selectedEntry.Preset.Voice, current),
+                        null);
+                    RememberVoicePreset(selectedEntry.Key, allEntries);
+                });
+                parent.Add(CreateInspectorRow(T("voice.presetAction", "Preset Action"), applyButton));
+            }
+
+            AddRecentVoicePresetControls(parent, allEntries);
+
+            if (loadErrors.Count > 0)
+            {
+                string errorText = string.Join(
+                    "\n",
+                    loadErrors.Take(5).Select(error => $"{Path.GetFileName(error.SourcePath)}: {error.Message}"));
+                if (loadErrors.Count > 5)
+                {
+                    errorText = $"{errorText}\n...";
                 }
 
-                applyVoiceChange(
-                    $"Apply Voice Preset: {preset.DisplayName}",
-                    current => GameAudioVoicePresetLibrary.CopyTo(preset.Voice, current),
-                    null);
-            });
-            parent.Add(CreateInspectorRow(T("voice.presetAction", "Preset Action"), applyButton));
+                parent.Add(CreateInspectorHelpBox(errorText, HelpBoxMessageType.Warning));
+            }
 
+            AddVoicePresetFileActions(parent, currentVoice, applyVoiceChange);
+        }
+
+        private void AddVoicePresetFileActions(
+            VisualElement parent,
+            GameAudioVoiceSettings currentVoice,
+            Action<string, Action<GameAudioVoiceSettings>, Action<GameAudioVoiceSettings>> applyVoiceChange)
+        {
             var fileActions = new VisualElement();
             fileActions.style.flexDirection = FlexDirection.Row;
             fileActions.style.flexWrap = Wrap.Wrap;
@@ -1491,7 +1562,10 @@ namespace TorusEdison.Editor.Windows
 
                 GameAudioVoicePreset preset = GameAudioVoicePresetLibrary.CreateUserPreset(displayName, "Exported from Torus Edison.", currentVoice);
                 _voicePresetFileSerializer.SaveToFile(resolvedPath, preset);
+                _selectedVoicePresetKey = GameAudioVoicePresetBrowserUtility.CreateUserKey(Path.GetFullPath(resolvedPath));
+                _inspectorStateKey = string.Empty;
                 ShowNotification(new GUIContent(TF("notification.presetExported", "Exported preset: {0}", preset.DisplayName)));
+                RefreshView();
             }
             catch (Exception exception)
             {
@@ -1533,15 +1607,172 @@ namespace TorusEdison.Editor.Windows
             }
         }
 
-        private string ResolveSelectedVoicePresetId()
+        private IReadOnlyList<GameAudioVoicePresetBrowserEntry> LoadVoicePresetBrowserEntries(out IReadOnlyList<GameAudioVoicePresetBrowserError> errors)
         {
-            if (GameAudioVoicePresetLibrary.TryGetPreset(_selectedVoicePresetId, out _))
+            var entries = new List<GameAudioVoicePresetBrowserEntry>();
+            var loadErrors = new List<GameAudioVoicePresetBrowserError>();
+            entries.AddRange(GameAudioVoicePresetBrowserUtility.CreateBuiltInEntries(GameAudioVoicePresetLibrary.BuiltInPresets));
+
+            string presetDirectory = ResolveUserPresetDirectory();
+            if (Directory.Exists(presetDirectory))
             {
-                return _selectedVoicePresetId;
+                foreach (string presetPath in Directory.GetFiles(presetDirectory, "*.json", SearchOption.TopDirectoryOnly).OrderBy(path => path, StringComparer.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        GameAudioVoicePresetLoadResult loadResult = _voicePresetFileSerializer.LoadFromFile(presetPath);
+                        entries.Add(new GameAudioVoicePresetBrowserEntry(
+                            GameAudioVoicePresetBrowserUtility.CreateUserKey(Path.GetFullPath(presetPath)),
+                            loadResult.Preset,
+                            presetPath,
+                            false));
+
+                        if (loadResult.Warnings.Count > 0)
+                        {
+                            loadErrors.Add(new GameAudioVoicePresetBrowserError(presetPath, string.Join("; ", loadResult.Warnings)));
+                        }
+                    }
+                    catch (Exception exception)
+                    {
+                        loadErrors.Add(new GameAudioVoicePresetBrowserError(presetPath, exception.Message));
+                    }
+                }
             }
 
-            _selectedVoicePresetId = GameAudioVoicePresetLibrary.BuiltInPresets[0].Id;
-            return _selectedVoicePresetId;
+            errors = loadErrors;
+            return entries;
+        }
+
+        private string ResolveSelectedVoicePresetKey(IReadOnlyList<GameAudioVoicePresetBrowserEntry> entries)
+        {
+            if (entries == null || entries.Count == 0)
+            {
+                _selectedVoicePresetKey = string.Empty;
+                return string.Empty;
+            }
+
+            if (entries.Any(entry => string.Equals(entry.Key, _selectedVoicePresetKey, StringComparison.Ordinal)))
+            {
+                return _selectedVoicePresetKey;
+            }
+
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            string recentKey = (_commonConfig.RecentVoicePresetKeys ?? Array.Empty<string>())
+                .FirstOrDefault(key => entries.Any(entry => string.Equals(entry.Key, key, StringComparison.Ordinal)));
+            _selectedVoicePresetKey = string.IsNullOrWhiteSpace(recentKey)
+                ? entries[0].Key
+                : recentKey;
+            return _selectedVoicePresetKey;
+        }
+
+        private bool TryGetSelectedVoicePreset(
+            IReadOnlyList<GameAudioVoicePresetBrowserEntry> entries,
+            out GameAudioVoicePresetBrowserEntry selectedEntry)
+        {
+            string selectedKey = ResolveSelectedVoicePresetKey(entries);
+            selectedEntry = entries?.FirstOrDefault(entry => string.Equals(entry.Key, selectedKey, StringComparison.Ordinal));
+            return selectedEntry != null;
+        }
+
+        private void AddRecentVoicePresetControls(VisualElement parent, IReadOnlyList<GameAudioVoicePresetBrowserEntry> entries)
+        {
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            string[] normalizedRecentKeys = GameAudioVoicePresetBrowserUtility.NormalizeRecentPresetKeys(_commonConfig.RecentVoicePresetKeys, entries);
+            IReadOnlyList<GameAudioVoicePresetBrowserEntry> recentEntries = GameAudioVoicePresetBrowserUtility.ResolveRecentEntries(entries, normalizedRecentKeys);
+            if (recentEntries.Count == 0)
+            {
+                parent.Add(CreateInspectorHelpBox(T("voice.presetRecentEmpty", "Recent presets will appear after you apply one."), HelpBoxMessageType.Info));
+                return;
+            }
+
+            var recentRow = new VisualElement();
+            recentRow.style.flexDirection = FlexDirection.Row;
+            recentRow.style.flexWrap = Wrap.Wrap;
+            foreach (GameAudioVoicePresetBrowserEntry entry in recentEntries)
+            {
+                Button recentButton = CreateCompactActionButton(entry.Preset.DisplayName, () =>
+                {
+                    _selectedVoicePresetKey = entry.Key;
+                    RefreshView();
+                });
+                recentRow.Add(recentButton);
+            }
+
+            parent.Add(CreateInspectorRow(T("voice.presetRecent", "Recent Presets"), recentRow));
+        }
+
+        private void RememberVoicePreset(string presetKey, IReadOnlyList<GameAudioVoicePresetBrowserEntry> entries)
+        {
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            string[] nextRecentKeys = GameAudioVoicePresetBrowserUtility.AddRecentPresetKey(_commonConfig.RecentVoicePresetKeys, presetKey, entries);
+            if ((_commonConfig.RecentVoicePresetKeys ?? Array.Empty<string>()).SequenceEqual(nextRecentKeys, StringComparer.Ordinal))
+            {
+                return;
+            }
+
+            try
+            {
+                _commonConfig.RecentVoicePresetKeys = nextRecentKeys;
+                SaveCommonConfig();
+                _inspectorStateKey = string.Empty;
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception, "Settings", "Saving recent voice presets failed");
+            }
+        }
+
+        private void UpdateVoicePresetSearchQuery(string query)
+        {
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            string normalized = query?.Trim() ?? string.Empty;
+            if (string.Equals(_commonConfig.VoicePresetSearchQuery, normalized, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            try
+            {
+                _commonConfig.VoicePresetSearchQuery = normalized;
+                SaveCommonConfig();
+                _selectedVoicePresetKey = string.Empty;
+                _inspectorStateKey = string.Empty;
+                RefreshView();
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception, "Settings", "Saving preset search query failed");
+            }
+        }
+
+        private void UpdateVoicePresetCategoryFilter(string categoryFilter)
+        {
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            string normalized = categoryFilter?.Trim() ?? string.Empty;
+            if (string.Equals(_commonConfig.VoicePresetCategoryFilter, normalized, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            try
+            {
+                _commonConfig.VoicePresetCategoryFilter = normalized;
+                SaveCommonConfig();
+                _selectedVoicePresetKey = string.Empty;
+                _inspectorStateKey = string.Empty;
+                RefreshView();
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception, "Settings", "Saving preset category filter failed");
+            }
+        }
+
+        private string FormatVoicePresetCategoryFilter(string categoryFilter)
+        {
+            return string.IsNullOrWhiteSpace(categoryFilter)
+                ? T("voice.presetCategoryAll", "All")
+                : categoryFilter;
         }
 
         private void AddVoiceInspector(

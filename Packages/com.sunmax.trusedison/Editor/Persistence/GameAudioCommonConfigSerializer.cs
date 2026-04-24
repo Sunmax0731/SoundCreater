@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using TorusEdison.Editor.Config;
 using TorusEdison.Editor.Domain;
@@ -71,6 +72,9 @@ namespace TorusEdison.Editor.Persistence
                 defaultGridDivision = string.IsNullOrWhiteSpace(config.DefaultGridDivision)
                     ? "1/16"
                     : config.DefaultGridDivision,
+                voicePresetSearchQuery = config.VoicePresetSearchQuery ?? string.Empty,
+                voicePresetCategoryFilter = config.VoicePresetCategoryFilter ?? string.Empty,
+                recentVoicePresetKeys = NormalizeRecentVoicePresetKeys(config.RecentVoicePresetKeys),
                 undoHistoryLimit = GameAudioValidationUtility.ClampInt(config.UndoHistoryLimit, 1, 1000),
                 displayLanguage = config.DisplayLanguage.ToString(),
                 enableDiagnosticLogging = config.EnableDiagnosticLogging,
@@ -125,6 +129,9 @@ namespace TorusEdison.Editor.Persistence
                 DefaultGridDivision = string.IsNullOrWhiteSpace(dto.defaultGridDivision)
                     ? "1/16"
                     : dto.defaultGridDivision,
+                VoicePresetSearchQuery = dto.voicePresetSearchQuery ?? string.Empty,
+                VoicePresetCategoryFilter = dto.voicePresetCategoryFilter ?? string.Empty,
+                RecentVoicePresetKeys = NormalizeRecentVoicePresetKeys(dto.recentVoicePresetKeys),
                 UndoHistoryLimit = GameAudioValidationUtility.ClampInt(dto.undoHistoryLimit <= 0 ? 100 : dto.undoHistoryLimit, 1, 1000),
                 DisplayLanguage = GameAudioEnumUtility.TryParseDefined(dto.displayLanguage, out GameAudioLanguageMode displayLanguage)
                     ? displayLanguage
@@ -134,6 +141,21 @@ namespace TorusEdison.Editor.Persistence
                     ? diagnosticLogLevel
                     : GameAudioDiagnosticLogLevel.Info
             };
+        }
+
+        private static string[] NormalizeRecentVoicePresetKeys(string[] recentKeys)
+        {
+            if (recentKeys == null || recentKeys.Length == 0)
+            {
+                return Array.Empty<string>();
+            }
+
+            return recentKeys
+                .Where(key => !string.IsNullOrWhiteSpace(key))
+                .Select(key => key.Trim())
+                .Distinct(StringComparer.Ordinal)
+                .Take(8)
+                .ToArray();
         }
     }
 }

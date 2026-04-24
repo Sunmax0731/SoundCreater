@@ -13,6 +13,7 @@
 - timeline toolbar に grid division の直接選択 UI を追加し、`1/4`, `1/8`, `1/16`, `1/32`, `1/64` を選べるように改善
 - 選択中の grid division を note snap、grid drawing、duplicate offset、common config の `defaultGridDivision` と同期
 - Selection Inspector から `.gats-preset.json` の voice preset import / export を実行できるように改善
+- preset browser に検索、category / tag filter、最近使用履歴、user preset file の警告表示を追加
 - toolbar から built-in project template を選んで新規 project を作成できるように改善
 - Unity に取り込んだ `AudioClip` の 8-bit WAV 変換を `Tools/Torus Edison/8-bit WAV Converter` へ分離
 - streaming / preload 無効の import 設定でも 8-bit 変換が失敗しないように修正
@@ -20,7 +21,7 @@
 
 検証:
 
-- Unity `6000.4.0f1` / Windows で EditMode tests を実行し、`Total=126 Passed=126 Failed=0 Skipped=0` を確認
+- Unity `6000.4.0f1` / Windows で EditMode tests を実行し、`Total=129 Passed=129 Failed=0 Skipped=0` を確認
 
 既知の制限:
 

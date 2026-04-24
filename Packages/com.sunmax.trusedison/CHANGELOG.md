@@ -7,6 +7,7 @@
 - added stereo voice spread controls with left/right detune and right-channel delay for stereo projects
 - added direct grid division selection in the timeline toolbar, synchronized with snap, grid drawing, duplicate offset, and `defaultGridDivision`
 - added `.gats-preset.json` voice preset import and export actions from the Selection Inspector
+- added voice preset browser search, category/tag filtering, recent preset history, and user preset warning states
 - added built-in project templates for common one-shot and loop starting points
 - moved 8-bit WAV conversion for imported `AudioClip` assets into `Tools/Torus Edison/8-bit WAV Converter`
 - fixed 8-bit conversion for imported clips that use streaming or non-preloaded audio import settings

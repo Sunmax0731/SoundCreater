@@ -25,6 +25,7 @@ namespace TorusEdison.Editor.Persistence
     {
         public string id;
         public string category;
+        public string[] tags;
         public string displayName;
         public string description;
         public GameAudioVoiceDto voice;
@@ -153,6 +154,9 @@ namespace TorusEdison.Editor.Persistence
         public bool rememberLastProject;
         public string lastProjectPath;
         public string defaultGridDivision;
+        public string voicePresetSearchQuery;
+        public string voicePresetCategoryFilter;
+        public string[] recentVoicePresetKeys;
         public int undoHistoryLimit;
         public string displayLanguage;
         public bool enableDiagnosticLogging;

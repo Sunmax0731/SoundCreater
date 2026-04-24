@@ -25,6 +25,9 @@ namespace TorusEdison.Editor.Tests
                 RememberLastProject = false,
                 LastProjectPath = "D:/AudioProjects/last.gats.json",
                 DefaultGridDivision = "1/8",
+                VoicePresetSearchQuery = "laser",
+                VoicePresetCategoryFilter = "Action",
+                RecentVoicePresetKeys = new[] { "builtin:laser-shot", "builtin:ui-click" },
                 UndoHistoryLimit = 240,
                 DisplayLanguage = GameAudioLanguageMode.Chinese,
                 EnableDiagnosticLogging = true,
@@ -41,6 +44,9 @@ namespace TorusEdison.Editor.Tests
             Assert.That(result.RememberLastProject, Is.False);
             Assert.That(result.LastProjectPath, Is.EqualTo("D:/AudioProjects/last.gats.json"));
             Assert.That(result.DefaultGridDivision, Is.EqualTo("1/8"));
+            Assert.That(result.VoicePresetSearchQuery, Is.EqualTo("laser"));
+            Assert.That(result.VoicePresetCategoryFilter, Is.EqualTo("Action"));
+            Assert.That(result.RecentVoicePresetKeys, Is.EqualTo(new[] { "builtin:laser-shot", "builtin:ui-click" }));
             Assert.That(result.UndoHistoryLimit, Is.EqualTo(240));
             Assert.That(result.DisplayLanguage, Is.EqualTo(GameAudioLanguageMode.Chinese));
             Assert.That(result.EnableDiagnosticLogging, Is.True);
