@@ -95,8 +95,10 @@ Use this page for project-level and tool-level settings.
 
 - BPM
 - Total Bars
-- Sample Rate
-- Channel Mode
+- current project Sample Rate
+- current project Channel Mode
+- new-project Sample Rate Override
+- new-project Channel Mode Override
 - UI language mode
 - diagnostic mode and log level
 - current foundation diagnostics
@@ -172,6 +174,7 @@ Current configuration files:
 - project settings: `ProjectSettings/GameAudioToolSettings.json`
 
 Project settings override common defaults for sample rate, channel mode, export directory, and auto-refresh behavior.
+The sample rate and channel mode overrides are used when `New` creates a project. Existing `.gats.json` files keep the sample rate and channel mode stored in the project file.
 
 ## Samples
 

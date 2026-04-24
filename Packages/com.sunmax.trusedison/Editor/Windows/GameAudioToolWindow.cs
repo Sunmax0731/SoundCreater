@@ -994,11 +994,16 @@ namespace TorusEdison.Editor.Windows
                 : string.Join(",", _selectedNoteIds.OrderBy(noteId => noteId, StringComparer.Ordinal));
             string nextStateKey = string.Format(
                 CultureInfo.InvariantCulture,
-                "{0}|{1}|{2}|{3}",
+                "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}",
                 RuntimeHelpers.GetHashCode(project),
                 _displayLanguage,
                 _selectedTrackId,
-                selectionKey);
+                selectionKey,
+                _commonConfig?.EnableDiagnosticLogging ?? false,
+                _commonConfig?.DiagnosticLogLevel ?? GameAudioDiagnosticLogLevel.Info,
+                _projectConfig?.PreferredSampleRate?.ToString(CultureInfo.InvariantCulture) ?? string.Empty,
+                _projectConfig?.PreferredChannelMode?.ToString() ?? string.Empty,
+                _projectConfig?.AutoRefreshAfterExport ?? true);
 
             if (string.Equals(_inspectorStateKey, nextStateKey, StringComparison.Ordinal))
             {
@@ -1253,6 +1258,23 @@ namespace TorusEdison.Editor.Windows
                     current => current.MasterGainDb = requested,
                     actualProject => NotifyClamp("Master Gain", requested, actualProject.MasterGainDb));
             }, FormatDecibelDisplay);
+
+            parent.Add(CreateInspectorGroupTitle(T("inspector.projectDefaults", "New Project Defaults")));
+            AddInspectorPopupField(
+                parent,
+                T("inspector.projectDefault.sampleRate", "Sample Rate Override"),
+                GetProjectSampleRateOverrideOptions(),
+                FormatProjectSampleRateOverride(_projectConfig?.PreferredSampleRate),
+                OnProjectPreferredSampleRateChanged);
+            AddInspectorPopupField(
+                parent,
+                T("inspector.projectDefault.channelMode", "Channel Mode Override"),
+                GetProjectChannelModeOverrideOptions(),
+                FormatProjectChannelModeOverride(_projectConfig?.PreferredChannelMode),
+                OnProjectPreferredChannelModeChanged);
+            parent.Add(CreateInspectorHelpBox(
+                T("inspector.projectDefaults.help", "These project settings override common defaults when New creates a project. Use Common Default keeps the shared setting in control."),
+                HelpBoxMessageType.Info));
 
             parent.Add(CreateInspectorGroupTitle(T("inspector.toolSettings", "Tool Settings")));
             AddInspectorPopupField(
@@ -1514,6 +1536,15 @@ namespace TorusEdison.Editor.Windows
             yield return FormatSampleRateOption(GameAudioToolInfo.AlternateSampleRate);
         }
 
+        private IEnumerable<string> GetProjectSampleRateOverrideOptions()
+        {
+            yield return T("settings.inheritCommonDefault", "Use Common Default");
+            foreach (string option in GetSupportedSampleRateOptions())
+            {
+                yield return option;
+            }
+        }
+
         private static IEnumerable<GameAudioDiagnosticLogLevel> GetSupportedDiagnosticLogLevels()
         {
             return (GameAudioDiagnosticLogLevel[])Enum.GetValues(typeof(GameAudioDiagnosticLogLevel));
@@ -1522,6 +1553,15 @@ namespace TorusEdison.Editor.Windows
         private static IEnumerable<GameAudioChannelMode> GetSupportedChannelModeOptions()
         {
             return (GameAudioChannelMode[])Enum.GetValues(typeof(GameAudioChannelMode));
+        }
+
+        private IEnumerable<string> GetProjectChannelModeOverrideOptions()
+        {
+            yield return T("settings.inheritCommonDefault", "Use Common Default");
+            foreach (GameAudioChannelMode option in GetSupportedChannelModeOptions())
+            {
+                yield return GameAudioLocalization.GetChannelModeLabel(_displayLanguage, option);
+            }
         }
 
         private static IEnumerable<int> GetSupportedConversionSampleRates()
@@ -1616,6 +1656,20 @@ namespace TorusEdison.Editor.Windows
             return string.Format(CultureInfo.InvariantCulture, "{0} Hz", sampleRate);
         }
 
+        private string FormatProjectSampleRateOverride(int? sampleRate)
+        {
+            return sampleRate.HasValue
+                ? FormatSampleRateOption(sampleRate.Value)
+                : T("settings.inheritCommonDefault", "Use Common Default");
+        }
+
+        private string FormatProjectChannelModeOverride(GameAudioChannelMode? channelMode)
+        {
+            return channelMode.HasValue
+                ? GameAudioLocalization.GetChannelModeLabel(_displayLanguage, channelMode.Value)
+                : T("settings.inheritCommonDefault", "Use Common Default");
+        }
+
         private string FormatConversionChannelMode(GameAudioConversionChannelMode channelMode)
         {
             return channelMode switch
@@ -1632,6 +1686,32 @@ namespace TorusEdison.Editor.Windows
             return int.TryParse(digits, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed)
                 ? parsed
                 : GameAudioToolInfo.DefaultSampleRate;
+        }
+
+        private static int? ParseProjectSampleRateOverride(string option)
+        {
+            string digits = new string((option ?? string.Empty).Where(char.IsDigit).ToArray());
+            if (int.TryParse(digits, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed)
+                && GameAudioValidationUtility.IsSupportedSampleRate(parsed))
+            {
+                return parsed;
+            }
+
+            return null;
+        }
+
+        private GameAudioChannelMode? ParseProjectChannelModeOverride(string option)
+        {
+            foreach (GameAudioChannelMode channelMode in GetSupportedChannelModeOptions())
+            {
+                if (string.Equals(option, channelMode.ToString(), StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(option, GameAudioLocalization.GetChannelModeLabel(_displayLanguage, channelMode), StringComparison.Ordinal))
+                {
+                    return channelMode;
+                }
+            }
+
+            return null;
         }
 
         private string GetResolvedConversionOutputName()
@@ -1984,6 +2064,52 @@ namespace TorusEdison.Editor.Windows
             ApplyProjectExportDirectory(string.Empty);
         }
 
+        private void OnProjectPreferredSampleRateChanged(string selectedOption)
+        {
+            _projectConfig ??= _projectConfigSerializer.LoadOrDefault(GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
+            int? preferredSampleRate = ParseProjectSampleRateOverride(selectedOption);
+            if (_projectConfig.PreferredSampleRate == preferredSampleRate)
+            {
+                return;
+            }
+
+            try
+            {
+                _projectConfig.PreferredSampleRate = preferredSampleRate;
+                SaveProjectConfig();
+                GameAudioDiagnosticLogger.Verbose("Settings", $"Project sample rate override set to {FormatNullableConfigValue(preferredSampleRate)}.");
+                _inspectorStateKey = string.Empty;
+                RefreshView();
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception, "Settings", "Saving project sample rate override failed");
+            }
+        }
+
+        private void OnProjectPreferredChannelModeChanged(string selectedOption)
+        {
+            _projectConfig ??= _projectConfigSerializer.LoadOrDefault(GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
+            GameAudioChannelMode? preferredChannelMode = ParseProjectChannelModeOverride(selectedOption);
+            if (_projectConfig.PreferredChannelMode == preferredChannelMode)
+            {
+                return;
+            }
+
+            try
+            {
+                _projectConfig.PreferredChannelMode = preferredChannelMode;
+                SaveProjectConfig();
+                GameAudioDiagnosticLogger.Verbose("Settings", $"Project channel mode override set to {FormatNullableConfigValue(preferredChannelMode)}.");
+                _inspectorStateKey = string.Empty;
+                RefreshView();
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception, "Settings", "Saving project channel mode override failed");
+            }
+        }
+
         private string OpenExportDirectoryPanel(string configuredDirectory)
         {
             string projectRoot = GetProjectRootPath();
@@ -2040,6 +2166,7 @@ namespace TorusEdison.Editor.Windows
                 _projectConfig.ExportDirectory = normalizedValue;
                 SaveProjectConfig();
                 GameAudioDiagnosticLogger.Verbose("Settings", $"Project export directory set to {normalizedValue}.");
+                _inspectorStateKey = string.Empty;
                 RefreshView();
             }
             catch (Exception exception)
@@ -2070,6 +2197,12 @@ namespace TorusEdison.Editor.Windows
             return fallbackDirectory;
         }
 
+        private static string FormatNullableConfigValue<TValue>(TValue? value)
+            where TValue : struct
+        {
+            return value.HasValue ? value.Value.ToString() : "(inherit)";
+        }
+
         private void OnCommonExportDirectoryChanged(ChangeEvent<string> evt)
         {
             ApplyCommonExportDirectory(evt.newValue?.Trim() ?? string.Empty);
@@ -2093,6 +2226,7 @@ namespace TorusEdison.Editor.Windows
                 _projectConfig.AutoRefreshAfterExport = evt.newValue;
                 SaveProjectConfig();
                 GameAudioDiagnosticLogger.Verbose("Settings", $"Auto refresh after export set to {evt.newValue}.");
+                _inspectorStateKey = string.Empty;
                 RefreshView();
             }
             catch (Exception exception)

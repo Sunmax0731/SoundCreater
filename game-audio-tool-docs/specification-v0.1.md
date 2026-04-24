@@ -718,6 +718,8 @@ JSONのルートには必ず以下を含める。
 | preferredSampleRate | 優先サンプルレート | 共通設定継承 |
 | preferredChannelMode | 優先チャンネル | 共通設定継承 |
 
+`preferredSampleRate` と `preferredChannelMode` は、新規プロジェクト作成時の既定値として使う。既存 `.gats.json` を開いた場合は、ファイル内の `sampleRate` / `channelMode` を優先する。
+
 ### 19.4 保存先
 
 - 共通設定: `%AppData%/Local/GameAudioTool/config.json`

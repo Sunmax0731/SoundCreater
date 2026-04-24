@@ -195,6 +195,29 @@ namespace TorusEdison.Editor.Tests
         }
 
         [Test]
+        public void ProjectFactory_UsesProjectConfigOverridesForNewProjectDefaults()
+        {
+            var commonConfig = new GameAudioCommonConfig
+            {
+                DefaultSampleRate = 48000,
+                DefaultChannelMode = GameAudioChannelMode.Stereo
+            };
+
+            var projectConfig = new GameAudioProjectConfig
+            {
+                PreferredSampleRate = 44100,
+                PreferredChannelMode = GameAudioChannelMode.Mono
+            };
+
+            GameAudioProject project = GameAudioProjectFactory.CreateDefaultProject(
+                GameAudioConfigResolver.ResolveSampleRate(commonConfig, projectConfig),
+                GameAudioConfigResolver.ResolveChannelMode(commonConfig, projectConfig));
+
+            Assert.That(project.SampleRate, Is.EqualTo(44100));
+            Assert.That(project.ChannelMode, Is.EqualTo(GameAudioChannelMode.Mono));
+        }
+
+        [Test]
         public void Localization_ResolveLanguage_UsesOverrideBeforeUnityLanguage()
         {
             Assert.That(GameAudioLocalization.ResolveLanguage(GameAudioLanguageMode.Japanese), Is.EqualTo(GameAudioDisplayLanguage.Japanese));

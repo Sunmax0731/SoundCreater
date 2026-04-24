@@ -96,8 +96,10 @@
 
 - BPM
 - Total Bars
-- Sample Rate
-- Channel Mode
+- 現在のプロジェクトの Sample Rate
+- 現在のプロジェクトの Channel Mode
+- 新規プロジェクト用 Sample Rate 上書き
+- 新規プロジェクト用 Channel Mode 上書き
 - 表示言語
 - Debug Mode / Log Level
 - Foundation Status
@@ -179,6 +181,7 @@ Export 画面には、Unity に取り込んだ `AudioClip` アセットを 8-bit
 - プロジェクト設定: `ProjectSettings/GameAudioToolSettings.json`
 
 プロジェクト設定は、サンプルレート、チャンネルモード、出力先、`Assets/` 自動リフレッシュ設定などで共通設定より優先されます。
+サンプルレートとチャンネルモードの上書きは、`New` で新規プロジェクトを作るときに使われます。既存の `.gats.json` を開いた場合は、ファイル内に保存されたサンプルレートとチャンネルモードが使われます。
 
 ## サンプル
 

@@ -10,6 +10,7 @@
 - タイムラインの footer や helper row のような補助領域は、通常の track hit-test から除外する。`trackCount` をそのまま配列 index として使う経路を残さない。
 - release prep では、package version、`GameAudioToolInfo.ToolVersion`、sample の `toolVersion`、README / manual / release body / BOOTH 紹介文を同じ作業単位で更新する。版番号だけ先に進めない。
 - Save / Save As / WAV export / 8-bit conversion でユーザー由来の名前をファイル名にする場合は、`GameAudioValidationUtility.SanitizeExportFileName` を通す。Windows 予約名、先頭末尾のドット、空白だけの名前もテスト対象に含める。
+- ProjectSettings の `preferredSampleRate` / `preferredChannelMode` は New 作成時の既定値 override として扱う。既存 `.gats.json` 読み込み時はファイル内の `sampleRate` / `channelMode` を優先し、UI・Manual・仕様書の説明をこの契約に合わせる。
 
 
 ## 目的
