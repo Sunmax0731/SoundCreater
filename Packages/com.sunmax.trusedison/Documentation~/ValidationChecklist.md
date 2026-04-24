@@ -148,15 +148,19 @@ Keyboard shortcut check:
 5. Add a track with `+ Add Track`
 6. Select the new track header and delete the empty track from the Selection Inspector
 7. Add another track, create a note on it, then delete the selected track and confirm the warning dialog
-8. Duplicate the note with `Ctrl+D`
-9. Delete one note
-10. Undo and redo the changes
+8. Change Bars with the Edit page `-` / `+` controls
+9. Drag the timeline right edge to shorten or extend Bars
+10. Duplicate the note with `Ctrl+D`
+11. Delete one note
+12. Undo and redo the changes
 
 Expected:
 
 - note creation, move, resize, duplicate, delete, track add, and track delete all work
 - deleting the final remaining track is disabled or rejected
 - deleting a track with notes asks for confirmation before the project changes
+- Bars changes from buttons, direct input, Settings slider, and right-edge drag are undoable
+- shortening Bars does not delete existing notes; notes outside the active range are restored when Bars is extended again
 - selection state remains consistent
 - undo / redo returns the project to the expected state
 

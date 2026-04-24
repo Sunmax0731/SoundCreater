@@ -30,6 +30,7 @@ namespace TorusEdison.Editor.Windows
         private const float TimelinePixelsPerBeat = 24.0f;
         private const float TimelineViewportHeight = 340.0f;
         private const float TimelineResizeHandleWidth = 6.0f;
+        private const int TimelineProjectLengthResizeSlackBars = 4;
         private const float TimelineFooterHeight = 34.0f;
         private const float InspectorValueWidth = 92.0f;
         private const float PreviewWaveformHeight = 108.0f;
@@ -110,6 +111,8 @@ namespace TorusEdison.Editor.Windows
         private Button _undoButton;
         private Button _redoButton;
         private Button _gridButton;
+        private Button _barsDecrementButton;
+        private Button _barsIncrementButton;
         private VisualElement _selectionInspectorContainer;
         private VisualElement _projectInspectorContainer;
         private IMGUIContainer _timelineSurface;
@@ -371,11 +374,26 @@ namespace TorusEdison.Editor.Windows
             };
             _timelineBarsField.style.width = 72.0f;
             _timelineBarsField.RegisterValueChangedCallback(OnTimelineBarsChanged);
-            actionRow.Add(CreateToolbarValueGroup(T("timeline.bars", "Bars"), _timelineBarsField));
+
+            var barsControls = new VisualElement();
+            barsControls.style.flexDirection = FlexDirection.Row;
+            barsControls.style.alignItems = Align.Center;
+            _barsDecrementButton = CreateCompactActionButton("-", () => StepTimelineBars(-1));
+            _barsDecrementButton.tooltip = T("timeline.decreaseBars", "Decrease Bars");
+            _barsDecrementButton.style.minWidth = 28.0f;
+            _barsDecrementButton.style.width = 28.0f;
+            _barsIncrementButton = CreateCompactActionButton("+", () => StepTimelineBars(1));
+            _barsIncrementButton.tooltip = T("timeline.increaseBars", "Increase Bars");
+            _barsIncrementButton.style.minWidth = 28.0f;
+            _barsIncrementButton.style.width = 28.0f;
+            barsControls.Add(_barsDecrementButton);
+            barsControls.Add(_timelineBarsField);
+            barsControls.Add(_barsIncrementButton);
+            actionRow.Add(CreateToolbarValueGroup(T("timeline.bars", "Bars"), barsControls));
 
             panel.Add(actionRow);
             panel.Add(CreateInspectorHelpBox(
-                T("timeline.lengthHelp", "Use the Bars field here or the Total Bars field in Settings to change project length."),
+                T("timeline.lengthHelp", "Use the Bars controls here, the Total Bars field in Settings, or drag the timeline right edge to change project length."),
                 HelpBoxMessageType.Info));
 
             _timelineSurface = new IMGUIContainer(DrawTimelineGui)
@@ -2614,16 +2632,42 @@ namespace TorusEdison.Editor.Windows
 
         private void OnTimelineBarsChanged(ChangeEvent<int> evt)
         {
+            SetProjectTotalBars(evt.newValue, "Set Total Bars");
+        }
+
+        private void StepTimelineBars(int delta)
+        {
             GameAudioProject project = CurrentProject;
-            if (project == null || project.TotalBars == evt.newValue)
+            if (project == null)
             {
                 return;
             }
 
+            SetProjectTotalBars(
+                project.TotalBars + delta,
+                delta < 0 ? "Decrease Total Bars" : "Increase Total Bars");
+        }
+
+        private void SetProjectTotalBars(int requestedBars, string displayName)
+        {
+            GameAudioProject project = CurrentProject;
+            if (project == null)
+            {
+                return;
+            }
+
+            int clampedBars = GameAudioValidationUtility.ClampInt(requestedBars, 1, GameAudioToolInfo.MaxTotalBars);
+            if (project.TotalBars == clampedBars)
+            {
+                NotifyClamp("Total Bars", requestedBars, clampedBars);
+                RefreshView();
+                return;
+            }
+
             TryApplyProjectChange(
-                "Set Total Bars",
-                current => current.TotalBars = evt.newValue,
-                actualProject => NotifyClamp("Total Bars", evt.newValue, actualProject.TotalBars));
+                displayName,
+                current => current.TotalBars = requestedBars,
+                actualProject => NotifyClamp("Total Bars", requestedBars, actualProject.TotalBars));
         }
 
         private void ExportWav()
@@ -2893,7 +2937,7 @@ namespace TorusEdison.Editor.Windows
         {
             GameAudioTimelineHelpWindow.Open(
                 _displayLanguage,
-                TF("status.timelineHint", "Grid {0} | Selected {1} note(s) | Drag empty lane to create | Drag note to move | Drag edge to resize | + Add Track in the footer | Ctrl+D duplicate | Delete removes selected notes or selected track | Ctrl+Z / Ctrl+Y undo redo", _currentGridDivision, _selectedNoteIds.Count));
+                TF("status.timelineHint", "Grid {0} | Selected {1} note(s) | Drag empty lane to create | Drag note to move | Drag note edge to resize | Drag timeline right edge to change Bars | + Add Track in the footer | Ctrl+D duplicate | Delete removes selected notes or selected track | Ctrl+Z / Ctrl+Y undo redo", _currentGridDivision, _selectedNoteIds.Count));
         }
 
         private void DuplicateSelectedNotes()
@@ -3175,6 +3219,7 @@ namespace TorusEdison.Editor.Windows
             renderedNotes = BuildRenderedNotes(project, metrics);
 
             DrawTimelineBackground(project, metrics);
+            DrawTimelineProjectLengthHandle(metrics);
             DrawTimelineTrackHeaders(project, metrics);
             DrawTimelineNotes(renderedNotes);
             DrawCreatePreview(project, metrics);
@@ -3261,6 +3306,29 @@ namespace TorusEdison.Editor.Windows
                 float y = metrics.GetTrackY(trackIndex);
                 EditorGUI.DrawRect(new Rect(0.0f, y, metrics.ContentWidth, 1.0f), new Color(0.20f, 0.20f, 0.20f));
                 EditorGUI.DrawRect(metrics.GetLaneRect(trackIndex), trackIndex % 2 == 0 ? new Color(0.11f, 0.11f, 0.11f) : new Color(0.13f, 0.13f, 0.13f));
+            }
+        }
+
+        private void DrawTimelineProjectLengthHandle(TimelineMetrics metrics)
+        {
+            int displayBars = _timelineDragState?.Mode == TimelineInteractionMode.ResizingProjectLength
+                ? _timelineDragState.CurrentTotalBars
+                : metrics.TotalBars;
+            Rect handleRect = metrics.GetProjectLengthHandleRect(displayBars);
+            Color handleColor = _timelineDragState?.Mode == TimelineInteractionMode.ResizingProjectLength
+                ? new Color(1.0f, 0.75f, 0.22f, 0.95f)
+                : new Color(0.65f, 0.65f, 0.55f, 0.85f);
+
+            EditorGUI.DrawRect(new Rect(handleRect.center.x - 1.0f, metrics.RulerHeight, 2.0f, metrics.TrackAreaHeight + metrics.FooterHeight), handleColor);
+            EditorGUI.DrawRect(new Rect(handleRect.x, metrics.RulerHeight, handleRect.width, 8.0f), handleColor);
+            EditorGUIUtility.AddCursorRect(metrics.GetProjectLengthHandleRect(metrics.TotalBars), MouseCursor.ResizeHorizontal);
+
+            if (_timelineDragState?.Mode == TimelineInteractionMode.ResizingProjectLength)
+            {
+                GUI.Label(
+                    new Rect(handleRect.x + 8.0f, 4.0f, 96.0f, metrics.RulerHeight - 6.0f),
+                    TF("timeline.barsPreview", "{0} bars", displayBars),
+                    EditorStyles.miniBoldLabel);
             }
         }
 
@@ -3471,6 +3539,14 @@ namespace TorusEdison.Editor.Windows
                 return;
             }
 
+            if (metrics.GetProjectLengthHandleRect(metrics.TotalBars).Contains(contentMouse))
+            {
+                BeginProjectLengthResizeInteraction(metrics);
+                evt.Use();
+                RefreshView();
+                return;
+            }
+
             if (trackIndex >= 0 && contentMouse.x < metrics.HeaderWidth)
             {
                 _selectedTrackId = CurrentProject.Tracks[trackIndex].Id;
@@ -3486,11 +3562,27 @@ namespace TorusEdison.Editor.Windows
                 return;
             }
 
+            if (contentMouse.x > metrics.GetProjectEndX(metrics.TotalBars))
+            {
+                return;
+            }
+
             _selectedTrackId = CurrentProject.Tracks[trackIndex].Id;
             _selectedNoteIds.Clear();
             BeginCreateInteraction(trackIndex, metrics.GetBeatFromContentX(contentMouse.x));
             evt.Use();
             RefreshView();
+        }
+
+        private void BeginProjectLengthResizeInteraction(TimelineMetrics metrics)
+        {
+            _selectedNoteIds.Clear();
+            _timelineDragState = new TimelineDragState
+            {
+                Mode = TimelineInteractionMode.ResizingProjectLength,
+                AnchorTotalBars = metrics.TotalBars,
+                CurrentTotalBars = metrics.TotalBars
+            };
         }
 
         private void BeginCreateInteraction(int trackIndex, float beat)
@@ -3568,6 +3660,9 @@ namespace TorusEdison.Editor.Windows
                 case TimelineInteractionMode.ResizingLeft:
                 case TimelineInteractionMode.ResizingRight:
                     UpdateResizePreview(contentMouse, metrics, disableSnap);
+                    break;
+                case TimelineInteractionMode.ResizingProjectLength:
+                    _timelineDragState.CurrentTotalBars = metrics.GetTotalBarsFromContentX(contentMouse.x);
                     break;
             }
         }
@@ -3669,6 +3764,9 @@ namespace TorusEdison.Editor.Windows
                     case TimelineInteractionMode.ResizingRight:
                         CommitMoveOrResize();
                         break;
+                    case TimelineInteractionMode.ResizingProjectLength:
+                        CommitProjectLengthResize();
+                        break;
                 }
             }
             catch (Exception exception)
@@ -3677,6 +3775,18 @@ namespace TorusEdison.Editor.Windows
                 CancelTimelineInteraction();
                 RefreshView();
             }
+        }
+
+        private void CommitProjectLengthResize()
+        {
+            if (_timelineDragState.CurrentTotalBars == _timelineDragState.AnchorTotalBars)
+            {
+                CancelTimelineInteraction();
+                RefreshView();
+                return;
+            }
+
+            SetProjectTotalBars(_timelineDragState.CurrentTotalBars, "Resize Total Bars");
         }
 
         private void CommitCreateNote(TimelineMetrics metrics)
@@ -3972,6 +4082,8 @@ namespace TorusEdison.Editor.Windows
             _toolbarGridField?.SetValueWithoutNotify(GameAudioTimelineGridUtility.NormalizeDivision(_currentGridDivision));
             _toolbarLoopToggle?.SetValueWithoutNotify(project.LoopPlayback);
             _timelineBarsField?.SetValueWithoutNotify(project.TotalBars);
+            _barsDecrementButton?.SetEnabled(project.TotalBars > 1);
+            _barsIncrementButton?.SetEnabled(project.TotalBars < GameAudioToolInfo.MaxTotalBars);
             _loopToggle.SetValueWithoutNotify(project.LoopPlayback);
             if (_commonExportDirectoryField != null)
             {
@@ -4500,6 +4612,8 @@ namespace TorusEdison.Editor.Windows
             public int AnchorTrackIndex;
             public float AnchorBeat;
             public float CurrentBeat;
+            public int AnchorTotalBars;
+            public int CurrentTotalBars;
             public List<TimelineNoteOrigin> Origins = new List<TimelineNoteOrigin>();
             public Dictionary<string, TimelinePreviewPlacement> PreviewPlacements = new Dictionary<string, TimelinePreviewPlacement>(StringComparer.Ordinal);
         }
@@ -4510,7 +4624,8 @@ namespace TorusEdison.Editor.Windows
             CreatingNote,
             MovingNotes,
             ResizingLeft,
-            ResizingRight
+            ResizingRight,
+            ResizingProjectLength
         }
 
         private enum TimelineHitEdge
@@ -4536,7 +4651,9 @@ namespace TorusEdison.Editor.Windows
                 FooterHeight = TimelineFooterHeight;
                 NoteHeight = TimelineNoteHeight;
                 PixelsPerBeat = TimelinePixelsPerBeat;
-                TimelineWidth = Math.Max(640.0f, TotalBeats * PixelsPerBeat);
+                float projectWidth = TotalBeats * PixelsPerBeat;
+                float resizeSlackWidth = TimelineProjectLengthResizeSlackBars * BeatsPerBar * PixelsPerBeat;
+                TimelineWidth = Math.Max(640.0f, projectWidth + resizeSlackWidth);
                 ContentWidth = HeaderWidth + TimelineWidth + 24.0f;
                 ContentHeight = RulerHeight + (trackCount * RowHeight) + FooterHeight + 8.0f;
             }
@@ -4567,6 +4684,8 @@ namespace TorusEdison.Editor.Windows
 
             public float ContentHeight { get; }
 
+            public float TrackAreaHeight => TrackCount * RowHeight;
+
             public float GetTrackY(int trackIndex)
             {
                 return RulerHeight + (trackIndex * RowHeight);
@@ -4575,6 +4694,22 @@ namespace TorusEdison.Editor.Windows
             public Rect GetLaneRect(int trackIndex)
             {
                 return new Rect(HeaderWidth, GetTrackY(trackIndex), TimelineWidth, RowHeight);
+            }
+
+            public float GetProjectEndX(int totalBars)
+            {
+                int clampedBars = Mathf.Clamp(totalBars, 1, GameAudioToolInfo.MaxTotalBars);
+                return HeaderWidth + (clampedBars * BeatsPerBar * PixelsPerBeat);
+            }
+
+            public Rect GetProjectLengthHandleRect(int totalBars)
+            {
+                float x = GetProjectEndX(totalBars);
+                return new Rect(
+                    x - TimelineResizeHandleWidth,
+                    RulerHeight,
+                    TimelineResizeHandleWidth * 2.0f,
+                    TrackAreaHeight + FooterHeight);
             }
 
             public Rect GetHeaderRect(int trackIndex)
@@ -4598,6 +4733,12 @@ namespace TorusEdison.Editor.Windows
             public float GetBeatFromContentX(float contentX)
             {
                 return Mathf.Clamp((contentX - HeaderWidth) / PixelsPerBeat, 0.0f, TotalBeats);
+            }
+
+            public int GetTotalBarsFromContentX(float contentX)
+            {
+                float rawBars = (contentX - HeaderWidth) / Mathf.Max(1.0f, BeatsPerBar * PixelsPerBeat);
+                return Mathf.Clamp(Mathf.RoundToInt(rawBars), 1, GameAudioToolInfo.MaxTotalBars);
             }
 
             public int GetTrackIndex(float contentY)
