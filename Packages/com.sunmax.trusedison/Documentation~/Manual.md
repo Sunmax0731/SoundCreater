@@ -185,6 +185,19 @@ Common settings store the startup guide flag, remember-last-project flag, last r
 Project settings override common defaults for sample rate, channel mode, export directory, and auto-refresh behavior.
 The sample rate and channel mode overrides are used when `New` creates a project. Existing `.gats.json` files keep the sample rate and channel mode stored in the project file.
 
+## Project File Compatibility
+
+`.gats.json` loading accepts `formatVersion` values in the supported major line, currently `1.x.x`.
+
+Compatibility rules:
+
+- `formatVersion`, the `project` object, and `project.name` are required
+- different major versions are rejected
+- unknown fields are ignored
+- known fields are type-checked when present
+- missing optional fields use domain defaults and warnings when the fallback changes project behavior
+- `defaultVoice` and delay settings can be omitted in older `1.x` files and are rebuilt from current defaults
+
 ## Samples
 
 Bundled samples:

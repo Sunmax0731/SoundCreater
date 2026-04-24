@@ -1,6 +1,8 @@
 # Skill.md
 ## Session Learnings
 
+- For `.gats.json` compatibility, keep `formatVersion`, `project`, and `project.name` as hard schema requirements. Optional same-major fields should be type-checked when present and migrated through serializer defaults/warnings when missing.
+
 - 新しい表示文言は `GameAudioLocalization` 経由で管理し、`GameAudioToolWindow` に日英中の文言を直書きしない。
 - 表示言語モードは `GameAudioLanguageMode` の `Auto + Override` を前提にし、Auto では editor language を優先し、取得できない場合のみ `UnityEngine.Application.systemLanguage` に fallback する。
 - `UnityEditor.LocalizationDatabase` はこの Unity 系列で直接参照できないことがある。compile-time 参照は避け、`typeof(EditorWindow).Assembly.GetType(...)` を使って localization 層の内部で reflection 解決する。

@@ -296,7 +296,7 @@ namespace TorusEdison.Editor.Persistence
             track.Pan = dto == null
                 ? 0.0f
                 : ReadClamped(dto.pan, -1.0f, 1.0f, 0.0f, warnings, $"track[{trackIndex}].pan");
-            track.DefaultVoice = dto?.defaultVoice == null
+            track.DefaultVoice = !HasVoicePayload(dto?.defaultVoice)
                 ? WithWarning(GameAudioProjectFactory.CreateDefaultVoice(), warnings, $"track[{trackIndex}].defaultVoice missing; default voice was applied.")
                 : FromDto(dto.defaultVoice, warnings, $"track[{trackIndex}].defaultVoice");
 
@@ -364,6 +364,7 @@ namespace TorusEdison.Editor.Persistence
 
         private static GameAudioEffectSettings FromDto(GameAudioEffectDto dto, List<string> warnings, string path)
         {
+            GameAudioDelayDto delayDto = HasDelayPayload(dto?.delay) ? dto.delay : null;
             return new GameAudioEffectSettings
             {
                 VolumeDb = dto == null ? 0.0f : ReadClamped(dto.volumeDb, -48.0f, 6.0f, 0.0f, warnings, $"{path}.volumeDb"),
@@ -371,12 +372,17 @@ namespace TorusEdison.Editor.Persistence
                 PitchSemitone = dto == null ? 0.0f : ReadClamped(dto.pitchSemitone, -24.0f, 24.0f, 0.0f, warnings, $"{path}.pitchSemitone"),
                 FadeInMs = dto == null ? 0 : ReadClamped(dto.fadeInMs, 0, 3000, 0, warnings, $"{path}.fadeInMs"),
                 FadeOutMs = dto == null ? 0 : ReadClamped(dto.fadeOutMs, 0, 3000, 0, warnings, $"{path}.fadeOutMs"),
-                Delay = FromDto(dto?.delay, warnings, $"{path}.delay")
+                Delay = FromDto(delayDto, warnings, $"{path}.delay")
             };
         }
 
         private static GameAudioDelaySettings FromDto(GameAudioDelayDto dto, List<string> warnings, string path)
         {
+            if (dto == null)
+            {
+                warnings.Add($"{path} missing; default delay was applied.");
+            }
+
             return new GameAudioDelaySettings
             {
                 Enabled = dto != null && dto.enabled,

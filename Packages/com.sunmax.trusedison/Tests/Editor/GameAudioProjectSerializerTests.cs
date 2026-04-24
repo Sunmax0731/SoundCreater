@@ -119,6 +119,69 @@ namespace TorusEdison.Editor.Tests
         }
 
         [Test]
+        public void Deserialize_AllowsSameMajorCompatibilityJsonWithFallbackWarnings()
+        {
+            const string json = @"{
+  ""formatVersion"": ""1.0.0"",
+  ""project"": {
+    ""name"": ""Compat"",
+    ""futureProjectField"": ""ignored"",
+    ""tracks"": [
+      {
+        ""id"": ""track-001"",
+        ""name"": ""Lead"",
+        ""notes"": [
+          {
+            ""id"": ""note-001"",
+            ""startBeat"": 0.0,
+            ""durationBeat"": 1.0,
+            ""midiNote"": 60,
+            ""velocity"": 0.8,
+            ""voiceOverride"": {
+              ""waveform"": ""Triangle"",
+              ""effect"": {}
+            }
+          }
+        ]
+      }
+    ]
+  }
+}";
+
+            var serializer = new GameAudioProjectSerializer();
+            GameAudioProjectLoadResult result = serializer.Deserialize(json);
+
+            Assert.That(result.Project.Name, Is.EqualTo("Compat"));
+            Assert.That(result.Project.SampleRate, Is.EqualTo(GameAudioToolInfo.DefaultSampleRate));
+            Assert.That(result.Project.ChannelMode, Is.EqualTo(GameAudioChannelMode.Stereo));
+            Assert.That(result.Project.MasterGainDb, Is.EqualTo(0.0f));
+            Assert.That(result.Project.LoopPlayback, Is.False);
+            Assert.That(result.Project.Tracks[0].DefaultVoice, Is.Not.Null);
+            Assert.That(result.Project.Tracks[0].Notes[0].VoiceOverride.Waveform, Is.EqualTo(GameAudioWaveformType.Triangle));
+            Assert.That(result.Project.Tracks[0].Notes[0].VoiceOverride.Effect.Delay.TimeMs, Is.EqualTo(180));
+            Assert.That(result.Warnings, Has.Some.EqualTo("track[1].defaultVoice missing; default voice was applied."));
+            Assert.That(result.Warnings, Has.Some.EqualTo("track[1].notes[0].voiceOverride.effect.delay missing; default delay was applied."));
+        }
+
+        [Test]
+        public void Deserialize_RejectsPresentOptionalFieldWithWrongType()
+        {
+            const string json = @"{
+  ""formatVersion"": ""1.0.0"",
+  ""project"": {
+    ""name"": ""Compat"",
+    ""masterGainDb"": ""loud"",
+    ""tracks"": []
+  }
+}";
+
+            var serializer = new GameAudioProjectSerializer();
+            GameAudioPersistenceException exception = Assert.Throws<GameAudioPersistenceException>(() => serializer.Deserialize(json));
+
+            StringAssert.Contains("$.project.masterGainDb must be a number.", exception.Message);
+        }
+
+        [Test]
         public void Deserialize_ClampsOutOfRangeValues_AndSortsNotes()
         {
             const string json = @"{

@@ -13,7 +13,7 @@ namespace TorusEdison.Editor.Persistence
             RequireObject(root, "$");
 
             RequireString(root, "$", "formatVersion");
-            RequireString(root, "$", "toolVersion");
+            OptionalString(root, "$", "toolVersion");
 
             GameAudioJsonNode project = RequireObjectProperty(root, "$", "project");
             ValidateProject(project, "$.project");
@@ -21,72 +21,81 @@ namespace TorusEdison.Editor.Persistence
 
         private static void ValidateProject(GameAudioJsonNode node, string path)
         {
-            RequireString(node, path, "id");
+            OptionalString(node, path, "id");
             RequireString(node, path, "name");
-            RequireNumber(node, path, "bpm");
-            GameAudioJsonNode timeSignature = RequireObjectProperty(node, path, "timeSignature");
-            RequireNumber(timeSignature, $"{path}.timeSignature", "numerator");
-            RequireNumber(timeSignature, $"{path}.timeSignature", "denominator");
-            RequireNumber(node, path, "totalBars");
-            RequireNumber(node, path, "sampleRate");
-            RequireString(node, path, "channelMode");
-            RequireNumber(node, path, "masterGainDb");
-            RequireBoolean(node, path, "loopPlayback");
-            if (TryGetProperty(node, "importedAudioConversion", out GameAudioJsonNode importedAudioConversion)
-                && importedAudioConversion.Kind != GameAudioJsonKind.Null)
+            OptionalNumber(node, path, "bpm");
+            if (TryGetOptionalObject(node, path, "timeSignature", out GameAudioJsonNode timeSignature))
+            {
+                OptionalNumber(timeSignature, $"{path}.timeSignature", "numerator");
+                OptionalNumber(timeSignature, $"{path}.timeSignature", "denominator");
+            }
+
+            OptionalNumber(node, path, "totalBars");
+            OptionalNumber(node, path, "sampleRate");
+            OptionalString(node, path, "channelMode");
+            OptionalNumber(node, path, "masterGainDb");
+            OptionalBoolean(node, path, "loopPlayback");
+            if (TryGetOptionalObject(node, path, "importedAudioConversion", out GameAudioJsonNode importedAudioConversion))
             {
                 ValidateImportedAudioConversion(importedAudioConversion, $"{path}.importedAudioConversion");
             }
 
-            GameAudioJsonNode tracks = RequireArrayProperty(node, path, "tracks");
-            for (int index = 0; index < tracks.Items.Count; index++)
+            if (TryGetOptionalArray(node, path, "tracks", out GameAudioJsonNode tracks))
             {
-                ValidateTrack(tracks.Items[index], $"{path}.tracks[{index}]");
+                for (int index = 0; index < tracks.Items.Count; index++)
+                {
+                    ValidateTrack(tracks.Items[index], $"{path}.tracks[{index}]");
+                }
             }
         }
 
         private static void ValidateImportedAudioConversion(GameAudioJsonNode node, string path)
         {
             RequireObject(node, path);
-            RequireString(node, path, "sourceClipName");
-            RequireString(node, path, "sourceAssetPath");
-            RequireNumber(node, path, "sourceSampleRate");
-            RequireNumber(node, path, "sourceChannelCount");
-            RequireNumber(node, path, "sourceDurationSeconds");
-            RequireNumber(node, path, "targetSampleRate");
-            RequireString(node, path, "targetChannelMode");
-            RequireNumber(node, path, "outputChannelCount");
-            RequireString(node, path, "outputWaveFileName");
+            OptionalString(node, path, "sourceClipName");
+            OptionalString(node, path, "sourceAssetPath");
+            OptionalNumber(node, path, "sourceSampleRate");
+            OptionalNumber(node, path, "sourceChannelCount");
+            OptionalNumber(node, path, "sourceDurationSeconds");
+            OptionalNumber(node, path, "targetSampleRate");
+            OptionalString(node, path, "targetChannelMode");
+            OptionalNumber(node, path, "outputChannelCount");
+            OptionalString(node, path, "outputWaveFileName");
         }
 
         private static void ValidateTrack(GameAudioJsonNode node, string path)
         {
             RequireObject(node, path);
-            RequireString(node, path, "id");
-            RequireString(node, path, "name");
-            RequireBoolean(node, path, "mute");
-            RequireBoolean(node, path, "solo");
-            RequireNumber(node, path, "volumeDb");
-            RequireNumber(node, path, "pan");
-            ValidateVoice(RequireObjectProperty(node, path, "defaultVoice"), $"{path}.defaultVoice");
-
-            GameAudioJsonNode notes = RequireArrayProperty(node, path, "notes");
-            for (int index = 0; index < notes.Items.Count; index++)
+            OptionalString(node, path, "id");
+            OptionalString(node, path, "name");
+            OptionalBoolean(node, path, "mute");
+            OptionalBoolean(node, path, "solo");
+            OptionalNumber(node, path, "volumeDb");
+            OptionalNumber(node, path, "pan");
+            if (TryGetOptionalObject(node, path, "defaultVoice", out GameAudioJsonNode defaultVoice))
             {
-                ValidateNote(notes.Items[index], $"{path}.notes[{index}]");
+                ValidateVoice(defaultVoice, $"{path}.defaultVoice");
+            }
+
+            if (TryGetOptionalArray(node, path, "notes", out GameAudioJsonNode notes))
+            {
+                for (int index = 0; index < notes.Items.Count; index++)
+                {
+                    ValidateNote(notes.Items[index], $"{path}.notes[{index}]");
+                }
             }
         }
 
         private static void ValidateNote(GameAudioJsonNode node, string path)
         {
             RequireObject(node, path);
-            RequireString(node, path, "id");
-            RequireNumber(node, path, "startBeat");
-            RequireNumber(node, path, "durationBeat");
-            RequireNumber(node, path, "midiNote");
-            RequireNumber(node, path, "velocity");
+            OptionalString(node, path, "id");
+            OptionalNumber(node, path, "startBeat");
+            OptionalNumber(node, path, "durationBeat");
+            OptionalNumber(node, path, "midiNote");
+            OptionalNumber(node, path, "velocity");
 
-            if (TryGetProperty(node, "voiceOverride", out GameAudioJsonNode voiceOverride) && voiceOverride.Kind != GameAudioJsonKind.Null)
+            if (TryGetOptionalObject(node, path, "voiceOverride", out GameAudioJsonNode voiceOverride))
             {
                 ValidateVoice(voiceOverride, $"{path}.voiceOverride");
             }
@@ -95,42 +104,52 @@ namespace TorusEdison.Editor.Persistence
         private static void ValidateVoice(GameAudioJsonNode node, string path)
         {
             RequireObject(node, path);
-            RequireString(node, path, "waveform");
-            RequireNumber(node, path, "pulseWidth");
-            RequireBoolean(node, path, "noiseEnabled");
-            RequireString(node, path, "noiseType");
-            RequireNumber(node, path, "noiseMix");
-            ValidateEnvelope(RequireObjectProperty(node, path, "adsr"), $"{path}.adsr");
-            ValidateEffect(RequireObjectProperty(node, path, "effect"), $"{path}.effect");
+            OptionalString(node, path, "waveform");
+            OptionalNumber(node, path, "pulseWidth");
+            OptionalBoolean(node, path, "noiseEnabled");
+            OptionalString(node, path, "noiseType");
+            OptionalNumber(node, path, "noiseMix");
+            if (TryGetOptionalObject(node, path, "adsr", out GameAudioJsonNode adsr))
+            {
+                ValidateEnvelope(adsr, $"{path}.adsr");
+            }
+
+            if (TryGetOptionalObject(node, path, "effect", out GameAudioJsonNode effect))
+            {
+                ValidateEffect(effect, $"{path}.effect");
+            }
         }
 
         private static void ValidateEnvelope(GameAudioJsonNode node, string path)
         {
             RequireObject(node, path);
-            RequireNumber(node, path, "attackMs");
-            RequireNumber(node, path, "decayMs");
-            RequireNumber(node, path, "sustain");
-            RequireNumber(node, path, "releaseMs");
+            OptionalNumber(node, path, "attackMs");
+            OptionalNumber(node, path, "decayMs");
+            OptionalNumber(node, path, "sustain");
+            OptionalNumber(node, path, "releaseMs");
         }
 
         private static void ValidateEffect(GameAudioJsonNode node, string path)
         {
             RequireObject(node, path);
-            RequireNumber(node, path, "volumeDb");
-            RequireNumber(node, path, "pan");
-            RequireNumber(node, path, "pitchSemitone");
-            RequireNumber(node, path, "fadeInMs");
-            RequireNumber(node, path, "fadeOutMs");
-            ValidateDelay(RequireObjectProperty(node, path, "delay"), $"{path}.delay");
+            OptionalNumber(node, path, "volumeDb");
+            OptionalNumber(node, path, "pan");
+            OptionalNumber(node, path, "pitchSemitone");
+            OptionalNumber(node, path, "fadeInMs");
+            OptionalNumber(node, path, "fadeOutMs");
+            if (TryGetOptionalObject(node, path, "delay", out GameAudioJsonNode delay))
+            {
+                ValidateDelay(delay, $"{path}.delay");
+            }
         }
 
         private static void ValidateDelay(GameAudioJsonNode node, string path)
         {
             RequireObject(node, path);
-            RequireBoolean(node, path, "enabled");
-            RequireNumber(node, path, "timeMs");
-            RequireNumber(node, path, "feedback");
-            RequireNumber(node, path, "mix");
+            OptionalBoolean(node, path, "enabled");
+            OptionalNumber(node, path, "timeMs");
+            OptionalNumber(node, path, "feedback");
+            OptionalNumber(node, path, "mix");
         }
 
         private static void RequireObject(GameAudioJsonNode node, string path)
@@ -166,6 +185,31 @@ namespace TorusEdison.Editor.Persistence
             return RequirePropertyKind(node, path, propertyName, GameAudioJsonKind.Array);
         }
 
+        private static void OptionalString(GameAudioJsonNode node, string path, string propertyName)
+        {
+            OptionalPropertyKind(node, path, propertyName, GameAudioJsonKind.String);
+        }
+
+        private static void OptionalNumber(GameAudioJsonNode node, string path, string propertyName)
+        {
+            OptionalPropertyKind(node, path, propertyName, GameAudioJsonKind.Number);
+        }
+
+        private static void OptionalBoolean(GameAudioJsonNode node, string path, string propertyName)
+        {
+            OptionalPropertyKind(node, path, propertyName, GameAudioJsonKind.Boolean);
+        }
+
+        private static bool TryGetOptionalObject(GameAudioJsonNode node, string path, string propertyName, out GameAudioJsonNode propertyValue)
+        {
+            return TryGetOptionalPropertyKind(node, path, propertyName, GameAudioJsonKind.Object, out propertyValue);
+        }
+
+        private static bool TryGetOptionalArray(GameAudioJsonNode node, string path, string propertyName, out GameAudioJsonNode propertyValue)
+        {
+            return TryGetOptionalPropertyKind(node, path, propertyName, GameAudioJsonKind.Array, out propertyValue);
+        }
+
         private static GameAudioJsonNode RequirePropertyKind(GameAudioJsonNode node, string path, string propertyName, GameAudioJsonKind expectedKind)
         {
             if (!TryGetProperty(node, propertyName, out GameAudioJsonNode propertyValue))
@@ -179,6 +223,28 @@ namespace TorusEdison.Editor.Persistence
             }
 
             return propertyValue;
+        }
+
+        private static void OptionalPropertyKind(GameAudioJsonNode node, string path, string propertyName, GameAudioJsonKind expectedKind)
+        {
+            TryGetOptionalPropertyKind(node, path, propertyName, expectedKind, out _);
+        }
+
+        private static bool TryGetOptionalPropertyKind(GameAudioJsonNode node, string path, string propertyName, GameAudioJsonKind expectedKind, out GameAudioJsonNode propertyValue)
+        {
+            propertyValue = null;
+            if (!TryGetProperty(node, propertyName, out GameAudioJsonNode candidate) || candidate.Kind == GameAudioJsonKind.Null)
+            {
+                return false;
+            }
+
+            if (candidate.Kind != expectedKind)
+            {
+                throw new GameAudioPersistenceException($"{path}.{propertyName} must be a {expectedKind.ToString().ToLowerInvariant()}.");
+            }
+
+            propertyValue = candidate;
+            return true;
         }
 
         private static bool TryGetProperty(GameAudioJsonNode node, string propertyName, out GameAudioJsonNode propertyValue)

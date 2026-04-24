@@ -1022,3 +1022,12 @@ MVP実装時点で以下の拡張余地を残す。
   }
 }
 ```
+
+## Appendix: JSON Format 1.x Compatibility Policy
+
+- Readers accept `.gats.json` files whose `formatVersion` major version is `1`.
+- Readers reject missing or invalid `formatVersion`, missing `project`, missing `project.name`, and any non-`1.x.x` major version.
+- Unknown fields are ignored so later `1.x` writers can add optional data without breaking older project files.
+- Known fields are type-checked when present. A known field with the wrong JSON type is rejected because the loader cannot distinguish user intent safely.
+- Missing optional known fields are migrated by domain defaults. This includes `toolVersion`, project audio defaults such as `masterGainDb` / `loopPlayback`, `defaultVoice`, optional `voiceOverride` subfields, and effect `delay`.
+- Fallbacks that can change audible or editor behavior should produce load warnings and be covered by compatibility tests.

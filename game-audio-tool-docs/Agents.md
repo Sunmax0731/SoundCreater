@@ -1,6 +1,8 @@
 # Agents.md
 ## Additional Session Learnings
 
+- Project JSON schema validation should require only structural fields that cannot be migrated safely (`formatVersion`, `project`, `project.name`). Same-major `1.x` optional fields should be type-checked when present, then allowed to fall through to serializer defaults and warnings when missing.
+
 - `Torus Edison` では localization と diagnostic logging が基盤機能になった。新しい表示文言は `GameAudioLocalization`、新しい診断ログは `GameAudioDiagnosticLogger` を通す。
 - 表示言語は日本語 / 英語 / 中国語の 3 言語対応とし、運用は `Auto + Override` を前提にする。Auto では editor language を優先し、必要なら system language に fallback する。
 - Windows 上の Unity headless validation は、起動した `Unity` プロセスを待機してから `-logFile` と `-testResults` を確認する。呼び出し元が先に戻っても検証完了とはみなさない。

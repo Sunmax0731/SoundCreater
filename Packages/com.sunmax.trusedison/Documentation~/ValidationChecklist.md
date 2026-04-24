@@ -32,6 +32,13 @@ Current automated coverage in this package includes:
 - diagnostic logger tests under `Tests/Editor/GameAudioDiagnosticLoggerTests.cs`
 - acceptance-scenario tests under `Tests/Editor/GameAudioAcceptanceScenarioTests.cs`
 
+JSON compatibility coverage must include:
+
+- same-major `1.x.x` project files that omit optional fields
+- fallback warnings for rebuilt optional voice/effect state
+- rejection of unsupported major versions
+- rejection of known optional fields when the field is present with the wrong JSON type
+
 Run the repository-standard automated check from the repository root:
 
 ```powershell
