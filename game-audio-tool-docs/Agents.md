@@ -1,6 +1,7 @@
 # Agents.md
 ## Additional Session Learnings
 
+- Voice presets are reusable voice/envelope/effect bundles. Apply them through existing project commands so selected-note overrides and track default voices remain Undo / Redo capable. Shared files use `.gats-preset.json`, not `.gats.json`.
 - WAV export quality UI should show source/output peak, project/output/tail length, warning state, normalize gain, and previous-export delta. Normalize is an export-only option and must not touch project state or Undo history.
 - Project JSON schema validation should require only structural fields that cannot be migrated safely (`formatVersion`, `project`, `project.name`). Same-major `1.x` optional fields should be type-checked when present, then allowed to fall through to serializer defaults and warnings when missing.
 

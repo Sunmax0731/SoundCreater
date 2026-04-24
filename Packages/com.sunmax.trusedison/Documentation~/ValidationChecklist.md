@@ -176,12 +176,15 @@ Expected:
 2. Select a track and change volume or pan
 3. Change project BPM or Total Bars
 4. Re-render preview and confirm the change is reflected
+5. Apply a built-in voice preset to a selected note and confirm Undo / Redo restores the previous voice state
+6. Apply a built-in voice preset to a selected track default voice and confirm Undo / Redo restores the previous default voice
 
 Expected:
 
 - inspector values update the active selection
 - changes affect playback after render
 - invalid values are clamped safely
+- voice preset application behaves as one undoable command
 
 ### 6. WAV Export
 

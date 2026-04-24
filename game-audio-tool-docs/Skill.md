@@ -1,6 +1,7 @@
 # Skill.md
 ## Session Learnings
 
+- Built-in voice presets belong in a small library separated from renderer/editor command logic. Applying a preset should copy voice settings into note overrides or track default voices through `ChangeNotes` / `ChangeTracks`, preserving Undo / Redo.
 - Export quality work should keep `GameAudioProjectRenderer` focused on rendering and add export-only quality / normalize behavior in `GameAudioWavExportService` or adjacent export types. Normalize must not be serialized into `.gats.json` or participate in Undo.
 - For `.gats.json` compatibility, keep `formatVersion`, `project`, and `project.name` as hard schema requirements. Optional same-major fields should be type-checked when present and migrated through serializer defaults/warnings when missing.
 

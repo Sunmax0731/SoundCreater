@@ -1039,3 +1039,11 @@ MVP実装時点で以下の拡張余地を残す。
 - Normalize is disabled by default and is treated as an export-only option. It must not change project data or Undo / Redo state.
 - Normalize applies gain toward the selected headroom after render and before WAV encoding.
 - Export comparison is session-local and compares the current export quality values with the previous export result.
+
+## Appendix: Voice Preset Policy
+
+- Built-in voice presets are available from the Selection Inspector for selected notes and selected track default voices.
+- Applying a preset to selected notes creates voice overrides when they do not already exist.
+- Preset application is a single project command, so Undo / Redo restores the previous note override or track default voice state.
+- Shared preset files use extension `.gats-preset.json`, `kind: "torusEdison.voicePreset"`, and `presetFormatVersion: "1.0.0"`.
+- User preset files should live under `%LocalAppData%/GameAudioTool/voice-presets`; project or team preset folders can be added later without conflicting with `.gats.json` project files.

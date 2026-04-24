@@ -11,6 +11,7 @@ using TorusEdison.Editor.Config;
 using TorusEdison.Editor.Domain;
 using TorusEdison.Editor.Localization;
 using TorusEdison.Editor.Persistence;
+using TorusEdison.Editor.Presets;
 using TorusEdison.Editor.Utilities;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -71,6 +72,7 @@ namespace TorusEdison.Editor.Windows
         private string _conversionOutputName = string.Empty;
         private int _conversionTargetSampleRate = 11025;
         private GameAudioConversionChannelMode _conversionChannelMode = GameAudioConversionChannelMode.Mono;
+        private string _selectedVoicePresetId = string.Empty;
 
         private Label _nameValue;
         private Label _bpmValue;
@@ -1134,8 +1136,22 @@ namespace TorusEdison.Editor.Windows
                     note => note.VoiceOverride = enabled ? note.VoiceOverride ?? GameAudioProjectFactory.CreateDefaultVoice() : null);
             });
 
+            Action<string, Action<GameAudioVoiceSettings>, Action<GameAudioVoiceSettings>> applySelectedNoteVoiceChange =
+                (displayName, applyVoiceChange, afterApply) =>
+                {
+                    TryApplySelectedNotesChange(
+                        displayName,
+                        note =>
+                        {
+                            note.VoiceOverride = note.VoiceOverride ?? GameAudioProjectFactory.CreateDefaultVoice();
+                            applyVoiceChange(note.VoiceOverride);
+                        },
+                        actualNotes => afterApply?.Invoke(actualNotes[0].Note.VoiceOverride ?? GameAudioProjectFactory.CreateDefaultVoice()));
+                };
+
             if (!allHaveOverride)
             {
+                AddVoicePresetControls(parent, applySelectedNoteVoiceChange);
                 string message = anyHaveOverride
                     ? T("inspector.note.overridePartial", "Some selected notes still use the track default voice. Enable voice override to apply explicit note-level voice settings to the full selection.")
                     : T("inspector.note.overrideNone", "Selected notes currently use each track's default voice. Enable voice override to edit per-note voice settings.");
@@ -1148,17 +1164,7 @@ namespace TorusEdison.Editor.Windows
                 parent,
                 T("voice.override", "Voice Override"),
                 voice,
-                (displayName, applyVoiceChange, afterApply) =>
-                {
-                    TryApplySelectedNotesChange(
-                        displayName,
-                        note =>
-                        {
-                            note.VoiceOverride = note.VoiceOverride ?? GameAudioProjectFactory.CreateDefaultVoice();
-                            applyVoiceChange(note.VoiceOverride);
-                        },
-                        actualNotes => afterApply?.Invoke(actualNotes[0].Note.VoiceOverride ?? GameAudioProjectFactory.CreateDefaultVoice()));
-                });
+                applySelectedNoteVoiceChange);
         }
 
         private void BuildTrackInspector(VisualElement parent, GameAudioTrack track)
@@ -1359,6 +1365,52 @@ namespace TorusEdison.Editor.Windows
                 HelpBoxMessageType.Info));
         }
 
+        private void AddVoicePresetControls(
+            VisualElement parent,
+            Action<string, Action<GameAudioVoiceSettings>, Action<GameAudioVoiceSettings>> applyVoiceChange)
+        {
+            IReadOnlyList<GameAudioVoicePreset> presets = GameAudioVoicePresetLibrary.BuiltInPresets;
+            if (presets.Count == 0)
+            {
+                return;
+            }
+
+            string selectedPresetId = ResolveSelectedVoicePresetId();
+            AddInspectorPopupField(
+                parent,
+                T("voice.preset", "Voice Preset"),
+                presets.Select(preset => preset.Id),
+                selectedPresetId,
+                GameAudioVoicePresetLibrary.FormatLabel,
+                requested => _selectedVoicePresetId = requested);
+
+            var applyButton = CreateCompactActionButton(T("voice.applyPreset", "Apply Preset"), () =>
+            {
+                string presetId = ResolveSelectedVoicePresetId();
+                if (!GameAudioVoicePresetLibrary.TryGetPreset(presetId, out GameAudioVoicePreset preset))
+                {
+                    return;
+                }
+
+                applyVoiceChange(
+                    $"Apply Voice Preset: {preset.DisplayName}",
+                    current => GameAudioVoicePresetLibrary.CopyTo(preset.Voice, current),
+                    null);
+            });
+            parent.Add(CreateInspectorRow(T("voice.presetAction", "Preset Action"), applyButton));
+        }
+
+        private string ResolveSelectedVoicePresetId()
+        {
+            if (GameAudioVoicePresetLibrary.TryGetPreset(_selectedVoicePresetId, out _))
+            {
+                return _selectedVoicePresetId;
+            }
+
+            _selectedVoicePresetId = GameAudioVoicePresetLibrary.BuiltInPresets[0].Id;
+            return _selectedVoicePresetId;
+        }
+
         private void AddVoiceInspector(
             VisualElement parent,
             string header,
@@ -1373,6 +1425,8 @@ namespace TorusEdison.Editor.Windows
             voiceFoldout.style.marginTop = 6.0f;
             voiceFoldout.style.marginBottom = 6.0f;
             parent.Add(voiceFoldout);
+
+            AddVoicePresetControls(voiceFoldout, applyVoiceChange);
 
             AddInspectorPopupField(
                 voiceFoldout,

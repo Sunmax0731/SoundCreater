@@ -173,6 +173,49 @@ The Export page also includes a conversion flow for imported `AudioClip` assets.
 
 This feature converts audio that you already brought into Unity. It does not download or extract audio from YouTube or other external services.
 
+## Voice Presets
+
+The Edit page includes built-in voice presets in the Selection Inspector.
+
+- select a track header to apply a preset to the track default voice
+- select one or more notes to apply a preset as note voice overrides
+- if selected notes do not already use voice overrides, applying a preset creates the overrides for those notes
+- preset application is one Undo / Redo command
+- built-in presets include UI click, confirm, cancel, coin pickup, laser shot, and noise hit
+
+Preset schema for shared files:
+
+```json
+{
+  "kind": "torusEdison.voicePreset",
+  "presetFormatVersion": "1.0.0",
+  "preset": {
+    "id": "team.ui-click",
+    "category": "UI",
+    "displayName": "Team UI Click",
+    "description": "Short reusable menu click.",
+    "voice": {
+      "waveform": "Square",
+      "pulseWidth": 0.35,
+      "noiseEnabled": false,
+      "noiseType": "White",
+      "noiseMix": 0.0,
+      "adsr": { "attackMs": 0, "decayMs": 35, "sustain": 0.15, "releaseMs": 45 },
+      "effect": {
+        "volumeDb": -4.0,
+        "pan": 0.0,
+        "pitchSemitone": 12.0,
+        "fadeInMs": 0,
+        "fadeOutMs": 25,
+        "delay": { "enabled": false, "timeMs": 180, "feedback": 0.25, "mix": 0.2 }
+      }
+    }
+  }
+}
+```
+
+Use the `.gats-preset.json` extension for shared voice preset files. The user preset location is `%LocalAppData%/GameAudioTool/voice-presets`.
+
 ## Version And License Window
 
 Use `Tools/Torus Edison/Version & License` to check the current package version, the license entry point, and the release source.
