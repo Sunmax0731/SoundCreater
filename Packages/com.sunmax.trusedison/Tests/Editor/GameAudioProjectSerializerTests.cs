@@ -184,6 +184,25 @@ namespace TorusEdison.Editor.Tests
         }
 
         [Test]
+        public void Deserialize_RejectsUndefinedNumericEnumStrings_AndWarns()
+        {
+            var serializer = new GameAudioProjectSerializer();
+            string json = serializer.Serialize(GameAudioProjectFactory.CreateDefaultProject())
+                .Replace(@"""channelMode"": ""Stereo""", @"""channelMode"": ""999""")
+                .Replace(@"""waveform"": ""Square""", @"""waveform"": ""999""")
+                .Replace(@"""noiseType"": ""White""", @"""noiseType"": ""999""");
+
+            GameAudioProjectLoadResult result = serializer.Deserialize(json);
+
+            Assert.That(result.Project.ChannelMode, Is.EqualTo(GameAudioChannelMode.Stereo));
+            Assert.That(result.Project.Tracks[0].DefaultVoice.Waveform, Is.EqualTo(GameAudioWaveformType.Square));
+            Assert.That(result.Project.Tracks[0].DefaultVoice.NoiseType, Is.EqualTo(GameAudioNoiseType.White));
+            Assert.That(result.Warnings, Has.Some.EqualTo("project.channelMode was unknown; defaulted to Stereo."));
+            Assert.That(result.Warnings, Has.Some.EqualTo("track[1].defaultVoice.waveform was unknown; defaulted to Square."));
+            Assert.That(result.Warnings, Has.Some.EqualTo("track[1].defaultVoice.noiseType was unknown; defaulted to White."));
+        }
+
+        [Test]
         public void Deserialize_RejectsTrackCountOverLimit()
         {
             string[] tracks = new string[33];

@@ -94,7 +94,7 @@ namespace TorusEdison.Editor.Persistence
             }
 
             GameAudioChannelMode? preferredChannelMode = null;
-            if (Enum.TryParse(dto.preferredChannelMode, true, out GameAudioChannelMode parsedChannelMode))
+            if (GameAudioEnumUtility.TryParseDefined(dto.preferredChannelMode, out GameAudioChannelMode parsedChannelMode))
             {
                 preferredChannelMode = parsedChannelMode;
             }

@@ -413,7 +413,7 @@ namespace TorusEdison.Editor.Persistence
 
         private static GameAudioWaveformType ReadWaveform(string value, List<string> warnings, string path)
         {
-            if (Enum.TryParse(value, true, out GameAudioWaveformType waveform))
+            if (GameAudioEnumUtility.TryParseDefined(value, out GameAudioWaveformType waveform))
             {
                 return waveform;
             }
@@ -424,7 +424,7 @@ namespace TorusEdison.Editor.Persistence
 
         private static GameAudioNoiseType ReadNoiseType(string value, List<string> warnings, string path)
         {
-            if (Enum.TryParse(value, true, out GameAudioNoiseType noiseType))
+            if (GameAudioEnumUtility.TryParseDefined(value, out GameAudioNoiseType noiseType))
             {
                 return noiseType;
             }
@@ -435,7 +435,7 @@ namespace TorusEdison.Editor.Persistence
 
         private static GameAudioChannelMode ReadChannelMode(string value, GameAudioChannelMode fallback, List<string> warnings, string path)
         {
-            if (Enum.TryParse(value, true, out GameAudioChannelMode channelMode))
+            if (GameAudioEnumUtility.TryParseDefined(value, out GameAudioChannelMode channelMode))
             {
                 return channelMode;
             }

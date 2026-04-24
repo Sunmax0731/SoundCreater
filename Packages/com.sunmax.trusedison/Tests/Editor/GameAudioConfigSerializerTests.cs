@@ -92,6 +92,18 @@ namespace TorusEdison.Editor.Tests
         }
 
         [Test]
+        public void CommonConfigSerializer_IgnoresUndefinedNumericEnumValues()
+        {
+            var serializer = new GameAudioCommonConfigSerializer();
+
+            GameAudioCommonConfig result = serializer.Deserialize("{\"defaultChannelMode\":\"999\",\"displayLanguage\":\"999\",\"diagnosticLogLevel\":\"999\"}");
+
+            Assert.That(result.DefaultChannelMode, Is.EqualTo(GameAudioChannelMode.Stereo));
+            Assert.That(result.DisplayLanguage, Is.EqualTo(GameAudioLanguageMode.Auto));
+            Assert.That(result.DiagnosticLogLevel, Is.EqualTo(GameAudioDiagnosticLogLevel.Info));
+        }
+
+        [Test]
         public void ProjectConfigSerializer_PreservesDefaultTrueWhenBoolFieldIsMissing()
         {
             var serializer = new GameAudioProjectConfigSerializer();
@@ -110,6 +122,16 @@ namespace TorusEdison.Editor.Tests
             GameAudioProjectConfig result = serializer.Deserialize("{\"autoRefreshAfterExport\":false}");
 
             Assert.That(result.AutoRefreshAfterExport, Is.False);
+        }
+
+        [Test]
+        public void ProjectConfigSerializer_IgnoresUndefinedNumericPreferredChannelMode()
+        {
+            var serializer = new GameAudioProjectConfigSerializer();
+
+            GameAudioProjectConfig result = serializer.Deserialize("{\"preferredChannelMode\":\"999\"}");
+
+            Assert.That(result.PreferredChannelMode, Is.Null);
         }
 
         [Test]

@@ -113,7 +113,7 @@ namespace TorusEdison.Editor.Persistence
                 DefaultSampleRate = GameAudioValidationUtility.IsSupportedSampleRate(dto.defaultSampleRate)
                     ? dto.defaultSampleRate
                     : GameAudioToolInfo.DefaultSampleRate,
-                DefaultChannelMode = Enum.TryParse(dto.defaultChannelMode, true, out GameAudioChannelMode channelMode)
+                DefaultChannelMode = GameAudioEnumUtility.TryParseDefined(dto.defaultChannelMode, out GameAudioChannelMode channelMode)
                     ? channelMode
                     : GameAudioChannelMode.Stereo,
                 DefaultExportDirectory = string.IsNullOrWhiteSpace(dto.defaultExportDirectory)
@@ -126,11 +126,11 @@ namespace TorusEdison.Editor.Persistence
                     ? "1/16"
                     : dto.defaultGridDivision,
                 UndoHistoryLimit = GameAudioValidationUtility.ClampInt(dto.undoHistoryLimit <= 0 ? 100 : dto.undoHistoryLimit, 1, 1000),
-                DisplayLanguage = Enum.TryParse(dto.displayLanguage, true, out GameAudioLanguageMode displayLanguage)
+                DisplayLanguage = GameAudioEnumUtility.TryParseDefined(dto.displayLanguage, out GameAudioLanguageMode displayLanguage)
                     ? displayLanguage
                     : GameAudioLanguageMode.Auto,
                 EnableDiagnosticLogging = dto.enableDiagnosticLogging,
-                DiagnosticLogLevel = Enum.TryParse(dto.diagnosticLogLevel, true, out GameAudioDiagnosticLogLevel diagnosticLogLevel)
+                DiagnosticLogLevel = GameAudioEnumUtility.TryParseDefined(dto.diagnosticLogLevel, out GameAudioDiagnosticLogLevel diagnosticLogLevel)
                     ? diagnosticLogLevel
                     : GameAudioDiagnosticLogLevel.Info
             };
