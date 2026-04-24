@@ -36,6 +36,7 @@ Current implementation scope:
 Open the tool from:
 
 - `Tools/Torus Edison/Open Editor`
+- `Tools/Torus Edison/8-bit WAV Converter`
 - `Tools/Torus Edison/Version & License`
 
 ## Workspace Pages
@@ -84,13 +85,11 @@ Current shortcuts:
 
 ### Export
 
-Use this page for WAV export and imported `AudioClip` conversion.
+Use this page for WAV export from the current `.gats.json` project.
 
 Available controls:
 
 - `Export WAV`
-- imported `AudioClip` to 8-bit WAV conversion
-- automatic generation of a conversion-focused `.gats.json` project next to the converted WAV
 - `Open Export Folder`
 - export length mode: `Project Bars`, `Seconds`, or `Auto Trim`
 - include/cut release and delay tail beyond the export target
@@ -198,10 +197,11 @@ Stereo behavior:
 
 ## 8-bit WAV Conversion
 
-The Export page also includes a conversion flow for imported `AudioClip` assets.
+Use `Tools/Torus Edison/8-bit WAV Converter` to convert imported `AudioClip` assets outside the main editor window.
 
 - select a source `AudioClip` that already exists in the Unity project
 - choose the output name
+- choose the export folder
 - choose the target sample rate
 - choose `Preserve Source`, `Mono`, or `Stereo`
 - export as 8-bit PCM `.wav`

@@ -30,31 +30,20 @@ namespace TorusEdison.Editor.Audio
                 throw new ArgumentException("Export directory is required.", nameof(exportDirectory));
             }
 
-            int resolvedSampleRate = targetSampleRate > 0 ? targetSampleRate : sourceClip.frequency;
+            SourceClipSampleData sourceData = ReadSourceClipSamples(sourceClip);
+
+            int resolvedSampleRate = targetSampleRate > 0 ? targetSampleRate : sourceData.SampleRate;
             if (resolvedSampleRate <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(targetSampleRate));
             }
 
-            int sourceFrameCount = sourceClip.samples;
-            int sourceChannelCount = sourceClip.channels;
-            if (sourceFrameCount <= 0 || sourceChannelCount <= 0)
-            {
-                throw new InvalidOperationException("Source clip is empty.");
-            }
-
-            var sourceSamples = new float[sourceFrameCount * sourceChannelCount];
-            if (!sourceClip.GetData(sourceSamples, 0))
-            {
-                throw new InvalidOperationException("Source clip samples could not be read.");
-            }
-
             int outputChannelCount;
             float[] convertedSamples = ConvertSamples(
-                sourceSamples,
-                sourceFrameCount,
-                sourceChannelCount,
-                sourceClip.frequency,
+                sourceData.Samples,
+                sourceData.FrameCount,
+                sourceData.ChannelCount,
+                sourceData.SampleRate,
                 resolvedSampleRate,
                 channelMode,
                 out outputChannelCount);
@@ -72,7 +61,7 @@ namespace TorusEdison.Editor.Audio
             string waveFileName = Path.GetFileName(filePath);
 
             GameAudioProject conversionProject = CreateConversionProject(
-                sourceClip,
+                sourceData,
                 outputName,
                 resolvedSampleRate,
                 channelMode,
@@ -85,6 +74,134 @@ namespace TorusEdison.Editor.Audio
                 "Conversion",
                 $"Encoded 8-bit WAV {filePath} ({resolvedSampleRate} Hz / {outputChannelCount} ch) and generated conversion project {projectFilePath}.");
             return new GameAudioAudioClipConversionExportResult(filePath, projectFilePath);
+        }
+
+        private static SourceClipSampleData ReadSourceClipSamples(AudioClip sourceClip)
+        {
+            string assetPath = AssetDatabase.GetAssetPath(sourceClip);
+            var importer = string.IsNullOrWhiteSpace(assetPath)
+                ? null
+                : AssetImporter.GetAtPath(assetPath) as AudioImporter;
+
+            if (importer != null && RequiresTemporaryReadableImport(importer.defaultSampleSettings))
+            {
+                return ReadSourceClipSamplesWithTemporaryReadableImport(assetPath, importer);
+            }
+
+            if (TryReadSourceClipSamples(sourceClip, assetPath, out SourceClipSampleData sourceData))
+            {
+                return sourceData;
+            }
+
+            if (importer != null)
+            {
+                return ReadSourceClipSamplesWithTemporaryReadableImport(assetPath, importer);
+            }
+
+            throw CreateUnreadableSourceClipException(sourceClip, assetPath);
+        }
+
+        private static bool RequiresTemporaryReadableImport(AudioImporterSampleSettings settings)
+        {
+            return settings.loadType != AudioClipLoadType.DecompressOnLoad
+                || !settings.preloadAudioData;
+        }
+
+        private static SourceClipSampleData ReadSourceClipSamplesWithTemporaryReadableImport(string assetPath, AudioImporter importer)
+        {
+            AudioImporterSampleSettings originalSettings = importer.defaultSampleSettings;
+            bool originalLoadInBackground = importer.loadInBackground;
+            bool restoreRequired = false;
+
+            try
+            {
+                AudioImporterSampleSettings readableSettings = originalSettings;
+                readableSettings.loadType = AudioClipLoadType.DecompressOnLoad;
+                readableSettings.compressionFormat = AudioCompressionFormat.PCM;
+                readableSettings.preloadAudioData = true;
+
+                importer.defaultSampleSettings = readableSettings;
+                importer.loadInBackground = false;
+                restoreRequired = true;
+                importer.SaveAndReimport();
+
+                AudioClip readableClip = AssetDatabase.LoadAssetAtPath<AudioClip>(assetPath);
+                if (TryReadSourceClipSamples(readableClip, assetPath, out SourceClipSampleData sourceData))
+                {
+                    return sourceData;
+                }
+
+                throw CreateUnreadableSourceClipException(readableClip, assetPath);
+            }
+            finally
+            {
+                if (restoreRequired)
+                {
+                    RestoreAudioImporterSettings(assetPath, originalSettings, originalLoadInBackground);
+                }
+            }
+        }
+
+        private static void RestoreAudioImporterSettings(
+            string assetPath,
+            AudioImporterSampleSettings originalSettings,
+            bool originalLoadInBackground)
+        {
+            if (AssetImporter.GetAtPath(assetPath) is not AudioImporter restoreImporter)
+            {
+                return;
+            }
+
+            restoreImporter.defaultSampleSettings = originalSettings;
+            restoreImporter.loadInBackground = originalLoadInBackground;
+            restoreImporter.SaveAndReimport();
+        }
+
+        private static bool TryReadSourceClipSamples(
+            AudioClip sourceClip,
+            string assetPath,
+            out SourceClipSampleData sourceData)
+        {
+            sourceData = null;
+            if (sourceClip == null)
+            {
+                return false;
+            }
+
+            int frameCount = sourceClip.samples;
+            int channelCount = sourceClip.channels;
+            int sampleRate = sourceClip.frequency;
+            if (frameCount <= 0 || channelCount <= 0)
+            {
+                throw new InvalidOperationException("Source clip is empty.");
+            }
+
+            var samples = new float[checked(frameCount * channelCount)];
+            if (!sourceClip.GetData(samples, 0))
+            {
+                return false;
+            }
+
+            sourceData = new SourceClipSampleData(
+                sourceClip.name ?? string.Empty,
+                string.IsNullOrWhiteSpace(assetPath) ? "(not imported)" : assetPath,
+                samples,
+                frameCount,
+                channelCount,
+                sampleRate);
+            return true;
+        }
+
+        private static InvalidOperationException CreateUnreadableSourceClipException(AudioClip sourceClip, string assetPath)
+        {
+            string sourceName = sourceClip != null && !string.IsNullOrWhiteSpace(sourceClip.name)
+                ? sourceClip.name
+                : "(unknown)";
+            string sourcePath = string.IsNullOrWhiteSpace(assetPath)
+                ? "(not imported)"
+                : assetPath;
+            return new InvalidOperationException(
+                $"Source clip samples could not be read. Clip={sourceName}; Asset={sourcePath}. Imported clips are temporarily reimported as decompressed PCM for conversion, so check that Unity can import this audio asset.");
         }
 
         internal static float[] ConvertSamples(
@@ -222,34 +339,33 @@ namespace TorusEdison.Editor.Audio
         }
 
         private static GameAudioProject CreateConversionProject(
-            AudioClip sourceClip,
+            SourceClipSampleData sourceData,
             string outputName,
             int targetSampleRate,
             GameAudioConversionChannelMode channelMode,
             int outputChannelCount,
             string outputWaveFileName)
         {
-            string projectName = ResolveProjectName(sourceClip, outputName);
+            string projectName = ResolveProjectName(sourceData.ClipName, outputName);
             var project = GameAudioProjectFactory.CreateDefaultProject(
                 targetSampleRate,
                 outputChannelCount == 1 ? GameAudioChannelMode.Mono : GameAudioChannelMode.Stereo);
 
             project.Name = projectName;
             project.SampleRate = targetSampleRate;
-            project.TotalBars = CalculateTotalBars(sourceClip.length, project.Bpm, project.TimeSignature?.Numerator ?? 4, project.TimeSignature?.Denominator ?? 4);
+            project.TotalBars = CalculateTotalBars(sourceData.DurationSeconds, project.Bpm, project.TimeSignature?.Numerator ?? 4, project.TimeSignature?.Denominator ?? 4);
             if (project.Tracks.Count > 0)
             {
                 project.Tracks[0].Name = "Imported Audio";
             }
 
-            string assetPath = AssetDatabase.GetAssetPath(sourceClip);
             project.ImportedAudioConversion = new GameAudioImportedAudioConversion
             {
-                SourceClipName = sourceClip.name ?? string.Empty,
-                SourceAssetPath = string.IsNullOrWhiteSpace(assetPath) ? "(not imported)" : assetPath,
-                SourceSampleRate = sourceClip.frequency,
-                SourceChannelCount = sourceClip.channels,
-                SourceDurationSeconds = sourceClip.length,
+                SourceClipName = sourceData.ClipName,
+                SourceAssetPath = sourceData.AssetPath,
+                SourceSampleRate = sourceData.SampleRate,
+                SourceChannelCount = sourceData.ChannelCount,
+                SourceDurationSeconds = sourceData.DurationSeconds,
                 TargetSampleRate = targetSampleRate,
                 TargetChannelMode = channelMode.ToString(),
                 OutputChannelCount = outputChannelCount,
@@ -259,16 +375,16 @@ namespace TorusEdison.Editor.Audio
             return project;
         }
 
-        private static string ResolveProjectName(AudioClip sourceClip, string outputName)
+        private static string ResolveProjectName(string sourceClipName, string outputName)
         {
             if (!string.IsNullOrWhiteSpace(outputName))
             {
                 return outputName.Trim();
             }
 
-            if (sourceClip != null && !string.IsNullOrWhiteSpace(sourceClip.name))
+            if (!string.IsNullOrWhiteSpace(sourceClipName))
             {
-                return $"{sourceClip.name}_8bit";
+                return $"{sourceClipName}_8bit";
             }
 
             return "Converted8Bit";
@@ -285,6 +401,40 @@ namespace TorusEdison.Editor.Audio
             double totalBeats = durationSeconds * bpm / 60.0;
             int totalBars = Math.Max(1, (int)Math.Ceiling(totalBeats / beatsPerBar));
             return Math.Clamp(totalBars, 1, GameAudioToolInfo.MaxTotalBars);
+        }
+
+        private sealed class SourceClipSampleData
+        {
+            public SourceClipSampleData(
+                string clipName,
+                string assetPath,
+                float[] samples,
+                int frameCount,
+                int channelCount,
+                int sampleRate)
+            {
+                ClipName = clipName ?? string.Empty;
+                AssetPath = string.IsNullOrWhiteSpace(assetPath) ? "(not imported)" : assetPath;
+                Samples = samples ?? throw new ArgumentNullException(nameof(samples));
+                FrameCount = frameCount;
+                ChannelCount = channelCount;
+                SampleRate = sampleRate;
+                DurationSeconds = sampleRate > 0 ? frameCount / (float)sampleRate : 0.0f;
+            }
+
+            public string ClipName { get; }
+
+            public string AssetPath { get; }
+
+            public float[] Samples { get; }
+
+            public int FrameCount { get; }
+
+            public int ChannelCount { get; }
+
+            public int SampleRate { get; }
+
+            public float DurationSeconds { get; }
         }
     }
 }

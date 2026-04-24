@@ -8,6 +8,8 @@
 - added direct grid division selection in the timeline toolbar, synchronized with snap, grid drawing, duplicate offset, and `defaultGridDivision`
 - added `.gats-preset.json` voice preset import and export actions from the Selection Inspector
 - added built-in project templates for common one-shot and loop starting points
+- moved 8-bit WAV conversion for imported `AudioClip` assets into `Tools/Torus Edison/8-bit WAV Converter`
+- fixed 8-bit conversion for imported clips that use streaming or non-preloaded audio import settings
 - refreshed README, manuals, release notes, release helper text, BOOTH-facing copy, and validation checklist for the current release scope
 
 ## 0.2.0

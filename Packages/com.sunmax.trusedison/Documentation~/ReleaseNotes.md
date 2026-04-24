@@ -14,11 +14,13 @@
 - 選択中の grid division を note snap、grid drawing、duplicate offset、common config の `defaultGridDivision` と同期
 - Selection Inspector から `.gats-preset.json` の voice preset import / export を実行できるように改善
 - toolbar から built-in project template を選んで新規 project を作成できるように改善
+- Unity に取り込んだ `AudioClip` の 8-bit WAV 変換を `Tools/Torus Edison/8-bit WAV Converter` へ分離
+- streaming / preload 無効の import 設定でも 8-bit 変換が失敗しないように修正
 - README、日英マニュアル、ValidationChecklist、release 文面、BOOTH 商品紹介文を 0.3.0 の機能状態に合わせて更新
 
 検証:
 
-- Unity `6000.4.0f1` / Windows で EditMode tests を実行し、`Total=117 Passed=117 Failed=0 Skipped=0` を確認
+- Unity `6000.4.0f1` / Windows で EditMode tests を実行し、`Total=126 Passed=126 Failed=0 Skipped=0` を確認
 
 既知の制限:
 

@@ -36,6 +36,7 @@
 次のメニューから起動します。
 
 - `Tools/Torus Edison/Open Editor`
+- `Tools/Torus Edison/8-bit WAV Converter`
 - `Tools/Torus Edison/Version & License`
 
 ## 画面構成
@@ -85,13 +86,11 @@
 
 ### Export
 
-この画面では WAV 書き出しと、Unity に取り込んだ `AudioClip` の 8-bit 変換を行います。
+この画面では、現在の `.gats.json` プロジェクトからの WAV 書き出しを行います。
 
 利用できる操作:
 
 - `Export WAV`
-- Unity に取り込んだ `AudioClip` の 8-bit WAV 変換
-- 変換した WAV と同じフォルダへの変換用 `.gats.json` 自動生成
 - `Open Export Folder`
 - 書き出し長モード: `Project Bars` / `Seconds` / `Auto Trim`
 - 書き出し目標長を超える release / delay tail の含める・切る設定
@@ -204,10 +203,11 @@ Stereo の扱い:
 
 ## 8-bit WAV 変換
 
-Export 画面には、Unity に取り込んだ `AudioClip` アセットを 8-bit PCM `.wav` に変換する機能があります。
+Unity に取り込んだ `AudioClip` アセットを 8-bit PCM `.wav` に変換する場合は、`Tools/Torus Edison/8-bit WAV Converter` を開きます。
 
 - 変換元 `AudioClip` を選択
 - 出力名を指定
+- 出力先フォルダを指定
 - 変換後サンプルレートを指定
 - `Preserve Source` / `Mono` / `Stereo` を選択
 - 8-bit PCM `.wav` として書き出し

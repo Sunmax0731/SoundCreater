@@ -33,7 +33,7 @@ GitHub 上のリポジトリ名は `SoundCreater` ですが、BOOTH や配布物
 - 16-bit PCM WAV 書き出し
 - `Project Bars` / `Seconds` / `Auto Trim` の書き出し長モード
 - release / delay tail の include/cut と Export Quality 表示
-- Unity に取り込んだ `AudioClip` の 8-bit WAV 変換
+- `Tools/Torus Edison/8-bit WAV Converter` から開ける 8-bit WAV 変換
 - 変換した WAV と同じフォルダへの変換用 `.gats.json` 自動生成
 - `Tools/Torus Edison/Version & License` から開けるバージョン / ライセンス画面
 - 日本語 / 英語 / 中国語 UI
@@ -68,6 +68,7 @@ GitHub 上のリポジトリ名は `SoundCreater` ですが、BOOTH や配布物
 Unity プロジェクトを開いたあと、次のメニューから起動します。
 
 - `Tools/Torus Edison/Open Editor`
+- `Tools/Torus Edison/8-bit WAV Converter`
 - `Tools/Torus Edison/Version & License`
 
 ## サポート情報
