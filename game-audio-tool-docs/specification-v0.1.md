@@ -151,7 +151,7 @@ Packages/com.sunmax.trusedison/
 | Export WAV | WAV書き出し |
 | BPM | テンポ設定 |
 | Time Signature | 拍子設定 |
-| Grid | グリッド分解能設定 |
+| Grid | グリッド分解能設定。`1/4`, `1/8`, `1/16`, `1/32`, `1/64` を直接選択でき、既存ボタンでは順送りできる |
 | Play | 再生 |
 | Stop | 停止 |
 | Loop | ループ再生ON/OFF |
@@ -714,7 +714,7 @@ JSONのルートには必ず以下を含める。
 | showStartupGuide | 初回ガイド表示 | true |
 | rememberLastProject | 前回プロジェクト復元 | true |
 | lastProjectPath | 前回保存または読み込みした `.gats.json` のパス | 空 |
-| defaultGridDivision | グリッド分解能 | 1/16 |
+| defaultGridDivision | グリッド分解能。ツールバーの直接選択 / 順送り操作と同期する | 1/16 |
 | undoHistoryLimit | Undo保持上限 | 100 |
 
 `showStartupGuide` が true の場合、エディタウィンドウ起動後にスタートアップガイドを表示する。ユーザーが確認またはマニュアルを開いた場合は false に保存し、`Settings` から再度有効化できる。

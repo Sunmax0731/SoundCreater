@@ -363,12 +363,22 @@ namespace TorusEdison.Editor.Windows
             _undoButton = CreateToolbarButton(T("timeline.undo", "Undo"), UndoLastEdit);
             _redoButton = CreateToolbarButton(T("timeline.redo", "Redo"), RedoLastEdit);
             _gridButton = CreateToolbarButton(TF("timeline.grid", "Grid {0}", "1/16"), CycleGridDivision);
+            List<string> gridDivisions = GameAudioTimelineGridUtility.SupportedDivisions.ToList();
+            int selectedGridIndex = Math.Max(
+                0,
+                gridDivisions.IndexOf(GameAudioTimelineGridUtility.NormalizeDivision(_currentGridDivision)));
+            _toolbarGridField = new PopupField<string>(gridDivisions, selectedGridIndex);
+            _toolbarGridField.tooltip = T("timeline.gridSelector", "Grid Division");
+            _toolbarGridField.style.width = 88.0f;
+            _toolbarGridField.style.marginLeft = 4.0f;
+            _toolbarGridField.RegisterValueChangedCallback(OnToolbarGridChanged);
             Button helpButton = CreateToolbarButton(T("timeline.help", "?"), ShowTimelineHelp);
             helpButton.style.minWidth = 36.0f;
 
             actionRow.Add(_undoButton);
             actionRow.Add(_redoButton);
             actionRow.Add(_gridButton);
+            actionRow.Add(_toolbarGridField);
             actionRow.Add(helpButton);
 
             _timelineBarsField = new IntegerField
@@ -3025,12 +3035,29 @@ namespace TorusEdison.Editor.Windows
         private void SetGridDivision(string division)
         {
             string normalized = GameAudioTimelineGridUtility.NormalizeDivision(division);
-            if (string.Equals(_currentGridDivision, normalized, StringComparison.Ordinal))
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            bool gridChanged = !string.Equals(_currentGridDivision, normalized, StringComparison.Ordinal);
+            bool configChanged = !string.Equals(_commonConfig.DefaultGridDivision ?? string.Empty, normalized, StringComparison.Ordinal);
+            if (!gridChanged && !configChanged)
             {
                 return;
             }
 
             _currentGridDivision = normalized;
+            if (configChanged)
+            {
+                try
+                {
+                    _commonConfig.DefaultGridDivision = normalized;
+                    SaveCommonConfig();
+                    GameAudioDiagnosticLogger.Verbose("Settings", $"Default grid division changed to {normalized}.");
+                }
+                catch (Exception exception)
+                {
+                    ShowEditorException(exception, "Settings", "Saving default grid division failed");
+                }
+            }
+
             RefreshView();
         }
 

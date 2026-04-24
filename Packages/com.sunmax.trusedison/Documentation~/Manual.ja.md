@@ -67,6 +67,7 @@
 - ノート複製と削除
 - タイムライン下部の `+ Add Track` ボタンからのトラック追加
 - note / track / project の Inspector 編集
+- グリッド分解能をプルダウンで直接選択、または `Grid` ボタンで段階切り替え
 - `?` ボタンから開く操作ヘルプウィンドウ
 
 主なショートカット:
@@ -140,6 +141,7 @@
 - タイムライン下部ボタンからのトラック追加
 - Selection Inspector、またはノート未選択時の `Delete` / `Backspace` による選択トラック削除
 - Edit 画面の `Bars` 入力欄、`-` / `+` ボタン、Settings の `Total Bars` スライダー、またはタイムライン右端ドラッグによるプロジェクト長変更
+- Edit 画面のグリッド分解能プルダウンまたは `Grid` ボタンによる分解能変更。ノートのスナップ、複製位置、グリッド描画は選択中の分解能に従います。
 - stereo voice effect: `Stereo Detune` は左右の pitch を分け、`Stereo Delay` は右チャンネルを遅らせます。
 - 主要編集操作に対する Undo / Redo
 

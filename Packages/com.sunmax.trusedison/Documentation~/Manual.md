@@ -66,6 +66,7 @@ Use this page for editing and preview work in one place.
 - duplicating and deleting selected notes
 - adding tracks from the footer `+ Add Track` button
 - editing note, track, and project values from the inspector
+- selecting timeline grid division from the grid popup, or cycling it with the `Grid` button
 - opening the timeline help window from `?`
 
 Current shortcuts:
@@ -135,6 +136,7 @@ Current editing support includes:
 - track creation from the timeline footer
 - selected-track deletion from the Selection Inspector, or with `Delete` / `Backspace` when no notes are selected
 - project length edits from the Edit page `Bars` field, `-` / `+` buttons, Settings `Total Bars` slider, or timeline right-edge drag
+- grid division changes from the Edit page grid popup or `Grid` cycle button; note snap, duplicate offset, and grid drawing use the selected division
 - stereo voice effects: `Stereo Detune` splits pitch between left/right, and `Stereo Delay` delays the right channel
 - undo and redo for major edit operations
 

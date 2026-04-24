@@ -144,21 +144,24 @@ Keyboard shortcut check:
 ### 3. Timeline Editing
 
 1. Go to the `Edit` page
-2. Create a note on an empty lane
-3. Move the note
-4. Resize the note
-5. Add a track with `+ Add Track`
-6. Select the new track header and delete the empty track from the Selection Inspector
-7. Add another track, create a note on it, then delete the selected track and confirm the warning dialog
-8. Change Bars with the Edit page `-` / `+` controls
-9. Drag the timeline right edge to shorten or extend Bars
-10. Duplicate the note with `Ctrl+D`
-11. Delete one note
-12. Undo and redo the changes
+2. Select a grid division such as `1/8` or `1/32` from the grid popup, then click the `Grid` cycle button once
+3. Create a note on an empty lane
+4. Move the note
+5. Resize the note
+6. Add a track with `+ Add Track`
+7. Select the new track header and delete the empty track from the Selection Inspector
+8. Add another track, create a note on it, then delete the selected track and confirm the warning dialog
+9. Change Bars with the Edit page `-` / `+` controls
+10. Drag the timeline right edge to shorten or extend Bars
+11. Duplicate the note with `Ctrl+D`
+12. Delete one note
+13. Undo and redo the changes
 
 Expected:
 
 - note creation, move, resize, duplicate, delete, track add, and track delete all work
+- the grid popup and `Grid` button show the current division, and note snap / grid drawing follow the selected division
+- the selected grid division is written to common config as `defaultGridDivision` for new projects
 - deleting the final remaining track is disabled or rejected
 - deleting a track with notes asks for confirmation before the project changes
 - Bars changes from buttons, direct input, Settings slider, and right-edge drag are undoable
