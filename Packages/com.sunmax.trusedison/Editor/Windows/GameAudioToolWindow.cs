@@ -37,6 +37,7 @@ namespace TorusEdison.Editor.Windows
         private readonly GameAudioPreviewPlaybackService _previewPlaybackService = new GameAudioPreviewPlaybackService();
         private readonly GameAudioProjectSerializer _projectSerializer = new GameAudioProjectSerializer();
         private readonly GameAudioProjectConfigSerializer _projectConfigSerializer = new GameAudioProjectConfigSerializer();
+        private readonly GameAudioProjectDirtyState _dirtyState = new GameAudioProjectDirtyState();
         private readonly GameAudioAudioClipConversionService _audioClipConversionService = new GameAudioAudioClipConversionService();
         private readonly GameAudioWavExportService _wavExportService = new GameAudioWavExportService();
         private readonly HashSet<string> _selectedNoteIds = new HashSet<string>(StringComparer.Ordinal);
@@ -1922,7 +1923,7 @@ namespace TorusEdison.Editor.Windows
                 string resolvedPath = GameAudioProjectFileUtility.NormalizeSavePath(targetPath);
                 _projectSerializer.SaveToFile(resolvedPath, CurrentProject);
                 _projectPath = resolvedPath;
-                _isDirty = false;
+                MarkProjectClean();
                 RememberProjectPath(resolvedPath);
                 GameAudioDiagnosticLogger.Info("Project", $"Saved project to {resolvedPath}.");
                 ShowNotification(new GUIContent(T("status.projectSaved", "Project saved.")));
@@ -1989,6 +1990,17 @@ namespace TorusEdison.Editor.Windows
             _projectConfigSerializer.Save(
                 _projectConfig ?? new GameAudioProjectConfig(),
                 GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
+        }
+
+        private void MarkProjectClean()
+        {
+            _dirtyState.MarkClean(CurrentProject);
+            _isDirty = false;
+        }
+
+        private void RefreshDirtyState()
+        {
+            _isDirty = _dirtyState.IsDirty(CurrentProject);
         }
 
         private bool TryRestoreRememberedProject()
@@ -2704,7 +2716,7 @@ namespace TorusEdison.Editor.Windows
             }
 
             _project = _editorSession.CurrentProject;
-            _isDirty = true;
+            RefreshDirtyState();
             CancelTimelineInteraction();
             PruneTimelineSelection();
             ResetPreviewState();
@@ -2719,7 +2731,7 @@ namespace TorusEdison.Editor.Windows
             }
 
             _project = _editorSession.CurrentProject;
-            _isDirty = true;
+            RefreshDirtyState();
             CancelTimelineInteraction();
             PruneTimelineSelection();
             ResetPreviewState();
@@ -2925,7 +2937,16 @@ namespace TorusEdison.Editor.Windows
 
             _project = project;
             _projectPath = path ?? string.Empty;
-            _isDirty = isDirty;
+            if (isDirty)
+            {
+                _dirtyState.Clear();
+                _isDirty = true;
+            }
+            else
+            {
+                MarkProjectClean();
+            }
+
             _loadWarnings = warnings == null ? new List<string>() : new List<string>(warnings);
             _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
             _editorSession = new GameAudioEditorSession(_project, _commonConfig.UndoHistoryLimit);
@@ -2947,8 +2968,8 @@ namespace TorusEdison.Editor.Windows
 
             _editorSession.Execute(command ?? throw new ArgumentNullException(nameof(command)));
             _project = _editorSession.CurrentProject;
-            _isDirty = true;
             afterApply?.Invoke();
+            RefreshDirtyState();
             PruneTimelineSelection();
             CancelTimelineInteraction();
             ResetPreviewState();

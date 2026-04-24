@@ -14,6 +14,7 @@
 - 共通設定の `showStartupGuide` / `rememberLastProject` / `lastProjectPath` は起動時 UX の実動作契約として扱う。保存・読み込み・New・Settings UI を変更した場合は、復元対象のクリア条件と Manual / 仕様書も合わせて更新する。
 - config DTO の bool 既定値が `true` の項目は、`JsonUtility.FromJsonOverwrite` を既定値入り DTO に対して使う。欠落時の既定値維持と明示 `false` の採用をテストで分けて確認する。
 - JSON / config から enum を復元するときは `GameAudioEnumUtility.TryParseDefined` を使う。`Enum.TryParse` だけでは `"999"` のような未定義数値文字列が通るため、fallback / warning テストも追加する。
+- window の dirty 表示は `_isDirty = true` 直書きではなく、保存済み serialized snapshot と現在 project の比較で更新する。Undo / Redo / Save As の再発防止テストを維持する。
 
 
 ## 目的
