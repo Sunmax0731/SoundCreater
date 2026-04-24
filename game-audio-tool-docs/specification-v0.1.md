@@ -706,8 +706,13 @@ JSONのルートには必ず以下を含める。
 | defaultExportDirectory | 既定出力先 | `ProjectRoot/Exports/Audio` |
 | showStartupGuide | 初回ガイド表示 | true |
 | rememberLastProject | 前回プロジェクト復元 | true |
+| lastProjectPath | 前回保存または読み込みした `.gats.json` のパス | 空 |
 | defaultGridDivision | グリッド分解能 | 1/16 |
 | undoHistoryLimit | Undo保持上限 | 100 |
+
+`showStartupGuide` が true の場合、エディタウィンドウ起動後にスタートアップガイドを表示する。ユーザーが確認またはマニュアルを開いた場合は false に保存し、`Settings` から再度有効化できる。
+
+`rememberLastProject` が true の場合、保存または読み込みに成功した `.gats.json` の絶対パスを `lastProjectPath` に保存し、次回起動時に復元する。復元対象が存在しない、または読み込みに失敗した場合は `lastProjectPath` をクリアし、新規プロジェクトで起動する。
 
 ### 19.3 プロジェクト設定項目
 

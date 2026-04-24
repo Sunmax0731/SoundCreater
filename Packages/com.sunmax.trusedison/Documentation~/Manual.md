@@ -100,6 +100,8 @@ Use this page for project-level and tool-level settings.
 - new-project Sample Rate Override
 - new-project Channel Mode Override
 - UI language mode
+- startup guide display toggle
+- remember-last-project toggle and last remembered project path
 - diagnostic mode and log level
 - current foundation diagnostics
 - validation warnings from loaded project data
@@ -112,6 +114,7 @@ Use this page for project-level and tool-level settings.
 - `Save As` normalizes the selected path to the `.gats.json` session extension.
 
 The canonical session format is `.gats.json`.
+When remember-last-project is enabled, Torus Edison restores the last saved or opened `.gats.json` file the next time the editor window starts. If the remembered file no longer exists, the stored path is cleared and a new project is created instead.
 
 ## Timeline Editing
 
@@ -173,6 +176,7 @@ Current configuration files:
 - common settings: `%LocalAppData%/GameAudioTool/config.json`
 - project settings: `ProjectSettings/GameAudioToolSettings.json`
 
+Common settings store the startup guide flag, remember-last-project flag, last remembered project path, default export directory, language, diagnostics, and baseline audio defaults.
 Project settings override common defaults for sample rate, channel mode, export directory, and auto-refresh behavior.
 The sample rate and channel mode overrides are used when `New` creates a project. Existing `.gats.json` files keep the sample rate and channel mode stored in the project file.
 

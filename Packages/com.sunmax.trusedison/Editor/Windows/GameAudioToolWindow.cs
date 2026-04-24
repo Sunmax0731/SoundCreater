@@ -61,6 +61,7 @@ namespace TorusEdison.Editor.Windows
         private WorkspacePage _currentWorkspacePage = WorkspacePage.File;
         private GameAudioDisplayLanguage _displayLanguage = GameAudioDisplayLanguage.English;
         private bool _pendingUiRebuild;
+        private bool _startupGuideScheduled;
         private AudioClip _conversionSourceClip;
         private string _conversionOutputName = string.Empty;
         private int _conversionTargetSampleRate = 11025;
@@ -125,7 +126,10 @@ namespace TorusEdison.Editor.Windows
 
             if (_project == null)
             {
-                BindProject(CreateConfiguredProject(), false, string.Empty, Array.Empty<string>());
+                if (!TryRestoreRememberedProject())
+                {
+                    BindProject(CreateConfiguredProject(), false, string.Empty, Array.Empty<string>());
+                }
             }
 
             rootVisualElement.Clear();
@@ -152,6 +156,7 @@ namespace TorusEdison.Editor.Windows
 
             SetWorkspacePage(_currentWorkspacePage);
             RefreshView();
+            ScheduleStartupGuideIfNeeded();
         }
 
         private string T(string key, string englishText)
@@ -994,11 +999,14 @@ namespace TorusEdison.Editor.Windows
                 : string.Join(",", _selectedNoteIds.OrderBy(noteId => noteId, StringComparer.Ordinal));
             string nextStateKey = string.Format(
                 CultureInfo.InvariantCulture,
-                "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}",
+                "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}",
                 RuntimeHelpers.GetHashCode(project),
                 _displayLanguage,
                 _selectedTrackId,
                 selectionKey,
+                _commonConfig?.ShowStartupGuide ?? true,
+                _commonConfig?.RememberLastProject ?? true,
+                _commonConfig?.LastProjectPath ?? string.Empty,
                 _commonConfig?.EnableDiagnosticLogging ?? false,
                 _commonConfig?.DiagnosticLogLevel ?? GameAudioDiagnosticLogLevel.Info,
                 _projectConfig?.PreferredSampleRate?.ToString(CultureInfo.InvariantCulture) ?? string.Empty,
@@ -1289,6 +1297,24 @@ namespace TorusEdison.Editor.Windows
                 HelpBoxMessageType.Info));
             AddInspectorToggleField(
                 parent,
+                T("inspector.showStartupGuide", "Show Startup Guide"),
+                _commonConfig?.ShowStartupGuide ?? true,
+                OnShowStartupGuideChanged);
+            AddInspectorToggleField(
+                parent,
+                T("inspector.rememberLastProject", "Remember Last Project"),
+                _commonConfig?.RememberLastProject ?? true,
+                OnRememberLastProjectChanged);
+            if (_commonConfig?.RememberLastProject == true && !string.IsNullOrWhiteSpace(_commonConfig.LastProjectPath))
+            {
+                parent.Add(CreateInspectorSummaryLabel(TF("inspector.lastProjectPath", "Last project: {0}", _commonConfig.LastProjectPath)));
+            }
+
+            parent.Add(CreateInspectorHelpBox(
+                T("inspector.startup.help", "The startup guide appears once by default and can be re-enabled here. When Remember Last Project is enabled, Torus Edison restores the last saved or opened .gats.json file on startup."),
+                HelpBoxMessageType.Info));
+            AddInspectorToggleField(
+                parent,
                 T("inspector.debugMode", "Debug Mode"),
                 _commonConfig?.EnableDiagnosticLogging ?? false,
                 OnDiagnosticLoggingChanged);
@@ -1493,6 +1519,7 @@ namespace TorusEdison.Editor.Windows
             }
 
             BindProject(CreateConfiguredProject(), false, string.Empty, Array.Empty<string>());
+            RememberProjectPath(string.Empty);
             RefreshView();
         }
 
@@ -1896,6 +1923,7 @@ namespace TorusEdison.Editor.Windows
                 _projectSerializer.SaveToFile(resolvedPath, CurrentProject);
                 _projectPath = resolvedPath;
                 _isDirty = false;
+                RememberProjectPath(resolvedPath);
                 GameAudioDiagnosticLogger.Info("Project", $"Saved project to {resolvedPath}.");
                 ShowNotification(new GUIContent(T("status.projectSaved", "Project saved.")));
                 RefreshView();
@@ -1961,6 +1989,209 @@ namespace TorusEdison.Editor.Windows
             _projectConfigSerializer.Save(
                 _projectConfig ?? new GameAudioProjectConfig(),
                 GameAudioConfigPaths.GetProjectConfigPath(GetProjectRootPath()));
+        }
+
+        private bool TryRestoreRememberedProject()
+        {
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            if (!_commonConfig.RememberLastProject || string.IsNullOrWhiteSpace(_commonConfig.LastProjectPath))
+            {
+                return false;
+            }
+
+            string configuredPath = _commonConfig.LastProjectPath;
+            string rememberedPath = NormalizeRememberedProjectPath(configuredPath);
+            if (string.IsNullOrWhiteSpace(rememberedPath) || !File.Exists(rememberedPath))
+            {
+                ClearRememberedProjectPath();
+                GameAudioDiagnosticLogger.Warning("Project", $"Remembered project path was cleared because the file was not found: {configuredPath}");
+                return false;
+            }
+
+            try
+            {
+                GameAudioProjectLoadResult loadResult = _projectSerializer.LoadFromFile(rememberedPath);
+                BindProject(loadResult.Project, false, rememberedPath, loadResult.Warnings);
+                RememberProjectPath(rememberedPath);
+                if (loadResult.Warnings.Count > 0)
+                {
+                    GameAudioDiagnosticLogger.Warning("Project", $"Restored remembered project with {loadResult.Warnings.Count} warning(s): {rememberedPath}");
+                }
+
+                GameAudioDiagnosticLogger.Info("Project", $"Restored remembered project from {rememberedPath}.");
+                return true;
+            }
+            catch (Exception exception)
+            {
+                GameAudioDiagnosticLogger.Warning("Project", $"Remembered project restore failed for {rememberedPath}. {exception.Message}");
+                ClearRememberedProjectPath();
+                return false;
+            }
+        }
+
+        private void ScheduleStartupGuideIfNeeded()
+        {
+            if (_startupGuideScheduled)
+            {
+                return;
+            }
+
+            _startupGuideScheduled = true;
+            if (_commonConfig?.ShowStartupGuide != true)
+            {
+                return;
+            }
+
+            EditorApplication.delayCall += ShowStartupGuideIfNeeded;
+        }
+
+        private void ShowStartupGuideIfNeeded()
+        {
+            if (this == null)
+            {
+                return;
+            }
+
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            if (!_commonConfig.ShowStartupGuide)
+            {
+                return;
+            }
+
+            int choice = EditorUtility.DisplayDialogComplex(
+                GameAudioToolInfo.DisplayName,
+                T("startup.guide.message", "Create or open a .gats.json project, edit notes on the timeline, preview the result, then export WAV from the Export page. This startup guide appears once by default and can be re-enabled in Settings."),
+                T("startup.guide.openManual", "Open Manual"),
+                T("startup.guide.startEditing", "Start Editing"),
+                T("startup.guide.showNextTime", "Show Next Time"));
+
+            if (choice != 2)
+            {
+                _commonConfig.ShowStartupGuide = false;
+                SaveCommonConfig();
+                _inspectorStateKey = string.Empty;
+            }
+
+            if (choice == 0)
+            {
+                OpenStartupManual();
+            }
+
+            RefreshView();
+        }
+
+        private void OpenStartupManual()
+        {
+            string manualFileName = _displayLanguage == GameAudioDisplayLanguage.Japanese
+                ? "Manual.ja.md"
+                : "Manual.md";
+            string manualPath = Path.Combine(GetEmbeddedPackageRootPath(), "Documentation~", manualFileName);
+            if (!File.Exists(manualPath))
+            {
+                EditorUtility.DisplayDialog(
+                    GameAudioToolInfo.DisplayName,
+                    TF("dialog.fileNotFound", "File not found:\n{0}", manualPath),
+                    T("dialog.ok", "OK"));
+                return;
+            }
+
+            EditorUtility.OpenWithDefaultApp(manualPath);
+        }
+
+        private void RememberProjectPath(string path)
+        {
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            if (!_commonConfig.RememberLastProject)
+            {
+                return;
+            }
+
+            string normalizedPath = NormalizeRememberedProjectPath(path);
+            if (string.Equals(_commonConfig.LastProjectPath ?? string.Empty, normalizedPath, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _commonConfig.LastProjectPath = normalizedPath;
+            SaveCommonConfig();
+            _inspectorStateKey = string.Empty;
+        }
+
+        private void ClearRememberedProjectPath()
+        {
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            if (string.IsNullOrWhiteSpace(_commonConfig.LastProjectPath))
+            {
+                return;
+            }
+
+            _commonConfig.LastProjectPath = string.Empty;
+            SaveCommonConfig();
+            _inspectorStateKey = string.Empty;
+        }
+
+        private static string NormalizeRememberedProjectPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                return Path.GetFullPath(path.Trim());
+            }
+            catch (Exception)
+            {
+                return path.Trim();
+            }
+        }
+
+        private void OnShowStartupGuideChanged(bool enabled)
+        {
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            if (_commonConfig.ShowStartupGuide == enabled)
+            {
+                return;
+            }
+
+            try
+            {
+                _commonConfig.ShowStartupGuide = enabled;
+                SaveCommonConfig();
+                GameAudioDiagnosticLogger.Verbose("Settings", $"Startup guide setting changed to {enabled}.");
+                _inspectorStateKey = string.Empty;
+                RefreshView();
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception, "Settings", "Saving startup guide setting failed");
+            }
+        }
+
+        private void OnRememberLastProjectChanged(bool enabled)
+        {
+            _commonConfig ??= _commonConfigSerializer.LoadOrDefault();
+            if (_commonConfig.RememberLastProject == enabled)
+            {
+                return;
+            }
+
+            try
+            {
+                _commonConfig.RememberLastProject = enabled;
+                _commonConfig.LastProjectPath = enabled
+                    ? NormalizeRememberedProjectPath(_projectPath)
+                    : string.Empty;
+                SaveCommonConfig();
+                GameAudioDiagnosticLogger.Verbose("Settings", $"Remember last project setting changed to {enabled}.");
+                _inspectorStateKey = string.Empty;
+                RefreshView();
+            }
+            catch (Exception exception)
+            {
+                ShowEditorException(exception, "Settings", "Saving remember last project setting failed");
+            }
         }
 
         private void OnDisplayLanguageChanged(GameAudioLanguageMode nextLanguage)
@@ -2667,13 +2898,15 @@ namespace TorusEdison.Editor.Windows
             try
             {
                 GameAudioProjectLoadResult loadResult = _projectSerializer.LoadFromFile(path);
-                BindProject(loadResult.Project, false, path, loadResult.Warnings);
+                string resolvedPath = NormalizeRememberedProjectPath(path);
+                BindProject(loadResult.Project, false, resolvedPath, loadResult.Warnings);
+                RememberProjectPath(resolvedPath);
                 if (loadResult.Warnings.Count > 0)
                 {
-                    GameAudioDiagnosticLogger.Warning("Project", $"Loaded project with {loadResult.Warnings.Count} warning(s): {path}");
+                    GameAudioDiagnosticLogger.Warning("Project", $"Loaded project with {loadResult.Warnings.Count} warning(s): {resolvedPath}");
                 }
 
-                GameAudioDiagnosticLogger.Info("Project", $"Loaded project from {path}.");
+                GameAudioDiagnosticLogger.Info("Project", $"Loaded project from {resolvedPath}.");
                 ShowNotification(new GUIContent(T("status.projectLoaded", "Project loaded.")));
                 RefreshView();
             }

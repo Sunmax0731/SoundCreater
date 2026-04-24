@@ -23,6 +23,7 @@ namespace TorusEdison.Editor.Tests
                 DefaultExportDirectory = "Custom/Exports",
                 ShowStartupGuide = false,
                 RememberLastProject = false,
+                LastProjectPath = "D:/AudioProjects/last.gats.json",
                 DefaultGridDivision = "1/8",
                 UndoHistoryLimit = 240,
                 DisplayLanguage = GameAudioLanguageMode.Chinese,
@@ -38,6 +39,7 @@ namespace TorusEdison.Editor.Tests
             Assert.That(result.DefaultExportDirectory, Is.EqualTo("Custom/Exports"));
             Assert.That(result.ShowStartupGuide, Is.False);
             Assert.That(result.RememberLastProject, Is.False);
+            Assert.That(result.LastProjectPath, Is.EqualTo("D:/AudioProjects/last.gats.json"));
             Assert.That(result.DefaultGridDivision, Is.EqualTo("1/8"));
             Assert.That(result.UndoHistoryLimit, Is.EqualTo(240));
             Assert.That(result.DisplayLanguage, Is.EqualTo(GameAudioLanguageMode.Chinese));
@@ -138,6 +140,7 @@ namespace TorusEdison.Editor.Tests
                 Assert.That(result.DisplayLanguage, Is.EqualTo(GameAudioLanguageMode.Auto));
                 Assert.That(result.EnableDiagnosticLogging, Is.False);
                 Assert.That(result.DiagnosticLogLevel, Is.EqualTo(GameAudioDiagnosticLogLevel.Info));
+                Assert.That(result.LastProjectPath, Is.EqualTo(string.Empty));
             }
             finally
             {

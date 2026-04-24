@@ -16,6 +16,8 @@ namespace TorusEdison.Editor.Config
 
         public bool RememberLastProject { get; set; } = true;
 
+        public string LastProjectPath { get; set; } = string.Empty;
+
         public string DefaultGridDivision { get; set; } = "1/16";
 
         public int UndoHistoryLimit { get; set; } = 100;

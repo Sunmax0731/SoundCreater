@@ -120,6 +120,7 @@ namespace TorusEdison.Editor.Persistence
         public string defaultExportDirectory;
         public bool showStartupGuide;
         public bool rememberLastProject;
+        public string lastProjectPath;
         public string defaultGridDivision;
         public int undoHistoryLimit;
         public string displayLanguage;

@@ -67,6 +67,7 @@ namespace TorusEdison.Editor.Persistence
                     : config.DefaultExportDirectory,
                 showStartupGuide = config.ShowStartupGuide,
                 rememberLastProject = config.RememberLastProject,
+                lastProjectPath = config.LastProjectPath ?? string.Empty,
                 defaultGridDivision = string.IsNullOrWhiteSpace(config.DefaultGridDivision)
                     ? "1/16"
                     : config.DefaultGridDivision,
@@ -115,6 +116,7 @@ namespace TorusEdison.Editor.Persistence
                     : dto.defaultExportDirectory,
                 ShowStartupGuide = dto.showStartupGuide,
                 RememberLastProject = dto.rememberLastProject,
+                LastProjectPath = dto.lastProjectPath ?? string.Empty,
                 DefaultGridDivision = string.IsNullOrWhiteSpace(dto.defaultGridDivision)
                     ? "1/16"
                     : dto.defaultGridDivision,
