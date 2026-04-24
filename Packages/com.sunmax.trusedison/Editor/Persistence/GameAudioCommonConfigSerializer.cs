@@ -90,7 +90,12 @@ namespace TorusEdison.Editor.Persistence
             GameAudioCommonConfigDto dto;
             try
             {
-                dto = JsonUtility.FromJson<GameAudioCommonConfigDto>(json);
+                dto = new GameAudioCommonConfigDto
+                {
+                    showStartupGuide = true,
+                    rememberLastProject = true
+                };
+                JsonUtility.FromJsonOverwrite(json, dto);
             }
             catch (Exception exception)
             {

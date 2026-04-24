@@ -76,7 +76,11 @@ namespace TorusEdison.Editor.Persistence
             GameAudioProjectConfigDto dto;
             try
             {
-                dto = JsonUtility.FromJson<GameAudioProjectConfigDto>(json);
+                dto = new GameAudioProjectConfigDto
+                {
+                    autoRefreshAfterExport = true
+                };
+                JsonUtility.FromJsonOverwrite(json, dto);
             }
             catch (Exception exception)
             {

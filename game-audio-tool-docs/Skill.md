@@ -13,6 +13,7 @@
 - Save / Save As / WAV export / 8-bit conversion で作るファイル名は `GameAudioValidationUtility.SanitizeExportFileName` を唯一の入口にする。`CON`、`PRN`、`AUX`、`NUL`、`COM1`、`LPT1` などのWindows予約名と、先頭末尾のドットや空白を必ずテストする。
 - ProjectSettings の `preferredSampleRate` / `preferredChannelMode` は New 作成時だけに効く既定値 override として扱う。Settings UI、Manual、仕様書、resolver の契約を揃え、既存 `.gats.json` の保存値を上書きしない。
 - 共通設定の `showStartupGuide` は初回起動ガイド、`rememberLastProject` と `lastProjectPath` は最後に保存または読み込みした `.gats.json` の復元に接続する。該当ファイルが消えている場合は記憶パスをクリアして新規プロジェクトへフォールバックする。
+- config JSON の部分読込では、既定値 `true` の bool を `JsonUtility.FromJson` で直接復元しない。既定値を入れた DTO に `JsonUtility.FromJsonOverwrite` し、欠落と明示 `false` の両方をテストする。
 
 
 ## 名称
@@ -95,6 +96,7 @@ MVPでは以下を狙わない。
 - 出力先や自動リフレッシュは設定ファイル経由で管理する
 - `preferredSampleRate` / `preferredChannelMode` は Settings UI から編集できるようにし、New 作成時の既定値として `GameAudioConfigResolver` 経由で適用する
 - `showStartupGuide` / `rememberLastProject` / `lastProjectPath` は共通設定のユーザー体験項目として Settings UI、起動時復元、Manual、仕様書を同期して扱う
+- `autoRefreshAfterExport` など既定値 `true` の bool は、古い/手動編集済み config JSON で欠落しても既定値を維持する
 
 ## 実装アーキテクチャの基本ルール
 

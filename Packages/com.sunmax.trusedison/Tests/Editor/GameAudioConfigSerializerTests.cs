@@ -69,6 +69,50 @@ namespace TorusEdison.Editor.Tests
         }
 
         [Test]
+        public void CommonConfigSerializer_PreservesDefaultTrueWhenBoolFieldsAreMissing()
+        {
+            var serializer = new GameAudioCommonConfigSerializer();
+
+            GameAudioCommonConfig result = serializer.Deserialize("{\"defaultExportDirectory\":\"Custom/Exports\"}");
+
+            Assert.That(result.DefaultExportDirectory, Is.EqualTo("Custom/Exports"));
+            Assert.That(result.ShowStartupGuide, Is.True);
+            Assert.That(result.RememberLastProject, Is.True);
+        }
+
+        [Test]
+        public void CommonConfigSerializer_UsesExplicitFalseBoolFields()
+        {
+            var serializer = new GameAudioCommonConfigSerializer();
+
+            GameAudioCommonConfig result = serializer.Deserialize("{\"showStartupGuide\":false,\"rememberLastProject\":false}");
+
+            Assert.That(result.ShowStartupGuide, Is.False);
+            Assert.That(result.RememberLastProject, Is.False);
+        }
+
+        [Test]
+        public void ProjectConfigSerializer_PreservesDefaultTrueWhenBoolFieldIsMissing()
+        {
+            var serializer = new GameAudioProjectConfigSerializer();
+
+            GameAudioProjectConfig result = serializer.Deserialize("{\"exportDirectory\":\"Assets/Exports/Audio\"}");
+
+            Assert.That(result.ExportDirectory, Is.EqualTo("Assets/Exports/Audio"));
+            Assert.That(result.AutoRefreshAfterExport, Is.True);
+        }
+
+        [Test]
+        public void ProjectConfigSerializer_UsesExplicitFalseBoolField()
+        {
+            var serializer = new GameAudioProjectConfigSerializer();
+
+            GameAudioProjectConfig result = serializer.Deserialize("{\"autoRefreshAfterExport\":false}");
+
+            Assert.That(result.AutoRefreshAfterExport, Is.False);
+        }
+
+        [Test]
         public void ConfigResolver_UsesProjectOverridesBeforeCommonDefaults()
         {
             var commonConfig = new GameAudioCommonConfig
