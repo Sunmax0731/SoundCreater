@@ -70,6 +70,11 @@ Use this page for editing and preview work in one place.
 
 Current shortcuts:
 
+- `Ctrl+N` new project
+- `Ctrl+O` open project
+- `Ctrl+S` save project
+- `Ctrl+Shift+S` save as
+- `Space` play or pause preview
 - `Ctrl+D` duplicate selected notes
 - `Delete` remove selected notes
 - `Ctrl+Z` undo

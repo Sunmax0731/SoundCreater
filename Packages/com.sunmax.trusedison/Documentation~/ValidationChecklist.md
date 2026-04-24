@@ -126,6 +126,12 @@ Expected:
 - rewind returns playback to the start
 - loop playback continues over the 4-bar sample
 
+Keyboard shortcut check:
+
+- `Space` starts preview playback when the editor canvas has focus
+- `Space` pauses playback while preview is playing
+- `Space` does not trigger preview playback while editing a text or numeric field
+
 ### 3. Timeline Editing
 
 1. Go to the `Edit` page
@@ -143,7 +149,21 @@ Expected:
 - selection state remains consistent
 - undo / redo returns the project to the expected state
 
-### 4. Inspector Editing
+### 4. File Shortcuts
+
+1. Focus the editor canvas outside input fields.
+2. Press `Ctrl+S`.
+3. Press `Ctrl+Shift+S`.
+4. Press `Ctrl+O`.
+5. Press `Ctrl+N`.
+6. Repeat while a text or numeric field is focused.
+
+Expected:
+
+- file shortcuts invoke the same actions as the toolbar buttons when the editor canvas has focus
+- text and numeric field editing is not interrupted by global shortcuts
+
+### 5. Inspector Editing
 
 1. Select a note and change pitch or velocity
 2. Select a track and change volume or pan
@@ -156,7 +176,7 @@ Expected:
 - changes affect playback after render
 - invalid values are clamped safely
 
-### 5. WAV Export
+### 6. WAV Export
 
 1. Go to the `Export` page
 2. Export `Basic SE`
@@ -171,7 +191,7 @@ Expected:
 - exported files are non-empty
 - `Assets/` export refresh behavior is correct
 
-### 6. Localization And Diagnostics
+### 7. Localization And Diagnostics
 
 1. Go to the `Settings` page
 2. Change UI language mode between `Auto`, `Japanese`, `English`, and `Chinese`

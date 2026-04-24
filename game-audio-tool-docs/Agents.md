@@ -15,6 +15,7 @@
 - config DTO の bool 既定値が `true` の項目は、`JsonUtility.FromJsonOverwrite` を既定値入り DTO に対して使う。欠落時の既定値維持と明示 `false` の採用をテストで分けて確認する。
 - JSON / config から enum を復元するときは `GameAudioEnumUtility.TryParseDefined` を使う。`Enum.TryParse` だけでは `"999"` のような未定義数値文字列が通るため、fallback / warning テストも追加する。
 - window の dirty 表示は `_isDirty = true` 直書きではなく、保存済み serialized snapshot と現在 project の比較で更新する。Undo / Redo / Save As の再発防止テストを維持する。
+- editor-wide shortcuts は input field / button / popup / slider にフォーカスがある場合は発火させない。Manual と ValidationChecklist のショートカット表も同時に更新する。
 
 
 ## 目的

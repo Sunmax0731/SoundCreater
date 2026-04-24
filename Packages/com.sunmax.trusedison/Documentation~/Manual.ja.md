@@ -71,6 +71,11 @@
 
 主なショートカット:
 
+- `Ctrl+N` 新規プロジェクト
+- `Ctrl+O` プロジェクトを開く
+- `Ctrl+S` 保存
+- `Ctrl+Shift+S` 名前を付けて保存
+- `Space` プレビュー再生 / 一時停止
 - `Ctrl+D` 選択ノート複製
 - `Delete` 選択ノート削除
 - `Ctrl+Z` Undo

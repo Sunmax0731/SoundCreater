@@ -3921,7 +3921,40 @@ namespace TorusEdison.Editor.Windows
 
         private void OnRootKeyDown(KeyDownEvent evt)
         {
+            if (ShouldIgnoreShortcutForFocusedElement(evt.target as VisualElement))
+            {
+                return;
+            }
+
             bool actionKey = evt.ctrlKey || evt.commandKey;
+
+            if (actionKey && evt.keyCode == KeyCode.N)
+            {
+                CreateNewProject();
+                ConsumeShortcutEvent(evt);
+                return;
+            }
+
+            if (actionKey && evt.keyCode == KeyCode.O)
+            {
+                OpenProject();
+                ConsumeShortcutEvent(evt);
+                return;
+            }
+
+            if (actionKey && evt.shiftKey && evt.keyCode == KeyCode.S)
+            {
+                SaveProjectAs();
+                ConsumeShortcutEvent(evt);
+                return;
+            }
+
+            if (actionKey && evt.keyCode == KeyCode.S)
+            {
+                SaveProject();
+                ConsumeShortcutEvent(evt);
+                return;
+            }
 
             if (actionKey && evt.keyCode == KeyCode.Z)
             {
@@ -3961,7 +3994,52 @@ namespace TorusEdison.Editor.Windows
             {
                 RewindPreview();
                 ConsumeShortcutEvent(evt);
+                return;
             }
+
+            if (!actionKey && evt.keyCode == KeyCode.Space)
+            {
+                TogglePreviewPlaybackShortcut();
+                ConsumeShortcutEvent(evt);
+            }
+        }
+
+        private void TogglePreviewPlaybackShortcut()
+        {
+            GameAudioPreviewState previewState = _previewPlaybackService.State;
+            if (previewState.IsPlaying)
+            {
+                PausePreview();
+                return;
+            }
+
+            PlayPreview();
+        }
+
+        internal static bool ShouldIgnoreShortcutForFocusedElement(VisualElement element)
+        {
+            for (VisualElement current = element; current != null; current = current.parent)
+            {
+                if (current is TextField
+                    || current is IntegerField
+                    || current is FloatField
+                    || current is DoubleField
+                    || current is LongField
+                    || current is Slider
+                    || current is SliderInt
+                    || current is Toggle
+                    || current is Button)
+                {
+                    return true;
+                }
+
+                if (current.GetType().Name.StartsWith("PopupField", StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void FocusTimelineShortcutTarget()

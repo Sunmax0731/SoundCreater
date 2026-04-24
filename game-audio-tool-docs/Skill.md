@@ -16,6 +16,7 @@
 - config JSON の部分読込では、既定値 `true` の bool を `JsonUtility.FromJson` で直接復元しない。既定値を入れた DTO に `JsonUtility.FromJsonOverwrite` し、欠落と明示 `false` の両方をテストする。
 - JSON / config の enum 復元は `GameAudioEnumUtility.TryParseDefined` に通す。未定義の数値文字列は採用せず、project JSON では既存の fallback + warning 経路へ流す。
 - dirty 判定は保存済み serialized snapshot を基準にする。Undo で snapshot と一致したら clean、Redo や追加編集で差分が戻ったら dirty にする。
+- `Ctrl+N/O/S/Shift+S` と `Space` などの editor-wide shortcuts は、TextField / numeric field / popup / slider / button にフォーカスがある場合は無視する。
 
 
 ## 名称
@@ -101,6 +102,7 @@ MVPでは以下を狙わない。
 - `autoRefreshAfterExport` など既定値 `true` の bool は、古い/手動編集済み config JSON で欠落しても既定値を維持する
 - `defaultChannelMode` / `preferredChannelMode` などの enum config は、未定義数値を既定値または null に戻して保存データへ持ち込まない
 - `Save` / `Save As` は dirty snapshot を更新し、`New` / `Open` は clean baseline を作る。Undo / Redo では boolean を直接立てず、snapshot 比較を使う
+- file / transport shortcuts を変更した場合は、Manual と ValidationChecklist の手動確認項目を同期する
 
 ## 実装アーキテクチャの基本ルール
 
