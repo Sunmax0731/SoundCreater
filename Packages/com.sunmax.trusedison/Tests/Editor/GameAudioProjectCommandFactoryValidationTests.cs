@@ -139,6 +139,12 @@ namespace TorusEdison.Editor.Tests
                     project.MasterGainDb = 24.0f;
                     project.TimeSignature = new GameAudioTimeSignature { Numerator = 5, Denominator = 4 };
                     project.LoopPlayback = true;
+                    project.ExportSettings = new GameAudioExportSettings
+                    {
+                        DurationMode = (GameAudioExportDurationMode)999,
+                        DurationSeconds = -1.0f,
+                        IncludeTail = false
+                    };
                 }));
 
             GameAudioProject project = session.CurrentProject;
@@ -151,6 +157,9 @@ namespace TorusEdison.Editor.Tests
             Assert.That(project.TimeSignature.Numerator, Is.EqualTo(4));
             Assert.That(project.TimeSignature.Denominator, Is.EqualTo(4));
             Assert.That(project.LoopPlayback, Is.True);
+            Assert.That(project.ExportSettings.DurationMode, Is.EqualTo(GameAudioExportDurationMode.ProjectBars));
+            Assert.That(project.ExportSettings.DurationSeconds, Is.EqualTo(GameAudioToolInfo.DefaultExportDurationSeconds));
+            Assert.That(project.ExportSettings.IncludeTail, Is.False);
         }
     }
 }

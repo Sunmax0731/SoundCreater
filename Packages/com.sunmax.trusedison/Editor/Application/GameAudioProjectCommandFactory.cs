@@ -306,6 +306,7 @@ namespace TorusEdison.Editor.Application
                 : GameAudioChannelMode.Stereo;
             project.MasterGainDb = GameAudioValidationUtility.ClampFloat(project.MasterGainDb, -24.0f, 6.0f);
             project.TimeSignature = NormalizeTimeSignature(project.TimeSignature);
+            project.ExportSettings = NormalizeExportSettings(project.ExportSettings);
             project.Tracks = project.Tracks ?? new List<GameAudioTrack>();
 
             for (int index = 0; index < project.Tracks.Count; index++)
@@ -379,6 +380,21 @@ namespace TorusEdison.Editor.Application
             normalized.TimeMs = GameAudioValidationUtility.ClampInt(normalized.TimeMs, 20, 1000);
             normalized.Feedback = GameAudioValidationUtility.ClampFloat(normalized.Feedback, 0.0f, 0.70f);
             normalized.Mix = GameAudioValidationUtility.ClampFloat(normalized.Mix, 0.0f, 1.0f);
+            return normalized;
+        }
+
+        private static GameAudioExportSettings NormalizeExportSettings(GameAudioExportSettings settings)
+        {
+            GameAudioExportSettings normalized = settings ?? new GameAudioExportSettings();
+            if (!Enum.IsDefined(typeof(GameAudioExportDurationMode), normalized.DurationMode))
+            {
+                normalized.DurationMode = GameAudioExportDurationMode.ProjectBars;
+            }
+
+            normalized.DurationSeconds = GameAudioValidationUtility.ClampFloat(
+                normalized.DurationSeconds <= 0.0f ? GameAudioToolInfo.DefaultExportDurationSeconds : normalized.DurationSeconds,
+                GameAudioToolInfo.MinExportDurationSeconds,
+                GameAudioToolInfo.MaxExportDurationSeconds);
             return normalized;
         }
 

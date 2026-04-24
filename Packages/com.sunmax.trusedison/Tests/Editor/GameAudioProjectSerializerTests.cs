@@ -70,6 +70,27 @@ namespace TorusEdison.Editor.Tests
         }
 
         [Test]
+        public void SerializeAndDeserialize_RoundTripsExportSettings()
+        {
+            var serializer = new GameAudioProjectSerializer();
+            GameAudioProject project = GameAudioProjectFactory.CreateDefaultProject();
+            project.ExportSettings = new GameAudioExportSettings
+            {
+                DurationMode = GameAudioExportDurationMode.Seconds,
+                DurationSeconds = 0.75f,
+                IncludeTail = false
+            };
+
+            string json = serializer.Serialize(project);
+            GameAudioProjectLoadResult result = serializer.Deserialize(json);
+
+            Assert.That(result.Project.ExportSettings, Is.Not.Null);
+            Assert.That(result.Project.ExportSettings.DurationMode, Is.EqualTo(GameAudioExportDurationMode.Seconds));
+            Assert.That(result.Project.ExportSettings.DurationSeconds, Is.EqualTo(0.75f));
+            Assert.That(result.Project.ExportSettings.IncludeTail, Is.False);
+        }
+
+        [Test]
         public void Deserialize_RejectsUnsupportedFormatVersion()
         {
             const string json = @"{
@@ -156,6 +177,9 @@ namespace TorusEdison.Editor.Tests
             Assert.That(result.Project.ChannelMode, Is.EqualTo(GameAudioChannelMode.Stereo));
             Assert.That(result.Project.MasterGainDb, Is.EqualTo(0.0f));
             Assert.That(result.Project.LoopPlayback, Is.False);
+            Assert.That(result.Project.ExportSettings.DurationMode, Is.EqualTo(GameAudioExportDurationMode.ProjectBars));
+            Assert.That(result.Project.ExportSettings.DurationSeconds, Is.EqualTo(GameAudioToolInfo.DefaultExportDurationSeconds));
+            Assert.That(result.Project.ExportSettings.IncludeTail, Is.True);
             Assert.That(result.Project.Tracks[0].DefaultVoice, Is.Not.Null);
             Assert.That(result.Project.Tracks[0].Notes[0].VoiceOverride.Waveform, Is.EqualTo(GameAudioWaveformType.Triangle));
             Assert.That(result.Project.Tracks[0].Notes[0].VoiceOverride.Effect.Delay.TimeMs, Is.EqualTo(180));

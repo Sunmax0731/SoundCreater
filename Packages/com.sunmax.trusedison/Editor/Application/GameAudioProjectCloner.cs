@@ -25,6 +25,8 @@ namespace TorusEdison.Editor.Application
                 ChannelMode = project.ChannelMode,
                 MasterGainDb = project.MasterGainDb,
                 LoopPlayback = project.LoopPlayback,
+                ExportSettings = CloneExportSettings(project.ExportSettings),
+                ImportedAudioConversion = project.ImportedAudioConversion == null ? null : CloneImportedAudioConversion(project.ImportedAudioConversion),
                 Tracks = project.Tracks == null
                     ? new List<GameAudioTrack>()
                     : project.Tracks.Select(CloneTrack).ToList()
@@ -80,6 +82,34 @@ namespace TorusEdison.Editor.Application
                     Numerator = timeSignature.Numerator,
                     Denominator = timeSignature.Denominator
                 };
+        }
+
+        private static GameAudioExportSettings CloneExportSettings(GameAudioExportSettings settings)
+        {
+            return settings == null
+                ? new GameAudioExportSettings()
+                : new GameAudioExportSettings
+                {
+                    DurationMode = settings.DurationMode,
+                    DurationSeconds = settings.DurationSeconds,
+                    IncludeTail = settings.IncludeTail
+                };
+        }
+
+        private static GameAudioImportedAudioConversion CloneImportedAudioConversion(GameAudioImportedAudioConversion conversion)
+        {
+            return new GameAudioImportedAudioConversion
+            {
+                SourceClipName = conversion.SourceClipName ?? string.Empty,
+                SourceAssetPath = conversion.SourceAssetPath ?? string.Empty,
+                SourceSampleRate = conversion.SourceSampleRate,
+                SourceChannelCount = conversion.SourceChannelCount,
+                SourceDurationSeconds = conversion.SourceDurationSeconds,
+                TargetSampleRate = conversion.TargetSampleRate,
+                TargetChannelMode = conversion.TargetChannelMode ?? string.Empty,
+                OutputChannelCount = conversion.OutputChannelCount,
+                OutputWaveFileName = conversion.OutputWaveFileName ?? string.Empty
+            };
         }
 
         private static GameAudioVoiceSettings CloneVoice(GameAudioVoiceSettings voice)

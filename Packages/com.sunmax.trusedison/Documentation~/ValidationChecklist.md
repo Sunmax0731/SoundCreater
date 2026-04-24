@@ -31,6 +31,7 @@ Current automated coverage in this package includes:
 - export tests under `Tests/Editor/GameAudioExportUtilityTests.cs`
 - diagnostic logger tests under `Tests/Editor/GameAudioDiagnosticLoggerTests.cs`
 - acceptance-scenario tests under `Tests/Editor/GameAudioAcceptanceScenarioTests.cs`
+- export length coverage for explicit seconds, auto trim, and tail include/cut behavior
 
 JSON compatibility coverage must include:
 
@@ -201,10 +202,13 @@ Expected:
 3. Export `Simple Loop`
 4. Confirm both files are written
 5. If exporting under `Assets/`, confirm the file appears in the Project window
-6. Confirm Export Quality shows peak, project duration, output duration, and tail duration
-7. Confirm a no-note or muted project shows a silent-buffer warning
-8. Confirm an over-gained project shows clipping risk when Normalize Export is off
-9. Enable Normalize Export with headroom and confirm the quality line reports normalize gain and a lower output peak
+6. Set Export Length to `Seconds` with a duration shorter than Bars, turn tail inclusion off, export, and confirm the output duration matches the target
+7. Turn tail inclusion on for a sound with release or delay, export, and confirm output duration can extend past the target
+8. Set Export Length to `Auto Trim`, export a short one-shot, and confirm trailing project silence is omitted
+9. Confirm Export Quality shows peak, target duration, output duration, project duration, and tail duration
+10. Confirm a no-note or muted project shows a silent-buffer warning
+11. Confirm an over-gained project shows clipping risk when Normalize Export is off
+12. Enable Normalize Export with headroom and confirm the quality line reports normalize gain and a lower output peak
 
 Expected:
 
@@ -212,6 +216,9 @@ Expected:
 - exported files are valid `.wav`
 - exported files are non-empty
 - `Assets/` export refresh behavior is correct
+- `Project Bars` remains the default for existing projects
+- short sound effects can export shorter than the project Bars value
+- release and delay tails are either included or cut according to the toggle
 - quality warnings make silent, low peak, and clipping-risk exports visible before distribution
 - normalize remains an export option and does not alter the project or Undo history
 

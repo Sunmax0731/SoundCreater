@@ -136,10 +136,30 @@ namespace TorusEdison.Editor.Persistence
                 channelMode = project.ChannelMode.ToString(),
                 masterGainDb = GameAudioValidationUtility.ClampFloat(project.MasterGainDb, -24.0f, 6.0f),
                 loopPlayback = project.LoopPlayback,
+                exportSettings = ToDto(project.ExportSettings),
                 importedAudioConversion = project.ImportedAudioConversion == null ? null : ToDto(project.ImportedAudioConversion),
                 tracks = (project.Tracks ?? new List<GameAudioTrack>())
                     .Select(ToDto)
                     .ToArray()
+            };
+        }
+
+        private static GameAudioExportSettingsDto ToDto(GameAudioExportSettings settings)
+        {
+            GameAudioExportSettings actualSettings = settings ?? new GameAudioExportSettings();
+            GameAudioExportDurationMode durationMode = Enum.IsDefined(typeof(GameAudioExportDurationMode), actualSettings.DurationMode)
+                ? actualSettings.DurationMode
+                : GameAudioExportDurationMode.ProjectBars;
+            float durationSeconds = GameAudioValidationUtility.ClampFloat(
+                actualSettings.DurationSeconds <= 0.0f ? GameAudioToolInfo.DefaultExportDurationSeconds : actualSettings.DurationSeconds,
+                GameAudioToolInfo.MinExportDurationSeconds,
+                GameAudioToolInfo.MaxExportDurationSeconds);
+
+            return new GameAudioExportSettingsDto
+            {
+                durationMode = durationMode.ToString(),
+                durationSeconds = durationSeconds,
+                includeTail = actualSettings.IncludeTail
             };
         }
 
@@ -250,6 +270,7 @@ namespace TorusEdison.Editor.Persistence
                 ChannelMode = ReadChannelMode(dto.channelMode, GameAudioChannelMode.Stereo, warnings, "project.channelMode"),
                 MasterGainDb = ReadClamped(dto.masterGainDb, -24.0f, 6.0f, 0.0f, warnings, "project.masterGainDb"),
                 LoopPlayback = dto.loopPlayback,
+                ExportSettings = ReadExportSettings(dto.exportSettings, warnings),
                 ImportedAudioConversion = importedAudioConversion
             };
 
@@ -260,6 +281,34 @@ namespace TorusEdison.Editor.Persistence
             }
 
             return project;
+        }
+
+        private static GameAudioExportSettings ReadExportSettings(GameAudioExportSettingsDto dto, List<string> warnings)
+        {
+            if (dto == null)
+            {
+                return new GameAudioExportSettings();
+            }
+
+            GameAudioExportDurationMode durationMode = ReadEnum(
+                dto.durationMode,
+                GameAudioExportDurationMode.ProjectBars,
+                warnings,
+                "project.exportSettings.durationMode");
+            float durationSeconds = ReadClamped(
+                dto.durationSeconds,
+                GameAudioToolInfo.MinExportDurationSeconds,
+                GameAudioToolInfo.MaxExportDurationSeconds,
+                GameAudioToolInfo.DefaultExportDurationSeconds,
+                warnings,
+                "project.exportSettings.durationSeconds");
+
+            return new GameAudioExportSettings
+            {
+                DurationMode = durationMode,
+                DurationSeconds = durationSeconds,
+                IncludeTail = dto.includeTail
+            };
         }
 
         private static GameAudioImportedAudioConversion ReadImportedAudioConversion(GameAudioImportedAudioConversionDto dto, List<string> warnings)
@@ -444,6 +493,18 @@ namespace TorusEdison.Editor.Persistence
             if (GameAudioEnumUtility.TryParseDefined(value, out GameAudioChannelMode channelMode))
             {
                 return channelMode;
+            }
+
+            warnings.Add($"{path} was unknown; defaulted to {fallback}.");
+            return fallback;
+        }
+
+        private static TEnum ReadEnum<TEnum>(string value, TEnum fallback, List<string> warnings, string path)
+            where TEnum : struct
+        {
+            if (GameAudioEnumUtility.TryParseDefined(value, out TEnum parsed))
+            {
+                return parsed;
             }
 
             warnings.Add($"{path} was unknown; defaulted to {fallback}.");

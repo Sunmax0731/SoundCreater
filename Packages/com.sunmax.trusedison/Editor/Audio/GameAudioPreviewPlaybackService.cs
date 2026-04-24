@@ -188,7 +188,7 @@ namespace TorusEdison.Editor.Audio
 
             if (_loopPlayback)
             {
-                double loopDurationSeconds = State.ProjectDurationSeconds;
+                double loopDurationSeconds = State.TargetDurationSeconds;
                 if (loopDurationSeconds <= 0.0d)
                 {
                     StopInternal(true, "Preview ready.");
@@ -265,12 +265,12 @@ namespace TorusEdison.Editor.Audio
             _renderResult = _renderer.Render(project);
             _outputClip = _clipAssetCache.CreateOutputClip(project.Name, _renderResult);
 
-            if (_renderResult.ProjectFrameCount < _renderResult.FrameCount)
+            if (_renderResult.TargetFrameCount < _renderResult.FrameCount)
             {
-                int loopSampleCount = _renderResult.ProjectFrameCount * _renderResult.ChannelCount;
+                int loopSampleCount = _renderResult.TargetFrameCount * _renderResult.ChannelCount;
                 float[] loopSamples = new float[loopSampleCount];
                 Array.Copy(_renderResult.Samples, loopSamples, loopSampleCount);
-                _loopClip = _clipAssetCache.CreateLoopClip(project.Name, loopSamples, _renderResult.ProjectFrameCount, _renderResult.ChannelCount, _renderResult.SampleRate);
+                _loopClip = _clipAssetCache.CreateLoopClip(project.Name, loopSamples, _renderResult.TargetFrameCount, _renderResult.ChannelCount, _renderResult.SampleRate);
             }
             else
             {
@@ -294,7 +294,7 @@ namespace TorusEdison.Editor.Audio
                     : "Preview ready.";
             GameAudioDiagnosticLogger.Verbose(
                 "Preview",
-                $"Preview buffer ready. Frames={_renderResult.FrameCount}; ProjectFrames={_renderResult.ProjectFrameCount}; Channels={_renderResult.ChannelCount}; Peak={_renderResult.PeakAmplitude:0.000}");
+                $"Preview buffer ready. Frames={_renderResult.FrameCount}; ProjectFrames={_renderResult.ProjectFrameCount}; TargetFrames={_renderResult.TargetFrameCount}; Channels={_renderResult.ChannelCount}; Peak={_renderResult.PeakAmplitude:0.000}");
         }
 
         private static double NormalizeLoopSeconds(double elapsedSeconds, double loopDurationSeconds)
@@ -319,7 +319,7 @@ namespace TorusEdison.Editor.Audio
 
             if (_loopPlayback)
             {
-                return NormalizeLoopSeconds(elapsedSeconds, State.ProjectDurationSeconds);
+                return NormalizeLoopSeconds(elapsedSeconds, State.TargetDurationSeconds);
             }
 
             return Math.Min(State.OutputDurationSeconds, elapsedSeconds);

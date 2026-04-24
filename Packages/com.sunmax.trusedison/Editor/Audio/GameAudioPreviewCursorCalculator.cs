@@ -12,15 +12,15 @@ namespace TorusEdison.Editor.Audio
                 return new GameAudioPreviewCursorState(0.0d, 0.0f, 1, 1.0d, false, 0.0d);
             }
 
-            double projectDurationSeconds = Math.Max(0.0d, previewState.ProjectDurationSeconds);
-            double outputDurationSeconds = Math.Max(projectDurationSeconds, previewState.OutputDurationSeconds);
+            double targetDurationSeconds = Math.Max(0.0d, previewState.TargetDurationSeconds);
+            double outputDurationSeconds = Math.Max(targetDurationSeconds, previewState.OutputDurationSeconds);
             double playbackSeconds = Clamp(previewState.PlaybackSeconds, 0.0d, outputDurationSeconds);
-            double musicalSeconds = Math.Min(projectDurationSeconds, playbackSeconds);
-            bool isInTail = !previewState.LoopPlayback && playbackSeconds > projectDurationSeconds;
-            double tailSeconds = Math.Max(0.0d, playbackSeconds - projectDurationSeconds);
-            float musicalProgress = projectDurationSeconds <= 0.0d
+            double musicalSeconds = Math.Min(targetDurationSeconds, playbackSeconds);
+            bool isInTail = !previewState.LoopPlayback && playbackSeconds > targetDurationSeconds;
+            double tailSeconds = Math.Max(0.0d, playbackSeconds - targetDurationSeconds);
+            float musicalProgress = targetDurationSeconds <= 0.0d
                 ? 0.0f
-                : (float)(musicalSeconds / projectDurationSeconds);
+                : (float)(musicalSeconds / targetDurationSeconds);
 
             double secondsPerBeat = 60.0d / Math.Max(1, project.Bpm);
             double beatsPerBar = GetBeatsPerBar(project.TimeSignature);

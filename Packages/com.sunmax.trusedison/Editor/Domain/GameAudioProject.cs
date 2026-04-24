@@ -22,6 +22,8 @@ namespace TorusEdison.Editor.Domain
 
         public bool LoopPlayback { get; set; }
 
+        public GameAudioExportSettings ExportSettings { get; set; } = new GameAudioExportSettings();
+
         public GameAudioImportedAudioConversion ImportedAudioConversion { get; set; }
 
         public List<GameAudioTrack> Tracks { get; set; } = new List<GameAudioTrack>();

@@ -35,6 +35,11 @@ namespace TorusEdison.Editor.Persistence
             OptionalString(node, path, "channelMode");
             OptionalNumber(node, path, "masterGainDb");
             OptionalBoolean(node, path, "loopPlayback");
+            if (TryGetOptionalObject(node, path, "exportSettings", out GameAudioJsonNode exportSettings))
+            {
+                ValidateExportSettings(exportSettings, $"{path}.exportSettings");
+            }
+
             if (TryGetOptionalObject(node, path, "importedAudioConversion", out GameAudioJsonNode importedAudioConversion))
             {
                 ValidateImportedAudioConversion(importedAudioConversion, $"{path}.importedAudioConversion");
@@ -47,6 +52,14 @@ namespace TorusEdison.Editor.Persistence
                     ValidateTrack(tracks.Items[index], $"{path}.tracks[{index}]");
                 }
             }
+        }
+
+        private static void ValidateExportSettings(GameAudioJsonNode node, string path)
+        {
+            RequireObject(node, path);
+            OptionalString(node, path, "durationMode");
+            OptionalNumber(node, path, "durationSeconds");
+            OptionalBoolean(node, path, "includeTail");
         }
 
         private static void ValidateImportedAudioConversion(GameAudioJsonNode node, string path)

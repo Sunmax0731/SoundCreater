@@ -94,6 +94,9 @@ namespace TorusEdison.Editor.Windows
         private Label _exportLastResultValue;
         private Label _exportQualityValue;
         private HelpBox _exportQualityHelpBox;
+        private PopupField<GameAudioExportDurationMode> _exportDurationModeField;
+        private FloatField _exportDurationSecondsField;
+        private Toggle _exportIncludeTailToggle;
         private Toggle _normalizeExportToggle;
         private FloatField _exportNormalizeHeadroomField;
         private ObjectField _conversionSourceClipField;
@@ -518,6 +521,30 @@ namespace TorusEdison.Editor.Windows
                 }
             };
             panel.Add(_exportQualityHelpBox);
+
+            panel.Add(CreateSectionTitle(T("export.length.title", "Export Length")));
+            List<GameAudioExportDurationMode> durationModes = GetSupportedExportDurationModes().ToList();
+            _exportDurationModeField = new PopupField<GameAudioExportDurationMode>(
+                durationModes,
+                0,
+                FormatExportDurationMode,
+                FormatExportDurationMode);
+            _exportDurationModeField.RegisterValueChangedCallback(OnExportDurationModeChanged);
+            panel.Add(CreateInspectorRow(T("export.length.mode", "Duration Mode"), _exportDurationModeField));
+
+            _exportDurationSecondsField = new FloatField
+            {
+                isDelayed = true
+            };
+            _exportDurationSecondsField.RegisterValueChangedCallback(OnExportDurationSecondsChanged);
+            panel.Add(CreateInspectorRow(T("export.length.seconds", "Duration Seconds"), _exportDurationSecondsField));
+
+            _exportIncludeTailToggle = new Toggle();
+            _exportIncludeTailToggle.RegisterValueChangedCallback(OnExportIncludeTailChanged);
+            panel.Add(CreateInspectorRow(T("export.length.includeTail", "Include Release / Delay Tail"), _exportIncludeTailToggle));
+            panel.Add(CreateInspectorHelpBox(
+                T("export.length.help", "Project Bars keeps the timeline length. Seconds writes the requested length. Auto Trim ends at the last audible note body. Include Tail allows release and delay repeats to extend beyond the target length; turning it off cuts at the target."),
+                HelpBoxMessageType.Info));
 
             _normalizeExportToggle = new Toggle();
             _normalizeExportToggle.RegisterValueChangedCallback(OnNormalizeExportChanged);
@@ -1711,6 +1738,13 @@ namespace TorusEdison.Editor.Windows
             return (GameAudioConversionChannelMode[])Enum.GetValues(typeof(GameAudioConversionChannelMode));
         }
 
+        private static IEnumerable<GameAudioExportDurationMode> GetSupportedExportDurationModes()
+        {
+            yield return GameAudioExportDurationMode.ProjectBars;
+            yield return GameAudioExportDurationMode.Seconds;
+            yield return GameAudioExportDurationMode.AutoTrim;
+        }
+
         private static Label CreateInspectorValueLabel(string text)
         {
             var label = new Label(text ?? string.Empty);
@@ -1809,6 +1843,16 @@ namespace TorusEdison.Editor.Windows
                 GameAudioConversionChannelMode.Mono => T("export.convert8Bit.channelMode.mono", "Mono"),
                 GameAudioConversionChannelMode.Stereo => T("export.convert8Bit.channelMode.stereo", "Stereo"),
                 _ => T("export.convert8Bit.channelMode.preserve", "Preserve Source")
+            };
+        }
+
+        private string FormatExportDurationMode(GameAudioExportDurationMode mode)
+        {
+            return mode switch
+            {
+                GameAudioExportDurationMode.Seconds => T("export.length.mode.seconds", "Seconds"),
+                GameAudioExportDurationMode.AutoTrim => T("export.length.mode.autoTrim", "Auto Trim"),
+                _ => T("export.length.mode.projectBars", "Project Bars")
             };
         }
 
@@ -2588,6 +2632,47 @@ namespace TorusEdison.Editor.Windows
             RefreshView();
         }
 
+        private void OnExportDurationModeChanged(ChangeEvent<GameAudioExportDurationMode> evt)
+        {
+            TryApplyProjectChange(
+                "Set Export Duration Mode",
+                project =>
+                {
+                    project.ExportSettings ??= new GameAudioExportSettings();
+                    project.ExportSettings.DurationMode = evt.newValue;
+                });
+        }
+
+        private void OnExportDurationSecondsChanged(ChangeEvent<float> evt)
+        {
+            if (!IsFinite(evt.newValue))
+            {
+                ShowInvalidNumberMessage(T("export.length.seconds", "Duration Seconds"));
+                RefreshView();
+                return;
+            }
+
+            TryApplyProjectChange(
+                "Set Export Duration Seconds",
+                project =>
+                {
+                    project.ExportSettings ??= new GameAudioExportSettings();
+                    project.ExportSettings.DurationSeconds = evt.newValue;
+                },
+                project => NotifyClamp("Export Duration Seconds", evt.newValue, project.ExportSettings?.DurationSeconds ?? GameAudioToolInfo.DefaultExportDurationSeconds));
+        }
+
+        private void OnExportIncludeTailChanged(ChangeEvent<bool> evt)
+        {
+            TryApplyProjectChange(
+                "Toggle Export Tail",
+                project =>
+                {
+                    project.ExportSettings ??= new GameAudioExportSettings();
+                    project.ExportSettings.IncludeTail = evt.newValue;
+                });
+        }
+
         private void OnExportNormalizeHeadroomChanged(ChangeEvent<float> evt)
         {
             if (!IsFinite(evt.newValue))
@@ -3355,12 +3440,12 @@ namespace TorusEdison.Editor.Windows
 
             double waveformDurationSeconds = GetWaveformDurationSeconds(previewState);
             if (!previewState.LoopPlayback
-                && previewState.OutputDurationSeconds > previewState.ProjectDurationSeconds
+                && previewState.OutputDurationSeconds > previewState.TargetDurationSeconds
                 && waveformDurationSeconds > 0.0d)
             {
-                float projectWidth = (float)(innerRect.width * (previewState.ProjectDurationSeconds / waveformDurationSeconds));
+                float targetWidth = (float)(innerRect.width * (previewState.TargetDurationSeconds / waveformDurationSeconds));
                 EditorGUI.DrawRect(
-                    new Rect(innerRect.x + projectWidth, innerRect.y, innerRect.width - projectWidth, innerRect.height),
+                    new Rect(innerRect.x + targetWidth, innerRect.y, innerRect.width - targetWidth, innerRect.height),
                     new Color(0.17f, 0.13f, 0.10f, 0.65f));
             }
 
@@ -4100,6 +4185,11 @@ namespace TorusEdison.Editor.Windows
             _exportFileNameValue.text = GameAudioExportUtility.NormalizeWaveFileName(project.Name);
             _exportLastResultValue.text = string.IsNullOrWhiteSpace(_lastExportedPath) ? T("status.notExported", "(not exported)") : _lastExportedPath;
             _exportQualityValue.text = BuildExportQualityText(_lastExportQualityReport);
+            GameAudioExportSettings exportSettings = project.ExportSettings ?? new GameAudioExportSettings();
+            _exportDurationModeField?.SetValueWithoutNotify(exportSettings.DurationMode);
+            _exportDurationSecondsField?.SetValueWithoutNotify(exportSettings.DurationSeconds);
+            _exportDurationSecondsField?.SetEnabled(exportSettings.DurationMode == GameAudioExportDurationMode.Seconds);
+            _exportIncludeTailToggle?.SetValueWithoutNotify(exportSettings.IncludeTail);
             _normalizeExportToggle?.SetValueWithoutNotify(_normalizeExport);
             _exportNormalizeHeadroomField?.SetValueWithoutNotify(_exportNormalizeHeadroomDb);
             string exportQualityWarningText = BuildExportQualityWarningText(_lastExportQualityReport);
@@ -4391,12 +4481,14 @@ namespace TorusEdison.Editor.Windows
                 ? T("audio.mono", "Mono")
                 : T("audio.stereo", "Stereo");
             return TF(
-                "status.previewBuffer",
-                "{0} Hz / {1} / project {2:0.00}s / output {3:0.00}s / peak {4:0.000}",
+                "status.previewBufferWithTarget",
+                "{0} Hz / {1} / target {2:0.00}s ({3}) / output {4:0.00}s / project {5:0.00}s / peak {6:0.000}",
                 previewState.SampleRate,
                 channelLabel,
-                previewState.ProjectDurationSeconds,
+                previewState.TargetDurationSeconds,
+                FormatExportDurationMode(previewState.RenderResult.DurationMode),
                 previewState.OutputDurationSeconds,
+                previewState.ProjectDurationSeconds,
                 previewState.PeakAmplitude);
         }
 
@@ -4434,15 +4526,21 @@ namespace TorusEdison.Editor.Windows
             string comparisonText = string.IsNullOrWhiteSpace(_lastExportComparisonText)
                 ? string.Empty
                 : $" / {_lastExportComparisonText}";
+            string tailPolicyText = report.IncludeTail
+                ? T("export.length.includeTailShort", "include tail")
+                : T("export.length.cutTailShort", "cut tail");
             return TF(
                 "export.quality.summary",
-                "{0} Hz / {1} / peak {2:0.000} (source {3:0.000}) / project {4:0.00}s / output {5:0.00}s / tail +{6:0.00}s / {7}{8}",
+                "{0} Hz / {1} / peak {2:0.000} (source {3:0.000}) / target {4:0.00}s ({5}, {6}) / output {7:0.00}s / project {8:0.00}s / tail +{9:0.00}s / {10}{11}",
                 report.SampleRate,
                 channelLabel,
                 report.OutputPeakAmplitude,
                 report.SourcePeakAmplitude,
-                report.ProjectDurationSeconds,
+                report.TargetDurationSeconds,
+                FormatExportDurationMode(report.DurationMode),
+                tailPolicyText,
                 report.OutputDurationSeconds,
+                report.ProjectDurationSeconds,
                 report.TailDurationSeconds,
                 normalizeText,
                 comparisonText);
@@ -4522,8 +4620,8 @@ namespace TorusEdison.Editor.Windows
             }
 
             return previewState.LoopPlayback
-                ? Math.Max(0.0d, previewState.ProjectDurationSeconds)
-                : Math.Max(previewState.ProjectDurationSeconds, previewState.OutputDurationSeconds);
+                ? Math.Max(0.0d, previewState.TargetDurationSeconds)
+                : Math.Max(previewState.TargetDurationSeconds, previewState.OutputDurationSeconds);
         }
 
         private static float CalculateWaveformCursorProgress(GameAudioPreviewState previewState)
@@ -4535,7 +4633,7 @@ namespace TorusEdison.Editor.Windows
             }
 
             double playbackSeconds = previewState.LoopPlayback
-                ? Math.Min(previewState.ProjectDurationSeconds, previewState.PlaybackSeconds)
+                ? Math.Min(previewState.TargetDurationSeconds, previewState.PlaybackSeconds)
                 : Math.Min(totalDurationSeconds, previewState.PlaybackSeconds);
             return Mathf.Clamp01((float)(playbackSeconds / totalDurationSeconds));
         }

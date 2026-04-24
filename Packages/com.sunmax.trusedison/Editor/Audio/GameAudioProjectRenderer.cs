@@ -27,9 +27,13 @@ namespace TorusEdison.Editor.Audio
             double secondsPerBeat = 60.0d / Math.Max(1, project.Bpm);
             double beatsPerBar = GetBeatsPerBar(project.TimeSignature);
             int projectFrameCount = Math.Max(1, SecondsToFrames(project.TotalBars * beatsPerBar * secondsPerBeat, sampleRate));
-            int renderFrameCount = settings.ExtendTail
-                ? Math.Max(projectFrameCount, CalculateTailExtendedFrameCount(project, sampleRate, secondsPerBeat))
-                : projectFrameCount;
+            GameAudioExportSettings exportSettings = ResolveExportSettings(project.ExportSettings);
+            int targetFrameCount = ResolveTargetFrameCount(project, exportSettings, sampleRate, secondsPerBeat, projectFrameCount);
+            bool includeTail = settings.ExtendTail && exportSettings.IncludeTail;
+            int renderFrameCount = includeTail
+                ? Math.Max(targetFrameCount, CalculateTailExtendedFrameCount(project, sampleRate, secondsPerBeat, targetFrameCount))
+                : targetFrameCount;
+            renderFrameCount = Math.Max(1, renderFrameCount);
 
             float[] samples = new float[renderFrameCount * channelCount];
             bool hasSoloTrack = HasSoloTrack(project);
@@ -37,7 +41,7 @@ namespace TorusEdison.Editor.Audio
             if (project.Tracks == null)
             {
                 float emptyPeakAmplitude = ApplyMasterGainAndClamp(project, samples, settings.ClampSamples);
-                return new GameAudioRenderResult(samples, sampleRate, channelCount, renderFrameCount, projectFrameCount, emptyPeakAmplitude);
+                return new GameAudioRenderResult(samples, sampleRate, channelCount, renderFrameCount, projectFrameCount, targetFrameCount, exportSettings.DurationMode, includeTail, emptyPeakAmplitude);
             }
 
             foreach (GameAudioTrack track in project.Tracks)
@@ -47,14 +51,14 @@ namespace TorusEdison.Editor.Audio
                     continue;
                 }
 
-                RenderTrack(project, track, sampleRate, channelCount, secondsPerBeat, renderFrameCount, samples);
+                RenderTrack(project, track, sampleRate, channelCount, secondsPerBeat, renderFrameCount, targetFrameCount, samples);
             }
 
             float peakAmplitude = ApplyMasterGainAndClamp(project, samples, settings.ClampSamples);
-            return new GameAudioRenderResult(samples, sampleRate, channelCount, renderFrameCount, projectFrameCount, peakAmplitude);
+            return new GameAudioRenderResult(samples, sampleRate, channelCount, renderFrameCount, projectFrameCount, targetFrameCount, exportSettings.DurationMode, includeTail, peakAmplitude);
         }
 
-        private static void RenderTrack(GameAudioProject project, GameAudioTrack track, int sampleRate, int channelCount, double secondsPerBeat, int renderFrameCount, float[] destination)
+        private static void RenderTrack(GameAudioProject project, GameAudioTrack track, int sampleRate, int channelCount, double secondsPerBeat, int renderFrameCount, int noteStartLimitFrameCount, float[] destination)
         {
             float trackGain = DbToLinear(GameAudioValidationUtility.ClampFloat(track.VolumeDb, -48.0f, 6.0f));
             float trackPan = GameAudioValidationUtility.ClampFloat(track.Pan, -1.0f, 1.0f);
@@ -72,7 +76,7 @@ namespace TorusEdison.Editor.Audio
                 }
 
                 int startFrame = Math.Max(0, SecondsToFrames(note.StartBeat * secondsPerBeat, sampleRate));
-                if (startFrame >= renderFrameCount)
+                if (startFrame >= renderFrameCount || startFrame >= noteStartLimitFrameCount)
                 {
                     continue;
                 }
@@ -207,7 +211,80 @@ namespace TorusEdison.Editor.Audio
             return peakAmplitude;
         }
 
-        private static int CalculateTailExtendedFrameCount(GameAudioProject project, int sampleRate, double secondsPerBeat)
+        private static GameAudioExportSettings ResolveExportSettings(GameAudioExportSettings settings)
+        {
+            GameAudioExportSettings actualSettings = settings ?? new GameAudioExportSettings();
+            return new GameAudioExportSettings
+            {
+                DurationMode = Enum.IsDefined(typeof(GameAudioExportDurationMode), actualSettings.DurationMode)
+                    ? actualSettings.DurationMode
+                    : GameAudioExportDurationMode.ProjectBars,
+                DurationSeconds = GameAudioValidationUtility.ClampFloat(
+                    actualSettings.DurationSeconds <= 0.0f ? GameAudioToolInfo.DefaultExportDurationSeconds : actualSettings.DurationSeconds,
+                    GameAudioToolInfo.MinExportDurationSeconds,
+                    GameAudioToolInfo.MaxExportDurationSeconds),
+                IncludeTail = actualSettings.IncludeTail
+            };
+        }
+
+        private static int ResolveTargetFrameCount(
+            GameAudioProject project,
+            GameAudioExportSettings exportSettings,
+            int sampleRate,
+            double secondsPerBeat,
+            int projectFrameCount)
+        {
+            switch (exportSettings.DurationMode)
+            {
+                case GameAudioExportDurationMode.Seconds:
+                    return Math.Max(1, SecondsToFrames(exportSettings.DurationSeconds, sampleRate));
+                case GameAudioExportDurationMode.AutoTrim:
+                    return CalculateBodyFrameCount(project, sampleRate, secondsPerBeat, projectFrameCount);
+                case GameAudioExportDurationMode.ProjectBars:
+                default:
+                    return Math.Max(1, projectFrameCount);
+            }
+        }
+
+        private static int CalculateBodyFrameCount(GameAudioProject project, int sampleRate, double secondsPerBeat, int noteStartLimitFrameCount)
+        {
+            int maxFrameCount = 0;
+            bool hasSoloTrack = HasSoloTrack(project);
+
+            if (project.Tracks == null)
+            {
+                return 1;
+            }
+
+            foreach (GameAudioTrack track in project.Tracks)
+            {
+                if (!IsTrackAudible(track, hasSoloTrack) || track?.Notes == null)
+                {
+                    continue;
+                }
+
+                foreach (GameAudioNote note in track.Notes)
+                {
+                    if (note == null)
+                    {
+                        continue;
+                    }
+
+                    int startFrame = Math.Max(0, SecondsToFrames(note.StartBeat * secondsPerBeat, sampleRate));
+                    if (startFrame >= noteStartLimitFrameCount)
+                    {
+                        continue;
+                    }
+
+                    int bodyFrameCount = Math.Max(1, SecondsToFrames(Math.Max(GameAudioToolInfo.MinNoteDurationBeat, note.DurationBeat) * secondsPerBeat, sampleRate));
+                    maxFrameCount = Math.Max(maxFrameCount, startFrame + bodyFrameCount);
+                }
+            }
+
+            return Math.Max(1, maxFrameCount);
+        }
+
+        private static int CalculateTailExtendedFrameCount(GameAudioProject project, int sampleRate, double secondsPerBeat, int noteStartLimitFrameCount)
         {
             int maxFrameCount = 0;
             bool hasSoloTrack = HasSoloTrack(project);
@@ -241,6 +318,11 @@ namespace TorusEdison.Editor.Audio
                     GameAudioDelaySettings delay = effect.Delay ?? GameAudioProjectFactory.CreateDefaultDelay();
 
                     int startFrame = Math.Max(0, SecondsToFrames(note.StartBeat * secondsPerBeat, sampleRate));
+                    if (startFrame >= noteStartLimitFrameCount)
+                    {
+                        continue;
+                    }
+
                     int bodyFrameCount = Math.Max(1, SecondsToFrames(Math.Max(GameAudioToolInfo.MinNoteDurationBeat, note.DurationBeat) * secondsPerBeat, sampleRate));
                     int releaseFrameCount = MillisecondsToFrames((voice.Adsr ?? GameAudioProjectFactory.CreateDefaultEnvelope()).ReleaseMs, sampleRate);
                     int delayFrameCount = delay.Enabled

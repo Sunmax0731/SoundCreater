@@ -13,6 +13,9 @@ namespace TorusEdison.Editor.Utilities
         public const int DefaultBpm = 120;
         public const int DefaultTotalBars = 8;
         public const int MaxTotalBars = 128;
+        public const float DefaultExportDurationSeconds = 1.0f;
+        public const float MinExportDurationSeconds = 0.05f;
+        public const float MaxExportDurationSeconds = 600.0f;
         public const float MinNoteDurationBeat = 0.0625f;
         public const string SupportedFormatMajor = "1";
     }

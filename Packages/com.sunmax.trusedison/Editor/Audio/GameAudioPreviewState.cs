@@ -48,6 +48,8 @@ namespace TorusEdison.Editor.Audio
             ? 0.0d
             : RenderResult.ProjectFrameCount / (double)RenderResult.SampleRate;
 
+        public double TargetDurationSeconds => RenderResult?.TargetDurationSeconds ?? 0.0d;
+
         public double OutputDurationSeconds => RenderResult?.DurationSeconds ?? 0.0d;
     }
 }

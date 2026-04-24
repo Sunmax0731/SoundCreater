@@ -1,4 +1,5 @@
 using System;
+using TorusEdison.Editor.Utilities;
 
 namespace TorusEdison.Editor.Persistence
 {
@@ -22,8 +23,17 @@ namespace TorusEdison.Editor.Persistence
         public string channelMode;
         public float masterGainDb;
         public bool loopPlayback;
+        public GameAudioExportSettingsDto exportSettings;
         public GameAudioImportedAudioConversionDto importedAudioConversion;
         public GameAudioTrackDto[] tracks;
+    }
+
+    [Serializable]
+    internal sealed class GameAudioExportSettingsDto
+    {
+        public string durationMode = "ProjectBars";
+        public float durationSeconds = GameAudioToolInfo.DefaultExportDurationSeconds;
+        public bool includeTail = true;
     }
 
     [Serializable]

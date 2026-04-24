@@ -51,6 +51,9 @@ namespace TorusEdison.Editor.Audio
                 renderResult.ChannelCount,
                 renderResult.FrameCount,
                 renderResult.ProjectFrameCount,
+                renderResult.TargetFrameCount,
+                renderResult.DurationMode,
+                renderResult.IncludeTail,
                 options.Normalize,
                 normalizeResult.Applied,
                 normalizeResult.GainDb);

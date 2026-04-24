@@ -102,6 +102,66 @@ namespace TorusEdison.Editor.Tests
         }
 
         [Test]
+        public void Render_UsesExplicitExportSecondsShorterThanProjectBars()
+        {
+            GameAudioProject project = CreateShortExportProject();
+            project.ExportSettings = new GameAudioExportSettings
+            {
+                DurationMode = GameAudioExportDurationMode.Seconds,
+                DurationSeconds = 0.25f,
+                IncludeTail = false
+            };
+
+            GameAudioRenderResult result = new GameAudioProjectRenderer().Render(project);
+
+            Assert.That(result.DurationMode, Is.EqualTo(GameAudioExportDurationMode.Seconds));
+            Assert.That(result.IncludeTail, Is.False);
+            Assert.That(result.TargetFrameCount, Is.EqualTo(12000));
+            Assert.That(result.FrameCount, Is.EqualTo(result.TargetFrameCount));
+            Assert.That(result.ProjectFrameCount, Is.GreaterThan(result.FrameCount));
+            Assert.That(result.Samples.Any(sample => Math.Abs(sample) > 0.0001f), Is.True);
+        }
+
+        [Test]
+        public void Render_IncludeTailExtendsReleasePastExplicitTarget()
+        {
+            GameAudioProject project = CreateShortExportProject();
+            project.ExportSettings = new GameAudioExportSettings
+            {
+                DurationMode = GameAudioExportDurationMode.Seconds,
+                DurationSeconds = 0.125f,
+                IncludeTail = true
+            };
+            project.Tracks[0].DefaultVoice.Adsr.ReleaseMs = 300;
+            project.Tracks[0].Notes[0].DurationBeat = 0.125f;
+
+            GameAudioRenderResult result = new GameAudioProjectRenderer().Render(project);
+
+            Assert.That(result.TargetFrameCount, Is.EqualTo(6000));
+            Assert.That(result.FrameCount, Is.GreaterThan(result.TargetFrameCount));
+            Assert.That(HasNonZeroSampleAfter(result, result.TargetFrameCount), Is.True);
+        }
+
+        [Test]
+        public void Render_AutoTrimEndsAtLastNoteBodyBeforeProjectBars()
+        {
+            GameAudioProject project = CreateShortExportProject();
+            project.ExportSettings = new GameAudioExportSettings
+            {
+                DurationMode = GameAudioExportDurationMode.AutoTrim,
+                IncludeTail = false
+            };
+            project.Tracks[0].Notes[0].DurationBeat = 0.5f;
+
+            GameAudioRenderResult result = new GameAudioProjectRenderer().Render(project);
+
+            Assert.That(result.DurationMode, Is.EqualTo(GameAudioExportDurationMode.AutoTrim));
+            Assert.That(result.TargetFrameCount, Is.EqualTo(12000));
+            Assert.That(result.FrameCount, Is.EqualTo(result.TargetFrameCount));
+            Assert.That(result.ProjectFrameCount, Is.GreaterThan(result.FrameCount));
+        }
+
+        [Test]
         public void Render_ClampsUnsafeValuesAndSupportsMonoOutput()
         {
             GameAudioProject project = GameAudioProjectFactory.CreateDefaultProject();
@@ -161,6 +221,31 @@ namespace TorusEdison.Editor.Tests
                 DurationBeat = 0.5f,
                 MidiNote = 72,
                 Velocity = 0.8f
+            });
+
+            return project;
+        }
+
+        private static GameAudioProject CreateShortExportProject()
+        {
+            GameAudioProject project = GameAudioProjectFactory.CreateDefaultProject();
+            project.Name = "ShortExport";
+            project.Bpm = 120;
+            project.TotalBars = 4;
+            project.SampleRate = 48000;
+            project.Tracks[0].DefaultVoice.Adsr.AttackMs = 0;
+            project.Tracks[0].DefaultVoice.Adsr.DecayMs = 0;
+            project.Tracks[0].DefaultVoice.Adsr.Sustain = 1.0f;
+            project.Tracks[0].DefaultVoice.Adsr.ReleaseMs = 0;
+            project.Tracks[0].DefaultVoice.Effect.Delay.Enabled = false;
+            project.Tracks[0].Notes.Clear();
+            project.Tracks[0].Notes.Add(new GameAudioNote
+            {
+                Id = "short-note",
+                StartBeat = 0.0f,
+                DurationBeat = 1.0f,
+                MidiNote = 69,
+                Velocity = 1.0f
             });
 
             return project;

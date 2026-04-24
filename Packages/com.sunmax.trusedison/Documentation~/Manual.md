@@ -90,6 +90,8 @@ Available controls:
 - imported `AudioClip` to 8-bit WAV conversion
 - automatic generation of a conversion-focused `.gats.json` project next to the converted WAV
 - `Open Export Folder`
+- export length mode: `Project Bars`, `Seconds`, or `Auto Trim`
+- include/cut release and delay tail beyond the export target
 - common default folder
 - project override folder
 - auto refresh toggle for `Assets/` exports
@@ -161,7 +163,9 @@ Current WAV export behavior:
 - sanitizes file names
 - creates export folders if needed
 - refreshes `AssetDatabase` when exporting under `Assets/`
-- reports export quality after each export: output peak, source peak, project length, output length, tail length, normalize status, and the delta from the previous export in the session
+- separates project length from export length: `Project Bars` uses the timeline length, `Seconds` writes a fixed requested duration, and `Auto Trim` ends at the last audible note body
+- can include release and delay tail beyond the target length, or cut exactly at the target length when tail inclusion is off
+- reports export quality after each export: output peak, source peak, target length, output length, project length, tail length, normalize status, and the delta from the previous export in the session
 - warns when the rendered buffer is silent, very quiet, or at clipping risk
 - can optionally normalize the exported WAV with a configurable headroom value; this is an export-only option and does not modify the project or Undo history
 

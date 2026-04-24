@@ -91,6 +91,8 @@
 - Unity に取り込んだ `AudioClip` の 8-bit WAV 変換
 - 変換した WAV と同じフォルダへの変換用 `.gats.json` 自動生成
 - `Open Export Folder`
+- 書き出し長モード: `Project Bars` / `Seconds` / `Auto Trim`
+- 書き出し目標長を超える release / delay tail の含める・切る設定
 - 共通既定フォルダ設定
 - プロジェクト上書きフォルダ設定
 - `Assets/` 配下書き出し時の自動リフレッシュ設定
@@ -168,6 +170,9 @@ Bars を短くしても既存ノートは削除または移動されません。
 - ファイル名禁止文字の補正
 - 出力先フォルダ自動作成
 - `Assets/` 配下書き出し時の `AssetDatabase.Refresh()`
+- プロジェクト長と書き出し長を分離します。`Project Bars` はタイムライン長、`Seconds` は指定秒数、`Auto Trim` は最後のノート本体末尾で書き出します。
+- release / delay tail は、目標長を超えて含めるか、目標長で切るかを選べます。
+- Export Quality は、peak、source peak、目標長、実際の出力長、project length、tail length、normalize 状態、前回書き出しとの差分を表示します。
 
 ## 8-bit WAV 変換
 
