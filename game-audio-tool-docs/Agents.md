@@ -1,3 +1,13 @@
+## Unity エディタ拡張の共通実務
+
+- GitHub Issue、Issue コメント、検証サマリー、リリースノートは日本語で記載する。コード識別子、パス、コマンド、ブランチ名、validation marker、エラー文は原文を維持する。
+- editor window は操作に集中させる。rendering、persistence、export、preset、validation、release packaging は service または application-layer command に分離する。
+- UI や workflow を追加したら、影響する README、manual/specification、validation checklist、release notes、BOOTH copy を同じ Issue で更新する。
+- Issue 単位の検証では、可能な限り `ISSUE<number>_<TOPIC>_VALIDATION=PASS` のような明示 marker を出し、validation script 側でも marker を確認する。
+- ユーザーが追加した QA asset や生成済み出力は、Issue でサンプル採用すると明記された場合だけコミットする。
+- Release artifact は tracked files から生成する。project cache、temp validation folder、log、generated release folder が配布 ZIP に含まれないことを検査する。
+- UI Toolkit rewrite や大きな layout migration は高リスクな移行作業として扱う。置き換え前に editing、preview、shortcut、Undo / Redo、export workflow との同等性を試作で確認する。
+
 # Agents.md
 ## Additional Session Learnings
 

@@ -1,3 +1,12 @@
+## 共有された Unity エディタ拡張ノウハウ
+
+- Issue ごとに作業を分け、実装、検証、ドキュメント更新、日本語の Issue コメント、merge / close 状態の報告までを 1 つの完了単位にする。
+- 主要 window の外へ再利用可能な処理を分離する。このリポジトリでは audio rendering、WAV export、preset handling、config persistence、validation、release artifact 検査を対象にする。
+- UI を変更したら、docs、menu path、shortcut、help text、validation checklist、release body、BOOTH copy への影響を確認する。
+- repo 固有の validation entry point を追加する場合は、継続的な回帰確認のため `ISSUE<number>_<TOPIC>_VALIDATION=PASS` のような明示的な validation marker を優先する。
+- Release packaging は tracked files のみから行う。生成 QA asset、temp validation folder、Unity cache folder、log、release staging directory を release ZIP に含めない。
+- GitHub Issue と Issue コメントは日本語で記載する。必要な場合だけ、コード、パス、コマンド、エラー文字列は原文を保持する。
+
 # Skill.md
 ## Session Learnings
 
