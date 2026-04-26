@@ -240,7 +240,7 @@ preset file は次の schema を使います。
 {
   "kind": "torusEdison.voicePreset",
   "presetFormatVersion": "1.0.0",
-  "toolVersion": "0.3.0",
+  "toolVersion": "0.3.1",
   "preset": {
     "id": "team.ui-click",
     "category": "UI",

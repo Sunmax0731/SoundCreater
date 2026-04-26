@@ -1,17 +1,17 @@
-# Torus Edison v0.3.0
+# Torus Edison v0.3.1
 
 Unity Editor 上で短いゲーム向け効果音やループ素材を試作し、`.gats.json` と WAV で扱えるようにするエディタ拡張です。
 
 ## 含まれるもの
 
-- `TorusEdison-0.3.0.unitypackage`
+- `TorusEdison-0.3.1.unitypackage`
 - 日本語 / 英語マニュアル
 - 利用規約
 - リリースノート
 - 検証チェックリスト
 - サンプル `.gats.json` 10 本
 
-## 0.3.0 の主な更新
+## 0.3.1 の主な更新
 
 - Export 画面に `Project Bars` / `Seconds` / `Auto Trim` の書き出し長モードを追加
 - release / delay tail を目標長に含めるか、目標長で切るかを選択可能

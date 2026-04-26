@@ -150,7 +150,7 @@ namespace TorusEdison.Editor.Tests
             const string json = @"{
   ""kind"": ""torusEdison.voicePreset"",
   ""presetFormatVersion"": ""2.0.0"",
-  ""toolVersion"": ""0.3.0"",
+  ""toolVersion"": ""0.3.1"",
   ""preset"": {
     ""displayName"": ""Future"",
     ""voice"": {}
@@ -168,7 +168,7 @@ namespace TorusEdison.Editor.Tests
             const string json = @"{
   ""kind"": ""torusEdison.voicePreset"",
   ""presetFormatVersion"": ""1.0.0"",
-  ""toolVersion"": ""0.3.0"",
+  ""toolVersion"": ""0.3.1"",
   ""preset"": {
     ""displayName"": 123,
     ""voice"": {}

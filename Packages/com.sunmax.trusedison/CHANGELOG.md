@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1
+
+- standardized the Unity Editor menu entries as `メイン画面`, `ライセンス`, and `バージョン情報`
+- moved helper and release commands under `Utilities` / `Developer`
+- clarified MIT License in README, package docs, and the Unity Editor information window
+- refreshed release copy and validation-facing docs for the current implementation
+
+
 ## 0.3.0
 
 - added export duration controls for project length, fixed seconds, and auto-trim workflows

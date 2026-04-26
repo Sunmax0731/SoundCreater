@@ -371,3 +371,10 @@ UIから直接仕様を決めない。
 
 このプロジェクトは「音が出る」だけでなく、**配布可能で、再編集できて、他人が使えるツールに仕上げること**が重要である。  
 各エージェントは、自分の担当範囲だけで閉じず、**保存・再現性・配布**まで見渡して動くこと。
+
+## Shared Unity Editor Extension Convention
+
+- Public menu entries use `Tools > Torus Edison > メイン画面`, `Tools > Torus Edison > ライセンス`, and `Tools > Torus Edison > バージョン情報`.
+- Keep developer-only or helper commands under a secondary group such as `Developer` or `Utilities`.
+- The license is MIT License. Keep `README.md`, package documentation, release notes, BOOTH/GitHub release copy, and the Unity Editor license window aligned with MIT.
+- When menu or license text changes, update README, manual, validation checklist, release notes, BOOTH/GitHub release copy, and release package contents in the same change.

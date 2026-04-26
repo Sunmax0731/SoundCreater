@@ -344,3 +344,10 @@ BOOTH向けには、GitHub Releaseと**同一成果物**を出品する。
 5. 実装を小さく分ける
 
 迷ったら、**MVPを確実に成立させる方向**を選ぶこと。
+
+## Shared Unity Editor Extension Convention
+
+- Public menu entries use `Tools > Torus Edison > メイン画面`, `Tools > Torus Edison > ライセンス`, and `Tools > Torus Edison > バージョン情報`.
+- Keep developer-only or helper commands under a secondary group such as `Developer` or `Utilities`.
+- The license is MIT License. Keep `README.md`, package documentation, release notes, BOOTH/GitHub release copy, and the Unity Editor license window aligned with MIT.
+- When menu or license text changes, update README, manual, validation checklist, release notes, BOOTH/GitHub release copy, and release package contents in the same change.

@@ -5,7 +5,7 @@ namespace TorusEdison.Editor.Utilities
         public const string DisplayName = "Torus Edison";
         public const string PackageIdentifier = "com.sunmax.trusedison";
         public const string RepositoryUrl = "https://github.com/Sunmax0731/SoundCreater";
-        public const string ToolVersion = "0.3.0";
+        public const string ToolVersion = "0.3.1";
         public const string SessionFileExtension = ".gats.json";
         public const int MaxTrackCount = 32;
         public const int DefaultSampleRate = 48000;

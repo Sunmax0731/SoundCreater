@@ -1,5 +1,13 @@
 # Release Notes
 
+## 0.3.1
+
+- Unity Editor menu entries now use `Tools > Torus Edison > メイン画面`, `ライセンス`, and `バージョン情報`.
+- `8-bit WAV Converter` and release-package commands are grouped under utility/developer menu paths.
+- The license window, README, manuals, terms, and release copy now state MIT License consistently.
+- This patch release contains documentation/menu/license alignment only; audio project compatibility remains on the same major format line.
+
+
 ## 0.3.0
 
 `Torus Edison` の書き出し制御、Stereo 音作り、タイムライン編集を強化する release です。
