@@ -127,7 +127,7 @@ Expected sound:
 
 ## Recommended Verification Flow
 
-1. Open `Tools/Torus Edison/Open Editor`
+1. Open `Tools/Torus Edison/メイン画面`
 2. Click `Create Samples`
 3. Load `Basic SE`
 4. Render preview and play it

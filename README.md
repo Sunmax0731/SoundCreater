@@ -34,9 +34,9 @@ GitHub 上のリポジトリ名は `SoundCreater` ですが、BOOTH や配布物
 - 16-bit PCM WAV 書き出し
 - `Project Bars` / `Seconds` / `Auto Trim` の書き出し長モード
 - release / delay tail の include/cut と Export Quality 表示
-- `Tools/Torus Edison/8-bit WAV Converter` から開ける 8-bit WAV 変換
+- `Tools/Torus Edison/Utilities/8-bit WAV Converter` から開ける 8-bit WAV 変換
 - 変換した WAV と同じフォルダへの変換用 `.gats.json` 自動生成
-- `Tools/Torus Edison/Version & License` から開けるバージョン / ライセンス画面
+- `Tools/Torus Edison/ライセンス` と `Tools/Torus Edison/バージョン情報` から開ける情報画面
 - 日本語 / 英語 / 中国語 UI
 - Debug Mode と Log Level による診断ログ出力
 
@@ -68,9 +68,14 @@ GitHub 上のリポジトリ名は `SoundCreater` ですが、BOOTH や配布物
 
 Unity プロジェクトを開いたあと、次のメニューから起動します。
 
-- `Tools/Torus Edison/Open Editor`
-- `Tools/Torus Edison/8-bit WAV Converter`
-- `Tools/Torus Edison/Version & License`
+- `Tools/Torus Edison/メイン画面`
+- `Tools/Torus Edison/ライセンス`
+- `Tools/Torus Edison/バージョン情報`
+- `Tools/Torus Edison/Utilities/8-bit WAV Converter`
+
+## ライセンス
+
+Torus Edison は MIT License で提供します。詳細は [LICENSE.md](Packages/com.sunmax.trusedison/LICENSE.md) を確認してください。
 
 ## サポート情報
 

@@ -112,7 +112,7 @@ namespace TorusEdison.Editor.Windows
         private IMGUIContainer _previewWaveformView;
         private string _inspectorStateKey = string.Empty;
 
-        [MenuItem("Tools/Torus Edison/Open Editor")]
+        [MenuItem("Tools/Torus Edison/メイン画面")]
         public static void OpenWindow()
         {
             var window = GetWindow<GameAudioToolWindow>();

@@ -15,7 +15,7 @@
 - Selection Inspector から `.gats-preset.json` の voice preset import / export を実行できるように改善
 - preset browser に検索、category / tag filter、最近使用履歴、user preset file の警告表示を追加
 - toolbar から built-in project template を選んで新規 project を作成できるように改善
-- Unity に取り込んだ `AudioClip` の 8-bit WAV 変換を `Tools/Torus Edison/8-bit WAV Converter` へ分離
+- Unity に取り込んだ `AudioClip` の 8-bit WAV 変換を `Tools/Torus Edison/Utilities/8-bit WAV Converter` へ分離
 - streaming / preload 無効の import 設定でも 8-bit 変換が失敗しないように修正
 - README、日英マニュアル、ValidationChecklist、release 文面、BOOTH 商品紹介文を 0.3.0 の機能状態に合わせて更新
 
@@ -39,7 +39,7 @@
 - Edit 画面と Settings 画面から `Total Bars` を変更できるように改善
 - Unity に取り込んだ `AudioClip` の 8-bit WAV 変換と、変換用 `.gats.json` 自動生成を追加
 - 同梱 sample AudioProject を 10 本構成へ拡充
-- `Version & License` 画面を追加
+- `License / Version Info` 画面を追加
 - 表示言語切替時に Settings 画面が空になる不具合を修正
 - `Ctrl+D`、`Delete`、`Ctrl+Z` などの編集ショートカットまわりを修正
 - `+ Add Track` 押下時の footer hit-test 由来の例外を修正

@@ -10,7 +10,7 @@ namespace TorusEdison.Editor.Release
         private const string StageRoot = "Assets/__TorusEdisonReleaseStaging__";
         private const string StageToolRoot = StageRoot + "/TorusEdison";
 
-        [MenuItem("Tools/Torus Edison/Build Release UnityPackage")]
+        [MenuItem("Tools/Torus Edison/Developer/Build Release UnityPackage")]
         private static void BuildUnityPackageInteractive()
         {
             PackageManifest manifest = LoadManifest();

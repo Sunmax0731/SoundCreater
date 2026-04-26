@@ -46,7 +46,7 @@ namespace TorusEdison.Editor.Windows
         private Label _lastProjectValue;
         private Button _convertButton;
 
-        [MenuItem("Tools/Torus Edison/8-bit WAV Converter")]
+        [MenuItem("Tools/Torus Edison/Utilities/8-bit WAV Converter")]
         public static void OpenWindow()
         {
             var window = GetWindow<GameAudio8BitConversionWindow>();

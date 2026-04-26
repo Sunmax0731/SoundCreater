@@ -35,9 +35,10 @@
 
 次のメニューから起動します。
 
-- `Tools/Torus Edison/Open Editor`
-- `Tools/Torus Edison/8-bit WAV Converter`
-- `Tools/Torus Edison/Version & License`
+- `Tools/Torus Edison/メイン画面`
+- `Tools/Torus Edison/ライセンス`
+- `Tools/Torus Edison/バージョン情報`
+- `Tools/Torus Edison/Utilities/8-bit WAV Converter`
 
 ## 画面構成
 
@@ -203,7 +204,7 @@ Stereo の扱い:
 
 ## 8-bit WAV 変換
 
-Unity に取り込んだ `AudioClip` アセットを 8-bit PCM `.wav` に変換する場合は、`Tools/Torus Edison/8-bit WAV Converter` を開きます。
+Unity に取り込んだ `AudioClip` アセットを 8-bit PCM `.wav` に変換する場合は、`Tools/Torus Edison/Utilities/8-bit WAV Converter` を開きます。
 
 - 変換元 `AudioClip` を選択
 - 出力名を指定
@@ -273,7 +274,7 @@ preset file は次の schema を使います。
 
 ## バージョン / ライセンス画面
 
-`Tools/Torus Edison/Version & License` から、現在のバージョン、利用規約への導線、配布元情報を確認できます。
+`Tools/Torus Edison/バージョン情報` から現在のバージョンと配布元情報を確認できます。`Tools/Torus Edison/ライセンス` から MIT License の概要と同梱 `LICENSE.md` の場所を確認できます。
 
 ## 設定ファイル
 

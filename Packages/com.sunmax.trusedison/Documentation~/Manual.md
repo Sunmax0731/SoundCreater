@@ -35,9 +35,10 @@ Current implementation scope:
 
 Open the tool from:
 
-- `Tools/Torus Edison/Open Editor`
-- `Tools/Torus Edison/8-bit WAV Converter`
-- `Tools/Torus Edison/Version & License`
+- `Tools/Torus Edison/メイン画面`
+- `Tools/Torus Edison/ライセンス`
+- `Tools/Torus Edison/バージョン情報`
+- `Tools/Torus Edison/Utilities/8-bit WAV Converter`
 
 ## Workspace Pages
 
@@ -197,7 +198,7 @@ Stereo behavior:
 
 ## 8-bit WAV Conversion
 
-Use `Tools/Torus Edison/8-bit WAV Converter` to convert imported `AudioClip` assets outside the main editor window.
+Use `Tools/Torus Edison/Utilities/8-bit WAV Converter` to convert imported `AudioClip` assets outside the main editor window.
 
 - select a source `AudioClip` that already exists in the Unity project
 - choose the output name
@@ -268,7 +269,7 @@ Use the `.gats-preset.json` extension for shared voice preset files. The user pr
 
 ## Version And License Window
 
-Use `Tools/Torus Edison/Version & License` to check the current package version, the license entry point, and the release source.
+Use `Tools/Torus Edison/バージョン情報` to check the current package version and release source. Use `Tools/Torus Edison/ライセンス` to check the MIT License summary and the included `LICENSE.md` location.
 
 ## Configuration Files
 

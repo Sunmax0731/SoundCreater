@@ -100,7 +100,7 @@ These checks still need a live Unity Editor session.
 ### 1. Open And Load
 
 1. Open the Unity host project.
-2. Open `Tools/Torus Edison/Open Editor`.
+2. Open `Tools/Torus Edison/メイン画面`.
 3. Load `Basic SE`.
 4. Load `Simple Loop`.
 5. Select `Coin Pickup` or `Simple Loop` in the toolbar `Template` selector and click `New From Template`.

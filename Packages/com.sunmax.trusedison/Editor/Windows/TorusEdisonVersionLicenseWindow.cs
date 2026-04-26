@@ -16,14 +16,29 @@ namespace TorusEdison.Editor.Windows
 
         private readonly GameAudioCommonConfigSerializer _commonConfigSerializer = new GameAudioCommonConfigSerializer();
         private GameAudioDisplayLanguage _displayLanguage = GameAudioDisplayLanguage.English;
+        private InfoMode _mode = InfoMode.Version;
 
-        [MenuItem("Tools/Torus Edison/Version & License")]
-        public static void OpenWindow()
+        [MenuItem("Tools/Torus Edison/ライセンス")]
+        public static void OpenLicense()
+        {
+            OpenWindow(InfoMode.License);
+        }
+
+        [MenuItem("Tools/Torus Edison/バージョン情報")]
+        public static void OpenVersionInfo()
+        {
+            OpenWindow(InfoMode.Version);
+        }
+
+        private static void OpenWindow(InfoMode mode)
         {
             var window = GetWindow<TorusEdisonVersionLicenseWindow>();
-            window.titleContent = new GUIContent("Torus Edison");
+            window._mode = mode;
+            window.titleContent = new GUIContent(mode == InfoMode.License ? "ライセンス" : "バージョン情報");
             window.minSize = new Vector2(760.0f, 620.0f);
+            window.CreateGUI();
             window.Show();
+            window.Focus();
         }
 
         private void CreateGUI()
@@ -46,21 +61,38 @@ namespace TorusEdison.Editor.Windows
             hero.style.marginBottom = 12.0f;
             scrollView.Add(hero);
 
-            scrollView.Add(BuildSection(
-                T("about.version", "Version"),
-                new[]
-                {
-                    (T("about.toolVersion", "Tool Version"), GameAudioToolInfo.ToolVersion),
-                    (T("about.packageId", "Package ID"), GameAudioToolInfo.PackageIdentifier),
-                    (T("about.sessionFormat", "Session Format"), GameAudioToolInfo.SessionFileExtension),
-                    (T("about.supportedEnv", "Supported Environment"), "Unity 6000.0+ / Windows / Offline"),
-                    (T("about.capabilities", "Current Scope"), $"32 tracks / {GameAudioToolInfo.MaxTotalBars} bars / WAV export / Localized UI")
-                }));
+            if (_mode == InfoMode.Version)
+            {
+                scrollView.Add(BuildSection(
+                    T("about.version", "Version"),
+                    new[]
+                    {
+                        (T("about.toolVersion", "Tool Version"), GameAudioToolInfo.ToolVersion),
+                        (T("about.packageId", "Package ID"), GameAudioToolInfo.PackageIdentifier),
+                        ("検証済み Unity", "6000.4.0f1"),
+                        ("メニュー", "Tools > Torus Edison > メイン画面"),
+                        ("ライセンス", "MIT License"),
+                        (T("about.sessionFormat", "Session Format"), GameAudioToolInfo.SessionFileExtension),
+                        (T("about.supportedEnv", "Supported Environment"), "Unity 6000.0+ / Windows / Offline"),
+                        (T("about.capabilities", "Current Scope"), $"32 tracks / {GameAudioToolInfo.MaxTotalBars} bars / WAV export / Localized UI")
+                    }));
+            }
+            else
+            {
+                scrollView.Add(BuildSection(
+                    T("about.license", "License"),
+                    new[]
+                    {
+                        ("ライセンス種別", "MIT License"),
+                        ("対象パッケージ", GameAudioToolInfo.PackageIdentifier),
+                        ("LICENSE", $"Packages/{GameAudioToolInfo.PackageIdentifier}/LICENSE.md")
+                    }));
+                scrollView.Add(BuildTextSection(
+                    T("about.license", "License"),
+                    "本 Unity エディタ拡張は MIT License で提供されます。利用、改変、再配布、商用利用が可能です。再配布時は、パッケージに含まれる LICENSE.md の著作権表示とライセンス本文を保持してください。"));
+            }
 
             scrollView.Add(BuildLinksSection());
-            scrollView.Add(BuildTextSection(
-                T("about.license", "License"),
-                T("about.licenseBody", "Use is governed by the included LICENSE.md and TermsOfUse.md documents. Check those files before redistribution, commercial use, or bundling this package into another toolchain.")));
             scrollView.Add(BuildTextSection(
                 T("about.support", "Support"),
                 T("about.supportBody", "When contacting support, share your Unity version, Torus Edison version, the loaded .gats.json file name, reproduction steps, and any Console warnings or errors.")));
@@ -248,7 +280,7 @@ namespace TorusEdison.Editor.Windows
             Rect titleRect = new Rect(rect.x + 220.0f, rect.y + 42.0f, rect.width - 260.0f, 80.0f);
             Rect subtitleRect = new Rect(rect.x + 224.0f, rect.y + 120.0f, rect.width - 280.0f, 26.0f);
             GUI.Label(titleRect, GameAudioToolInfo.DisplayName, titleStyle);
-            GUI.Label(subtitleRect, "Version & License", subtitleStyle);
+            GUI.Label(subtitleRect, "License / Version Info", subtitleStyle);
         }
 
         private static void DrawHeroImage(Rect rect, Texture2D heroImage)
@@ -270,7 +302,7 @@ namespace TorusEdison.Editor.Windows
 
             GUI.Label(
                 new Rect(rect.x + 24.0f, rect.yMax - 38.0f, rect.width - 48.0f, 28.0f),
-                "Version & License",
+                "License / Version Info",
                 overlayLabel);
         }
 
@@ -348,6 +380,12 @@ namespace TorusEdison.Editor.Windows
                 Rect line = new Rect(x, blockRect.center.y - (wave * 0.5f), 2.0f, Mathf.Max(2.0f, wave));
                 EditorGUI.DrawRect(line, new Color(1.0f, 1.0f, 1.0f, 0.45f));
             }
+        }
+
+        private enum InfoMode
+        {
+            Version,
+            License
         }
     }
 }

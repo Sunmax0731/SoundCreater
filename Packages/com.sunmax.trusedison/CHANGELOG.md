@@ -9,7 +9,7 @@
 - added `.gats-preset.json` voice preset import and export actions from the Selection Inspector
 - added voice preset browser search, category/tag filtering, recent preset history, and user preset warning states
 - added built-in project templates for common one-shot and loop starting points
-- moved 8-bit WAV conversion for imported `AudioClip` assets into `Tools/Torus Edison/8-bit WAV Converter`
+- moved 8-bit WAV conversion for imported `AudioClip` assets into `Tools/Torus Edison/Utilities/8-bit WAV Converter`
 - fixed 8-bit conversion for imported clips that use streaming or non-preloaded audio import settings
 - refreshed README, manuals, release notes, release helper text, BOOTH-facing copy, and validation checklist for the current release scope
 
@@ -21,7 +21,7 @@
 - added imported `AudioClip` to 8-bit PCM WAV conversion in the Export page
 - added automatic generation of a conversion `.gats.json` project alongside 8-bit WAV export
 - expanded the bundled sample set to ten AudioProjects across UI, gameplay, and loop categories
-- added the `Version & License` window
+- added the `License / Version Info` window
 - fixed Settings inspector refresh after live language changes
 - fixed timeline keyboard shortcut handling for duplicate, delete, undo, and redo
 - fixed footer hit testing so the add-track area is no longer treated as a normal track row
